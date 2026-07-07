@@ -1,3 +1,5 @@
+import org.gradle.api.plugins.JavaPluginExtension
+
 plugins {
     base
 }
@@ -17,7 +19,7 @@ allprojects {
 subprojects {
     apply(plugin = "java-library")
 
-    java {
+    extensions.configure<JavaPluginExtension> {
         toolchain {
             languageVersion.set(JavaLanguageVersion.of(21))
         }
@@ -100,6 +102,7 @@ project(":example-app") {
         "testImplementation"(project(":spring-lite-test"))
     }
 
-    the<ApplicationPluginExtension>().mainClass.set("lite.spring.example.ExampleApplication")
+    extensions.configure<org.gradle.api.plugins.JavaApplication> {
+        mainClass.set("lite.spring.example.ExampleApplication")
+    }
 }
-
