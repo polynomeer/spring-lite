@@ -6,6 +6,7 @@ plugins {
 
 val junitVersion = "5.10.2"
 val assertjVersion = "3.26.3"
+val h2Version = "2.2.224"
 
 allprojects {
     group = "lite.spring"
@@ -68,6 +69,7 @@ project(":spring-lite-jdbc") {
     dependencies {
         "api"(project(":spring-lite-context"))
         "implementation"(project(":spring-lite-tx"))
+        "testImplementation"("com.h2database:h2:$h2Version")
     }
 }
 
