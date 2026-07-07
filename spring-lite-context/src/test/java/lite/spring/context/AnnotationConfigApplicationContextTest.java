@@ -11,6 +11,7 @@ import lite.spring.core.annotation.ComponentScan;
 import lite.spring.core.annotation.Configuration;
 import lite.spring.core.annotation.PostConstruct;
 import lite.spring.core.annotation.PreDestroy;
+import lite.spring.core.annotation.Qualifier;
 import lite.spring.core.exception.BeansException;
 import lite.spring.core.exception.NoSuchBeanException;
 import lite.spring.core.exception.NoUniqueBeanException;
@@ -63,6 +64,31 @@ class AnnotationConfigApplicationContextTest {
                 .isInstanceOf(NoUniqueBeanException.class)
                 .hasMessageContaining(Formatter.class.getName());
         }
+    }
+
+    @Test
+    void resolvesDependencyByQualifierUsingBeanName() {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(QualifierByNameConfig.class)) {
+            QualifiedFormatterClient client = context.getBean(QualifiedFormatterClient.class);
+
+            assertThat(client.value()).isEqualTo("second");
+        }
+    }
+
+    @Test
+    void resolvesDependencyByQualifierAnnotationOnBeanDefinition() {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(QualifierByAnnotationConfig.class)) {
+            QualifiedFormatterClient client = context.getBean(QualifiedFormatterClient.class);
+
+            assertThat(client.value()).isEqualTo("special");
+        }
+    }
+
+    @Test
+    void throwsWhenQualifierHasNoMatchingBean() {
+        assertThatThrownBy(() -> new AnnotationConfigApplicationContext(MissingQualifierConfig.class))
+            .isInstanceOf(NoSuchBeanException.class)
+            .hasMessageContaining("with qualifier missing");
     }
 
     @Test
@@ -137,6 +163,56 @@ class AnnotationConfigApplicationContextTest {
     }
 
     @Configuration
+    static class QualifierByNameConfig {
+        @Bean
+        Formatter firstFormatter() {
+            return () -> "first";
+        }
+
+        @Bean
+        Formatter secondFormatter() {
+            return () -> "second";
+        }
+
+        @Bean
+        QualifiedFormatterClient qualifiedFormatterClient(@Qualifier("secondFormatter") Formatter formatter) {
+            return new QualifiedFormatterClient(formatter);
+        }
+    }
+
+    @Configuration
+    static class QualifierByAnnotationConfig {
+        @Bean
+        Formatter plainFormatter() {
+            return () -> "plain";
+        }
+
+        @Bean
+        @Qualifier("special")
+        Formatter specialFormatter() {
+            return () -> "special";
+        }
+
+        @Bean
+        QualifiedFormatterClient qualifiedFormatterClient(@Qualifier("special") Formatter formatter) {
+            return new QualifiedFormatterClient(formatter);
+        }
+    }
+
+    @Configuration
+    static class MissingQualifierConfig {
+        @Bean
+        Formatter onlyFormatter() {
+            return () -> "only";
+        }
+
+        @Bean
+        QualifiedFormatterClient qualifiedFormatterClient(@Qualifier("missing") Formatter formatter) {
+            return new QualifiedFormatterClient(formatter);
+        }
+    }
+
+    @Configuration
     static class DestroyConfig {
         @Bean
         DestroyAwareBean destroyAwareBean() {
@@ -184,6 +260,18 @@ class AnnotationConfigApplicationContextTest {
 
     interface Formatter {
         String value();
+    }
+
+    static class QualifiedFormatterClient {
+        private final Formatter formatter;
+
+        QualifiedFormatterClient(Formatter formatter) {
+            this.formatter = formatter;
+        }
+
+        String value() {
+            return formatter.value();
+        }
     }
 
     static class ContextAwareBean {

@@ -25,6 +25,7 @@ import lite.spring.core.annotation.ComponentScan;
 import lite.spring.core.annotation.Configuration;
 import lite.spring.core.annotation.PostConstruct;
 import lite.spring.core.annotation.PreDestroy;
+import lite.spring.core.annotation.Qualifier;
 import lite.spring.core.exception.BeansException;
 import lite.spring.core.exception.NoSuchBeanException;
 import lite.spring.core.exception.NoUniqueBeanException;
@@ -166,7 +167,12 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
         BeanDefinition.Kind kind = candidate.isAnnotationPresent(Configuration.class)
             ? Kind.CONFIGURATION
             : Kind.COMPONENT;
-        registerBeanDefinition(BeanDefinition.component(BeanNameGenerator.generateBeanName(candidate), candidate, kind));
+        registerBeanDefinition(BeanDefinition.component(
+            BeanNameGenerator.generateBeanName(candidate),
+            candidate,
+            kind,
+            extractQualifier(candidate)
+        ));
     }
 
     private boolean isManagedType(Class<?> candidate) {
@@ -256,18 +262,23 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
     private Object[] resolveExecutableArguments(Parameter[] parameters) {
         Object[] arguments = new Object[parameters.length];
         for (int index = 0; index < parameters.length; index++) {
-            arguments[index] = resolveDependency(parameters[index].getType());
+            arguments[index] = resolveDependency(parameters[index]);
         }
         return arguments;
     }
 
-    private Object resolveDependency(Class<?> dependencyType) {
+    private Object resolveDependency(Parameter parameter) {
+        Class<?> dependencyType = parameter.getType();
         if (dependencyType.equals(ApplicationContext.class) || dependencyType.equals(ConfigurableApplicationContext.class)) {
             return this;
         }
         Map<String, ?> candidates = getBeansOfType(dependencyType);
         if (candidates.isEmpty()) {
             throw new NoSuchBeanException("No bean of type " + dependencyType.getName());
+        }
+        Qualifier qualifier = parameter.getAnnotation(Qualifier.class);
+        if (qualifier != null) {
+            return resolveQualifiedDependency(dependencyType, qualifier.value(), candidates);
         }
         if (candidates.size() > 1) {
             throw new NoUniqueBeanException("Multiple beans of type " + dependencyType.getName() + ": " + candidates.keySet());
@@ -292,8 +303,47 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
             if (beanDefinitions.containsKey(beanName)) {
                 continue;
             }
-            registerBeanDefinition(BeanDefinition.factoryMethod(beanName, method.getReturnType(), configurationClass, method));
+            registerBeanDefinition(BeanDefinition.factoryMethod(
+                beanName,
+                method.getReturnType(),
+                configurationClass,
+                method,
+                extractQualifier(method)
+            ));
         }
+    }
+
+    private Object resolveQualifiedDependency(Class<?> dependencyType, String qualifier, Map<String, ?> candidates) {
+        if (candidates.containsKey(qualifier)) {
+            return candidates.get(qualifier);
+        }
+        List<String> matchingBeanNames = beanDefinitions.values().stream()
+            .filter(definition -> typeMatches(dependencyType, definition))
+            .filter(definition -> qualifier.equals(definition.qualifier()))
+            .map(BeanDefinition::name)
+            .filter(candidates::containsKey)
+            .toList();
+        if (matchingBeanNames.isEmpty()) {
+            throw new NoSuchBeanException("No bean of type " + dependencyType.getName() + " with qualifier " + qualifier);
+        }
+        if (matchingBeanNames.size() > 1) {
+            throw new NoUniqueBeanException("Multiple beans of type " + dependencyType.getName() + " with qualifier " + qualifier + ": " + matchingBeanNames);
+        }
+        return candidates.get(matchingBeanNames.getFirst());
+    }
+
+    private boolean typeMatches(Class<?> dependencyType, BeanDefinition definition) {
+        return dependencyType.isAssignableFrom(definition.beanType());
+    }
+
+    private String extractQualifier(Class<?> beanType) {
+        Qualifier qualifier = beanType.getAnnotation(Qualifier.class);
+        return qualifier == null || qualifier.value().isBlank() ? null : qualifier.value();
+    }
+
+    private String extractQualifier(Method method) {
+        Qualifier qualifier = method.getAnnotation(Qualifier.class);
+        return qualifier == null || qualifier.value().isBlank() ? null : qualifier.value();
     }
 
     private Object initializeBean(String beanName, Object bean) {

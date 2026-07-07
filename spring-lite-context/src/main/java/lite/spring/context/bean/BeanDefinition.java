@@ -16,6 +16,7 @@ public final class BeanDefinition {
     private final Class<?> configurationClass;
     private final Method factoryMethod;
     private final boolean singleton;
+    private final String qualifier;
 
     private BeanDefinition(
         String name,
@@ -23,7 +24,8 @@ public final class BeanDefinition {
         Kind kind,
         Class<?> configurationClass,
         Method factoryMethod,
-        boolean singleton
+        boolean singleton,
+        String qualifier
     ) {
         this.name = name;
         this.beanType = beanType;
@@ -31,14 +33,15 @@ public final class BeanDefinition {
         this.configurationClass = configurationClass;
         this.factoryMethod = factoryMethod;
         this.singleton = singleton;
+        this.qualifier = qualifier;
     }
 
-    public static BeanDefinition component(String name, Class<?> beanType, Kind kind) {
-        return new BeanDefinition(name, beanType, kind, null, null, true);
+    public static BeanDefinition component(String name, Class<?> beanType, Kind kind, String qualifier) {
+        return new BeanDefinition(name, beanType, kind, null, null, true, qualifier);
     }
 
-    public static BeanDefinition factoryMethod(String name, Class<?> beanType, Class<?> configurationClass, Method factoryMethod) {
-        return new BeanDefinition(name, beanType, Kind.FACTORY_METHOD, configurationClass, factoryMethod, true);
+    public static BeanDefinition factoryMethod(String name, Class<?> beanType, Class<?> configurationClass, Method factoryMethod, String qualifier) {
+        return new BeanDefinition(name, beanType, Kind.FACTORY_METHOD, configurationClass, factoryMethod, true, qualifier);
     }
 
     public String name() {
@@ -64,5 +67,8 @@ public final class BeanDefinition {
     public boolean singleton() {
         return singleton;
     }
-}
 
+    public String qualifier() {
+        return qualifier;
+    }
+}
