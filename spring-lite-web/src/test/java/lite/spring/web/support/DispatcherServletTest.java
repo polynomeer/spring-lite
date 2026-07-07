@@ -1,0 +1,202 @@
+package lite.spring.web.support;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import com.sun.net.httpserver.Headers;
+import com.sun.net.httpserver.HttpContext;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpPrincipal;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import lite.spring.context.support.AnnotationConfigApplicationContext;
+import lite.spring.core.annotation.Bean;
+import lite.spring.core.annotation.Configuration;
+import lite.spring.web.annotation.GetMapping;
+import lite.spring.web.annotation.PathVariable;
+import lite.spring.web.annotation.PostMapping;
+import lite.spring.web.annotation.RequestBody;
+import lite.spring.web.annotation.RequestMapping;
+import lite.spring.web.annotation.RequestParam;
+import lite.spring.web.annotation.RestController;
+import lite.spring.web.json.JsonMapper;
+import org.junit.jupiter.api.Test;
+
+class DispatcherServletTest {
+    @Test
+    void dispatchesGetRequestsWithPathVariablesAndQueryParams() throws Exception {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
+            DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
+            StubHttpExchange exchange = new StubHttpExchange("GET", URI.create("/greetings/7?name=codex"), "");
+
+            dispatcherServlet.handle(exchange);
+
+            assertThat(exchange.statusCode()).withFailMessage(exchange.responseBodyAsString()).isEqualTo(200);
+            assertThat(exchange.responseBodyAsString()).isEqualTo("{\"message\":\"hello codex #7\"}");
+        }
+    }
+
+    @Test
+    void dispatchesPostRequestsWithRecordBodyBinding() throws Exception {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
+            DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
+            StubHttpExchange exchange = new StubHttpExchange("POST", URI.create("/greetings"), "{\"name\":\"spring-lite\",\"quantity\":2}");
+
+            dispatcherServlet.handle(exchange);
+
+            assertThat(exchange.statusCode()).withFailMessage(exchange.responseBodyAsString()).isEqualTo(200);
+            assertThat(exchange.responseBodyAsString()).isEqualTo("{\"message\":\"created spring-lite x2\"}");
+        }
+    }
+
+    @Test
+    void returns404WhenNoHandlerMatches() throws Exception {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
+            DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
+            StubHttpExchange exchange = new StubHttpExchange("GET", URI.create("/missing"), "");
+
+            dispatcherServlet.handle(exchange);
+
+            assertThat(exchange.statusCode()).isEqualTo(404);
+            assertThat(exchange.responseBodyAsString()).contains("Not Found");
+        }
+    }
+
+    @Configuration
+    static class WebTestConfig {
+        @Bean
+        GreetingController greetingController() {
+            return new GreetingController();
+        }
+    }
+
+    @RestController
+    @RequestMapping("/greetings")
+    public static class GreetingController {
+        @GetMapping("/{id}")
+        public Response get(@PathVariable("id") Long id, @RequestParam("name") String name) {
+            return new Response("hello " + name + " #" + id);
+        }
+
+        @PostMapping
+        public Response create(@RequestBody Request request) {
+            return new Response("created " + request.name() + " x" + request.quantity());
+        }
+    }
+
+    public record Request(String name, int quantity) {
+    }
+
+    public record Response(String message) {
+    }
+
+    static final class StubHttpExchange extends HttpExchange {
+        private final Headers requestHeaders = new Headers();
+        private final Headers responseHeaders = new Headers();
+        private final String method;
+        private final URI uri;
+        private final InputStream requestBody;
+        private final ByteArrayOutputStream responseBody = new ByteArrayOutputStream();
+        private int statusCode;
+
+        StubHttpExchange(String method, URI uri, String body) {
+            this.method = method;
+            this.uri = uri;
+            this.requestBody = new ByteArrayInputStream(body.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        }
+
+        int statusCode() {
+            return statusCode;
+        }
+
+        String responseBodyAsString() {
+            return responseBody.toString(java.nio.charset.StandardCharsets.UTF_8);
+        }
+
+        @Override
+        public Headers getRequestHeaders() {
+            return requestHeaders;
+        }
+
+        @Override
+        public Headers getResponseHeaders() {
+            return responseHeaders;
+        }
+
+        @Override
+        public URI getRequestURI() {
+            return uri;
+        }
+
+        @Override
+        public String getRequestMethod() {
+            return method;
+        }
+
+        @Override
+        public HttpContext getHttpContext() {
+            return null;
+        }
+
+        @Override
+        public void close() {
+        }
+
+        @Override
+        public InputStream getRequestBody() {
+            return requestBody;
+        }
+
+        @Override
+        public OutputStream getResponseBody() {
+            return responseBody;
+        }
+
+        @Override
+        public void sendResponseHeaders(int rCode, long responseLength) {
+            this.statusCode = rCode;
+        }
+
+        @Override
+        public InetSocketAddress getRemoteAddress() {
+            return new InetSocketAddress(0);
+        }
+
+        @Override
+        public int getResponseCode() {
+            return statusCode;
+        }
+
+        @Override
+        public InetSocketAddress getLocalAddress() {
+            return new InetSocketAddress(0);
+        }
+
+        @Override
+        public String getProtocol() {
+            return "HTTP/1.1";
+        }
+
+        @Override
+        public Object getAttribute(String name) {
+            return null;
+        }
+
+        @Override
+        public void setAttribute(String name, Object value) {
+        }
+
+        @Override
+        public void setStreams(InputStream i, OutputStream o) {
+        }
+
+        @Override
+        public HttpPrincipal getPrincipal() {
+            return null;
+        }
+    }
+}
