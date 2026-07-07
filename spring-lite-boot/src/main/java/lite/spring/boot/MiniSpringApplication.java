@@ -6,7 +6,6 @@ import java.net.InetSocketAddress;
 import lite.spring.boot.support.ApplicationProperties;
 import lite.spring.boot.support.BootInfrastructureRegistrar;
 import lite.spring.context.support.AnnotationConfigApplicationContext;
-import lite.spring.web.json.JsonMapper;
 import lite.spring.web.support.DispatcherServlet;
 
 public final class MiniSpringApplication {
@@ -18,13 +17,13 @@ public final class MiniSpringApplication {
         context.register(applicationClass);
         BootInfrastructureRegistrar.registerDefaults(context);
         context.refresh();
-        startHttpServerIfPossible(context, context.getBean(JsonMapper.class));
+        startHttpServerIfPossible(context);
         return context;
     }
 
-    private static void startHttpServerIfPossible(AnnotationConfigApplicationContext context, JsonMapper jsonMapper) {
+    private static void startHttpServerIfPossible(AnnotationConfigApplicationContext context) {
         try {
-            DispatcherServlet dispatcherServlet = new DispatcherServlet(context, jsonMapper);
+            DispatcherServlet dispatcherServlet = context.getBean(DispatcherServlet.class);
             ApplicationProperties properties = ApplicationProperties.load();
             int port = Integer.parseInt(properties.get("server.port", "8080"));
             HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);

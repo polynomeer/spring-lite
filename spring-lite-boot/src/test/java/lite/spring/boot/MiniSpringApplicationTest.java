@@ -11,6 +11,7 @@ import lite.spring.core.annotation.ConditionalOnProperty;
 import lite.spring.jdbc.datasource.DriverManagerDataSource;
 import lite.spring.tx.annotation.Transactional;
 import lite.spring.web.json.JsonMapper;
+import lite.spring.web.support.DispatcherServlet;
 import org.junit.jupiter.api.Test;
 
 class MiniSpringApplicationTest {
@@ -22,6 +23,7 @@ class MiniSpringApplicationTest {
             assertThat(service.call("ok")).isEqualTo("ok");
             assertThat(context.containsBeanOfType(lite.spring.tx.support.TransactionManager.class)).isTrue();
             assertThat(context.containsBeanOfType(lite.spring.tx.support.TransactionalBeanPostProcessor.class)).isTrue();
+            assertThat(context.containsBeanOfType(DispatcherServlet.class)).isTrue();
         }
     }
 

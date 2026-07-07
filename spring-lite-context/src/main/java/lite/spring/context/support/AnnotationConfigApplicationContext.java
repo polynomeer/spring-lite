@@ -150,6 +150,9 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
         for (String beanName : beanDefinitions.keySet()) {
             BeanDefinition beanDefinition = beanDefinitions.get(beanName);
             if (type.isAssignableFrom(beanDefinition.beanType())) {
+                if (beansInCreation.contains(beanName)) {
+                    continue;
+                }
                 result.put(beanName, type.cast(getBean(beanName)));
             }
         }
