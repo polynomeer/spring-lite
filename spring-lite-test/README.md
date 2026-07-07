@@ -2,9 +2,10 @@
 
 프레임워크와 예제 앱 테스트를 지원하는 보조 모듈이다.
 
-## 예정 패키지
+## 현재 상태
 
-- `lite.spring.test.context`
-- `lite.spring.test.web`
-- `lite.spring.test.fixture`
+현재는 별도 테스트 유틸리티 소스가 아직 없다. 모듈 의존성만 구성되어 있으며, 향후 아래 영역을 추가할 계획이다.
 
+- 컨텍스트 로딩 테스트 지원
+- 웹 계층 테스트 DSL
+- 공통 fixture / mock 지원

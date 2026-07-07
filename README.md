@@ -7,7 +7,7 @@
 1. `@Component` 기반 Bean 등록과 생성자 주입
 2. `ApplicationContext`와 `@Configuration` / `@Bean`
 3. `@RestController`, `@GetMapping`, `@PostMapping` 기반 MVC
-4. JDK Dynamic Proxy 기반 AOP
+4. 프록시 기반 AOP
 5. `@Transactional`과 JDBC 템플릿
 6. `MiniSpringApplication.run()` 형태의 부트스트랩
 
@@ -35,13 +35,13 @@
 
 - `spring-lite-core`: 공통 유틸리티, 메타데이터, 리플렉션 도우미
 - `spring-lite-context`: BeanDefinition, BeanFactory, ApplicationContext, 스캐닝, 라이프사이클
-- `spring-lite-aop`: ProxyFactory, Advice, Advisor, Pointcut, AOP 후처리
+- `spring-lite-aop`: `MethodInterceptor`, `MethodInvocation`, `ProxyFactory`
 - `spring-lite-web`: DispatcherServlet, HandlerMapping, ArgumentResolver, JSON 응답
 - `spring-lite-jdbc`: JdbcTemplate, RowMapper, DataSource 유틸리티
-- `spring-lite-tx`: TransactionManager, TransactionInterceptor, 트랜잭션 경계
+- `spring-lite-tx`: `@Transactional`, `TransactionManager`, `TransactionalBeanPostProcessor`
 - `spring-lite-boot`: 자동 설정, 애플리케이션 실행, 내장 서버 연동 지점
 - `spring-lite-test`: 테스트 지원 모듈
-- `example-app`: 주문/결제/재고 예제 애플리케이션
+- `example-app`: 주문 조회/생성 예제 애플리케이션
 
 ## 문서 읽기 순서
 
@@ -60,10 +60,10 @@
 
 현재는 실행 가능한 MVP를 넘어서 컨테이너, AOP, MVC, JDBC, Boot 계층의 핵심 확장까지 반영된 상태다. 다만 다음 항목은 아직 축소되어 있거나 다음 단계 과제로 남아 있다.
 
-- Boot 자동 설정은 조건부 등록까지는 아직 확장되지 않았다.
+- Boot 자동 설정은 조건부 등록과 모듈 분리까지 반영됐지만, 더 다양한 조건과 조립 전략은 남아 있다.
 - 웹 계층은 JSON API 중심이며 응답 모델과 검증 기능이 더 필요하다.
 - 트랜잭션은 단일 데이터소스와 단순 전파 정책을 기준으로 설계되어 있다.
-- 테스트 지원 모듈은 향후 별도 DSL과 헬퍼를 더 보강할 여지가 크다.
+- 테스트 지원 모듈은 아직 실체화 전이며, 향후 별도 DSL과 헬퍼를 추가할 계획이다.
 
 ## 실행 방법
 
