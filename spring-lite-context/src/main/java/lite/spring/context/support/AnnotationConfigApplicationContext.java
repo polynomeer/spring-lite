@@ -43,12 +43,17 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
     private final PropertyResolver propertyResolver = PropertyResolver.loadFromClasspath("application.yml");
     private boolean refreshed;
 
+    public AnnotationConfigApplicationContext() {
+    }
+
     public AnnotationConfigApplicationContext(Class<?>... configurationClasses) {
+        this();
         register(configurationClasses);
         refresh();
     }
 
     public AnnotationConfigApplicationContext(String... basePackages) {
+        this();
         scan(basePackages);
         refresh();
     }
@@ -72,6 +77,15 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
                 registerDiscoveredClass(candidate);
             }
         }
+    }
+
+    public boolean containsBeanDefinition(String beanName) {
+        return beanDefinitions.containsKey(beanName);
+    }
+
+    public boolean containsBeanOfType(Class<?> beanType) {
+        return beanDefinitions.values().stream().anyMatch(definition -> beanType.isAssignableFrom(definition.beanType()))
+            || singletons.values().stream().anyMatch(bean -> beanType.isAssignableFrom(bean.getClass()));
     }
 
     @Override
@@ -167,7 +181,7 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
         if (!isManagedType(candidate)) {
             return;
         }
-        BeanDefinition.Kind kind = candidate.isAnnotationPresent(Configuration.class)
+        BeanDefinition.Kind kind = AnnotationUtils.hasAnnotation(candidate, Configuration.class)
             ? Kind.CONFIGURATION
             : Kind.COMPONENT;
         registerBeanDefinition(BeanDefinition.component(
