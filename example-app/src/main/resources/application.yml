@@ -1,0 +1,4 @@
+spring-lite:
+  application:
+    name: example-app
+
