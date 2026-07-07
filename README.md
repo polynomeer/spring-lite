@@ -43,11 +43,12 @@
 1. [프로젝트 개요](./docs/codex/project-brief.md)
 2. [아키텍처 개요](./docs/architecture/overview.md)
 3. [스프링 핵심 원리와 코드 가이드](./docs/architecture/spring-core-principles-and-code-guide.md)
-4. [구현 로드맵](./docs/codex/implementation-roadmap.md)
-5. [작업 백로그](./docs/codex/task-backlog.md)
-6. [모듈 맵](./docs/codex/module-map.md)
-7. [개발 규칙](./docs/guides/development-conventions.md)
-8. [커밋 규칙](./docs/guides/commit-conventions.md)
+4. [Post-MVP 구현 계획](./docs/codex/post-mvp-implementation-plan.md)
+5. [구현 로드맵](./docs/codex/implementation-roadmap.md)
+6. [작업 백로그](./docs/codex/task-backlog.md)
+7. [모듈 맵](./docs/codex/module-map.md)
+8. [개발 규칙](./docs/guides/development-conventions.md)
+9. [커밋 규칙](./docs/guides/commit-conventions.md)
 
 ## 현재 상태
 
