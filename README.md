@@ -1,6 +1,6 @@
 # spring-lite
 
-`spring-lite`는 Spring Framework의 핵심 원리를 직접 구현하는 학습용 경량 프레임워크 프로젝트다. 목표는 IoC/DI, Bean Lifecycle, MVC Dispatcher, AOP, Transaction, Auto Configuration을 단계적으로 구현하면서 각 계층의 책임을 명확하게 분리하는 것이다.
+`spring-lite`는 Spring Framework의 핵심 원리를 직접 구현하는 학습용 경량 프레임워크 프로젝트다. 현재 저장소에는 IoC/DI, Bean Lifecycle, MVC Dispatcher, 프록시 기반 `@Transactional`, 경량 부트스트랩, 예제 앱까지 동작 가능한 MVP가 포함되어 있다.
 
 ## 목표 범위
 
@@ -10,6 +10,21 @@
 4. JDK Dynamic Proxy 기반 AOP
 5. `@Transactional`과 JDBC 템플릿
 6. `MiniSpringApplication.run()` 형태의 부트스트랩
+
+## 구현된 기능
+
+- 애노테이션 기반 컴포넌트 스캔
+- 생성자 주입 기반 DI 컨테이너
+- `@Configuration` / `@Bean`
+- `@PostConstruct` / `@PreDestroy`
+- `BeanPostProcessor`
+- JDK Dynamic Proxy 기반 AOP 인프라
+- `@Transactional` 기반 메서드 인터셉션
+- `JdbcTemplate`, `RowMapper`, `DriverManagerDataSource`
+- `@RestController`, `@RequestMapping`, `@GetMapping`, `@PostMapping`
+- `@PathVariable`, `@RequestParam`, `@RequestBody`
+- 내장 JDK HTTP 서버 기반 `MiniSpringApplication.run()`
+- 주문 예제 앱과 기본 테스트
 
 ## 모듈 구성
 
@@ -35,4 +50,26 @@
 
 ## 현재 상태
 
-현재 저장소는 구현을 시작하기 위한 문서화와 멀티모듈 구조를 먼저 잡아둔 상태다. 실제 코드 구현은 `spring-lite-context`의 Bean 등록/조회 흐름부터 시작하는 것이 우선순위다.
+현재는 실행 가능한 MVP까지 구현된 상태다. 다만 다음 항목은 의도적으로 축소되어 있다.
+
+- AOP는 JDK Dynamic Proxy 기반이며 인터페이스 구현 Bean에 우선 대응한다.
+- 클래스패스 스캔은 파일 시스템 기반이며 JAR 스캔은 다루지 않는다.
+- JSON 바인딩은 경량 자체 구현으로, 복잡한 객체 그래프나 고급 직렬화 규칙은 지원하지 않는다.
+- 트랜잭션은 단일 데이터소스/단순 경계를 기준으로 설계되어 있다.
+
+## 실행 방법
+
+```bash
+./gradlew test
+./gradlew :example-app:run
+```
+
+기본 포트는 `8080`이며, 예제 API는 아래처럼 확인할 수 있다.
+
+```bash
+curl http://localhost:8080/orders
+curl http://localhost:8080/orders/1
+curl -X POST http://localhost:8080/orders \
+  -H 'Content-Type: application/json' \
+  -d '{"product":"book","quantity":2}'
+```
