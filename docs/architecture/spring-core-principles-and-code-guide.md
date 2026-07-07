@@ -30,7 +30,7 @@ IoC(Inversion of Control)는 제어의 역전이다. 원래 애플리케이션 �
 
 Spring에서 중요한 점은 IoC가 추상 구호가 아니라 "ApplicationContext가 Bean을 등록하고 생성한다"는 매우 구체적인 런타임 동작이라는 점이다.
 
-`spring-lite`에서는 이 역할을 [AnnotationConfigApplicationContext](/Users/hammac/Projects/spring-lite/spring-lite-context/src/main/java/lite/spring/context/support/AnnotationConfigApplicationContext.java:1)가 맡는다.
+`spring-lite`에서는 이 역할을 [AnnotationConfigApplicationContext](../../spring-lite-context/src/main/java/lite/spring/context/support/AnnotationConfigApplicationContext.java)가 맡는다.
 
 ### 2.2 DI란 무엇인가
 
@@ -38,7 +38,7 @@ DI(Dependency Injection)는 의존성 주입이다. 객체가 필요한 협력 �
 
 예를 들어 `DefaultOrderService`는 `OrderRepository`를 직접 `new` 하지 않는다. 생성자를 통해 받는다. 이 구조 덕분에 구현이 바뀌어도 서비스 코드는 유지된다.
 
-관련 코드는 [DefaultOrderService](/Users/hammac/Projects/spring-lite/example-app/src/main/java/lite/spring/example/order/DefaultOrderService.java:1)에 있다.
+관련 코드는 [DefaultOrderService](../../example-app/src/main/java/lite/spring/example/order/DefaultOrderService.java)에 있다.
 
 ### 2.3 `spring-lite`에서 DI가 동작하는 방식
 
@@ -54,10 +54,10 @@ DI(Dependency Injection)는 의존성 주입이다. 객체가 필요한 협력 �
 
 핵심 코드 연결:
 
-- Bean 메타데이터: [BeanDefinition](/Users/hammac/Projects/spring-lite/spring-lite-context/src/main/java/lite/spring/context/bean/BeanDefinition.java:1)
-- 패키지 스캔: [ClassPathScanner](/Users/hammac/Projects/spring-lite/spring-lite-context/src/main/java/lite/spring/context/scan/ClassPathScanner.java:1)
-- Bean 이름 생성: [BeanNameGenerator](/Users/hammac/Projects/spring-lite/spring-lite-context/src/main/java/lite/spring/context/support/BeanNameGenerator.java:1)
-- 생성자 선택/의존성 해결/Bean 생성: [AnnotationConfigApplicationContext](/Users/hammac/Projects/spring-lite/spring-lite-context/src/main/java/lite/spring/context/support/AnnotationConfigApplicationContext.java:1)
+- Bean 메타데이터: [BeanDefinition](../../spring-lite-context/src/main/java/lite/spring/context/bean/BeanDefinition.java)
+- 패키지 스캔: [ClassPathScanner](../../spring-lite-context/src/main/java/lite/spring/context/scan/ClassPathScanner.java)
+- Bean 이름 생성: [BeanNameGenerator](../../spring-lite-context/src/main/java/lite/spring/context/support/BeanNameGenerator.java)
+- 생성자 선택/의존성 해결/Bean 생성: [AnnotationConfigApplicationContext](../../spring-lite-context/src/main/java/lite/spring/context/support/AnnotationConfigApplicationContext.java)
 
 ### 2.4 왜 `BeanDefinition`이 중요한가
 
@@ -91,13 +91,13 @@ Spring은 개발자가 모든 객체를 XML이나 코드로 일일이 등록하�
 - JAR 내부 스캔은 지원하지 않는다.
 - 클래스 로딩 시점 부작용을 정교하게 제어하지 않는다.
 
-이 제한은 현재 [README.md](/Users/hammac/Projects/spring-lite/README.md:1)에도 문서화되어 있다.
+이 제한은 현재 [README.md](../../README.md)에도 문서화되어 있다.
 
 ### 3.3 메타 애노테이션 처리
 
 실제 Spring에서 중요한 포인트는 애노테이션을 직접만 보지 않는다는 점이다. 예를 들어 `@Service`는 결국 `@Component`의 한 변형이다.
 
-`spring-lite`에서도 [AnnotationUtils](/Users/hammac/Projects/spring-lite/spring-lite-context/src/main/java/lite/spring/context/support/AnnotationUtils.java:1)가 메타 애노테이션을 따라가며 관리 대상인지 판단한다.
+`spring-lite`에서도 [AnnotationUtils](../../spring-lite-context/src/main/java/lite/spring/context/support/AnnotationUtils.java)가 메타 애노테이션을 따라가며 관리 대상인지 판단한다.
 
 이 때문에 `@MiniSpringBootApplication`처럼 여러 애노테이션을 합성한 경우도 컨테이너가 정상적으로 읽을 수 있다.
 
@@ -121,7 +121,7 @@ BeanDefinition 등록
 -> 종료 시 @PreDestroy / AutoCloseable close
 ```
 
-핵심 로직은 [AnnotationConfigApplicationContext](/Users/hammac/Projects/spring-lite/spring-lite-context/src/main/java/lite/spring/context/support/AnnotationConfigApplicationContext.java:1)에 들어 있다.
+핵심 로직은 [AnnotationConfigApplicationContext](../../spring-lite-context/src/main/java/lite/spring/context/support/AnnotationConfigApplicationContext.java)에 들어 있다.
 
 ### 4.2 `@Configuration`과 `@Bean`
 
@@ -136,7 +136,7 @@ Spring은 클래스 단위 컴포넌트만 관리하는 것이 아니라, 설정
 
 이 구조는 `AppConfig` 같은 설정 클래스를 가능하게 만든다.
 
-관련 코드는 [AppConfig](/Users/hammac/Projects/spring-lite/example-app/src/main/java/lite/spring/example/config/AppConfig.java:1)에 있다.
+관련 코드는 [AppConfig](../../example-app/src/main/java/lite/spring/example/config/AppConfig.java)에 있다.
 
 ### 4.3 `BeanPostProcessor`의 역할
 
@@ -144,7 +144,7 @@ Spring의 강력함은 "Bean을 만든 뒤 가로채서 바꿀 수 있다"는 �
 
 실제 Spring의 AOP, 트랜잭션, 프레임워크 확장도 이 구조를 많이 활용한다.
 
-`spring-lite`의 `BeanPostProcessor` 인터페이스는 [BeanPostProcessor](/Users/hammac/Projects/spring-lite/spring-lite-context/src/main/java/lite/spring/context/factory/BeanPostProcessor.java:1)에 있고, 트랜잭션 프록시 적용 구현은 [TransactionalBeanPostProcessor](/Users/hammac/Projects/spring-lite/spring-lite-tx/src/main/java/lite/spring/tx/support/TransactionalBeanPostProcessor.java:1)에 있다.
+`spring-lite`의 `BeanPostProcessor` 인터페이스는 [BeanPostProcessor](../../spring-lite-context/src/main/java/lite/spring/context/factory/BeanPostProcessor.java)에 있고, 트랜잭션 프록시 적용 구현은 [TransactionalBeanPostProcessor](../../spring-lite-tx/src/main/java/lite/spring/tx/support/TransactionalBeanPostProcessor.java)에 있다.
 
 ## 5. 싱글톤과 컨테이너 캐시
 
@@ -182,9 +182,9 @@ Spring AOP의 핵심은 "대상 객체를 직접 호출하지 않고 프록시�
 
 `spring-lite`도 같은 전략을 쓴다.
 
-- 프록시 생성: [ProxyFactory](/Users/hammac/Projects/spring-lite/spring-lite-aop/src/main/java/lite/spring/aop/support/ProxyFactory.java:1)
-- 메서드 인터셉터 계약: [MethodInterceptor](/Users/hammac/Projects/spring-lite/spring-lite-aop/src/main/java/lite/spring/aop/MethodInterceptor.java:1)
-- 호출 컨텍스트: [MethodInvocation](/Users/hammac/Projects/spring-lite/spring-lite-aop/src/main/java/lite/spring/aop/MethodInvocation.java:1)
+- 프록시 생성: [ProxyFactory](../../spring-lite-aop/src/main/java/lite/spring/aop/support/ProxyFactory.java)
+- 메서드 인터셉터 계약: [MethodInterceptor](../../spring-lite-aop/src/main/java/lite/spring/aop/MethodInterceptor.java)
+- 호출 컨텍스트: [MethodInvocation](../../spring-lite-aop/src/main/java/lite/spring/aop/MethodInvocation.java)
 
 ### 7.3 `spring-lite`의 프록시 동작
 
@@ -215,13 +215,13 @@ Spring의 선언적 트랜잭션은 "메서드에 애노테이션만 붙이면 �
 5. 프록시는 `transactionManager.begin()` 호출 후 실제 메서드를 실행한다.
 6. 성공하면 `commit()`, 예외가 나면 `rollback()` 한다.
 
-핵심 코드는 [TransactionalBeanPostProcessor](/Users/hammac/Projects/spring-lite/spring-lite-tx/src/main/java/lite/spring/tx/support/TransactionalBeanPostProcessor.java:1)에 있다.
+핵심 코드는 [TransactionalBeanPostProcessor](../../spring-lite-tx/src/main/java/lite/spring/tx/support/TransactionalBeanPostProcessor.java)에 있다.
 
 ### 8.3 `TransactionManager`
 
 `TransactionManager`는 현재 스레드에 연결된 JDBC `Connection`을 `ThreadLocal`로 보관한다.
 
-관련 코드는 [TransactionManager](/Users/hammac/Projects/spring-lite/spring-lite-tx/src/main/java/lite/spring/tx/support/TransactionManager.java:1)에 있다.
+관련 코드는 [TransactionManager](../../spring-lite-tx/src/main/java/lite/spring/tx/support/TransactionManager.java)에 있다.
 
 핵심 동작은 다음과 같다.
 
@@ -249,7 +249,7 @@ Spring의 `JdbcTemplate`은 이 반복을 템플릿 메서드 형태로 감춘�
 
 ### 9.2 `spring-lite`의 `JdbcTemplate`
 
-구현은 [JdbcTemplate](/Users/hammac/Projects/spring-lite/spring-lite-jdbc/src/main/java/lite/spring/jdbc/JdbcTemplate.java:1)에 있다.
+구현은 [JdbcTemplate](../../spring-lite-jdbc/src/main/java/lite/spring/jdbc/JdbcTemplate.java)에 있다.
 
 핵심 포인트는 두 가지다.
 
@@ -258,7 +258,7 @@ Spring의 `JdbcTemplate`은 이 반복을 템플릿 메서드 형태로 감춘�
 
 `SingleConnectionProxy`는 트랜잭션 중인 커넥션을 `try-with-resources` 안에서 안전하게 다루기 위한 어댑터다. `close()`를 무시해서, 템플릿 코드가 커넥션을 닫아버리지 않게 한다.
 
-관련 코드는 [SingleConnectionProxy](/Users/hammac/Projects/spring-lite/spring-lite-jdbc/src/main/java/lite/spring/jdbc/SingleConnectionProxy.java:1)에 있다.
+관련 코드는 [SingleConnectionProxy](../../spring-lite-jdbc/src/main/java/lite/spring/jdbc/SingleConnectionProxy.java)에 있다.
 
 ## 10. Web MVC
 
@@ -278,7 +278,7 @@ HTTP Request
 -> HTTP Response
 ```
 
-`spring-lite`는 이 흐름을 [DispatcherServlet](/Users/hammac/Projects/spring-lite/spring-lite-web/src/main/java/lite/spring/web/support/DispatcherServlet.java:1) 안에 단순화해서 담고 있다.
+`spring-lite`는 이 흐름을 [DispatcherServlet](../../spring-lite-web/src/main/java/lite/spring/web/support/DispatcherServlet.java) 안에 단순화해서 담고 있다.
 
 ### 10.2 핸들러 발견
 
@@ -307,8 +307,8 @@ HTTP Request
 
 `spring-lite`는 학습용으로 자체 JSON 매퍼를 구현했다.
 
-- 직렬화: [JsonMapper](/Users/hammac/Projects/spring-lite/spring-lite-web/src/main/java/lite/spring/web/json/JsonMapper.java:1)
-- 파싱: [JsonParser](/Users/hammac/Projects/spring-lite/spring-lite-web/src/main/java/lite/spring/web/json/JsonParser.java:1)
+- 직렬화: [JsonMapper](../../spring-lite-web/src/main/java/lite/spring/web/json/JsonMapper.java)
+- 파싱: [JsonParser](../../spring-lite-web/src/main/java/lite/spring/web/json/JsonParser.java)
 
 현재 구현은 다음 범위를 다룬다.
 
@@ -333,7 +333,7 @@ Spring Boot의 중요한 가치는 애플리케이션 실행을 간결하게 만
 
 ### 11.2 `spring-lite`의 부트스트랩
 
-`spring-lite`에서는 [MiniSpringApplication](/Users/hammac/Projects/spring-lite/spring-lite-boot/src/main/java/lite/spring/boot/MiniSpringApplication.java:1)이 이 역할을 맡는다.
+`spring-lite`에서는 [MiniSpringApplication](../../spring-lite-boot/src/main/java/lite/spring/boot/MiniSpringApplication.java)이 이 역할을 맡는다.
 
 흐름은 아래와 같다.
 
@@ -344,11 +344,11 @@ Spring Boot의 중요한 가치는 애플리케이션 실행을 간결하게 만
 5. JDK `HttpServer` 시작
 6. 모든 요청을 DispatcherServlet로 연결
 
-`@MiniSpringBootApplication`은 설정과 스캔을 합친 합성 애노테이션이다. 관련 코드는 [MiniSpringBootApplication](/Users/hammac/Projects/spring-lite/spring-lite-boot/src/main/java/lite/spring/boot/annotation/MiniSpringBootApplication.java:1)에 있다.
+`@MiniSpringBootApplication`은 설정과 스캔을 합친 합성 애노테이션이다. 관련 코드는 [MiniSpringBootApplication](../../spring-lite-boot/src/main/java/lite/spring/boot/annotation/MiniSpringBootApplication.java)에 있다.
 
 ### 11.3 설정 로딩
 
-현재 `application.yml` 파서는 아주 가볍다. [ApplicationProperties](/Users/hammac/Projects/spring-lite/spring-lite-boot/src/main/java/lite/spring/boot/support/ApplicationProperties.java:1)가 YAML을 단순 계층 키로 읽는다.
+현재 `application.yml` 파서는 아주 가볍다. [ApplicationProperties](../../spring-lite-boot/src/main/java/lite/spring/boot/support/ApplicationProperties.java)가 YAML을 단순 계층 키로 읽는다.
 
 이 역시 실제 Spring Boot의 강력한 `Environment`/`Binder`와 비교하면 축소 구현이지만, 외부 설정이 런타임에 반영된다는 구조 자체는 보여준다.
 
@@ -358,11 +358,11 @@ Spring Boot의 중요한 가치는 애플리케이션 실행을 간결하게 만
 
 관련 코드는 아래에 있다.
 
-- 진입점: [ExampleApplication](/Users/hammac/Projects/spring-lite/example-app/src/main/java/lite/spring/example/ExampleApplication.java:1)
-- 설정: [AppConfig](/Users/hammac/Projects/spring-lite/example-app/src/main/java/lite/spring/example/config/AppConfig.java:1)
-- 컨트롤러: [OrderController](/Users/hammac/Projects/spring-lite/example-app/src/main/java/lite/spring/example/order/OrderController.java:1)
-- 서비스: [DefaultOrderService](/Users/hammac/Projects/spring-lite/example-app/src/main/java/lite/spring/example/order/DefaultOrderService.java:1)
-- 저장소: [InMemoryOrderRepository](/Users/hammac/Projects/spring-lite/example-app/src/main/java/lite/spring/example/order/InMemoryOrderRepository.java:1)
+- 진입점: [ExampleApplication](../../example-app/src/main/java/lite/spring/example/ExampleApplication.java)
+- 설정: [AppConfig](../../example-app/src/main/java/lite/spring/example/config/AppConfig.java)
+- 컨트롤러: [OrderController](../../example-app/src/main/java/lite/spring/example/order/OrderController.java)
+- 서비스: [DefaultOrderService](../../example-app/src/main/java/lite/spring/example/order/DefaultOrderService.java)
+- 저장소: [InMemoryOrderRepository](../../example-app/src/main/java/lite/spring/example/order/InMemoryOrderRepository.java)
 
 실행 중 요청 흐름은 아래처럼 이해하면 된다.
 
@@ -404,14 +404,13 @@ ExampleApplication.main()
 
 가장 이해가 잘 되는 순서는 아래다.
 
-1. [ExampleApplication](/Users/hammac/Projects/spring-lite/example-app/src/main/java/lite/spring/example/ExampleApplication.java:1)
-2. [MiniSpringApplication](/Users/hammac/Projects/spring-lite/spring-lite-boot/src/main/java/lite/spring/boot/MiniSpringApplication.java:1)
-3. [AnnotationConfigApplicationContext](/Users/hammac/Projects/spring-lite/spring-lite-context/src/main/java/lite/spring/context/support/AnnotationConfigApplicationContext.java:1)
-4. [BeanDefinition](/Users/hammac/Projects/spring-lite/spring-lite-context/src/main/java/lite/spring/context/bean/BeanDefinition.java:1)
-5. [TransactionalBeanPostProcessor](/Users/hammac/Projects/spring-lite/spring-lite-tx/src/main/java/lite/spring/tx/support/TransactionalBeanPostProcessor.java:1)
-6. [ProxyFactory](/Users/hammac/Projects/spring-lite/spring-lite-aop/src/main/java/lite/spring/aop/support/ProxyFactory.java:1)
-7. [DispatcherServlet](/Users/hammac/Projects/spring-lite/spring-lite-web/src/main/java/lite/spring/web/support/DispatcherServlet.java:1)
-8. [JsonMapper](/Users/hammac/Projects/spring-lite/spring-lite-web/src/main/java/lite/spring/web/json/JsonMapper.java:1)
+1. [ExampleApplication](../../example-app/src/main/java/lite/spring/example/ExampleApplication.java)
+2. [MiniSpringApplication](../../spring-lite-boot/src/main/java/lite/spring/boot/MiniSpringApplication.java)
+3. [AnnotationConfigApplicationContext](../../spring-lite-context/src/main/java/lite/spring/context/support/AnnotationConfigApplicationContext.java)
+4. [BeanDefinition](../../spring-lite-context/src/main/java/lite/spring/context/bean/BeanDefinition.java)
+5. [TransactionalBeanPostProcessor](../../spring-lite-tx/src/main/java/lite/spring/tx/support/TransactionalBeanPostProcessor.java)
+6. [ProxyFactory](../../spring-lite-aop/src/main/java/lite/spring/aop/support/ProxyFactory.java)
+7. [DispatcherServlet](../../spring-lite-web/src/main/java/lite/spring/web/support/DispatcherServlet.java)
+8. [JsonMapper](../../spring-lite-web/src/main/java/lite/spring/web/json/JsonMapper.java)
 
 이 순서로 보면 "애플리케이션 시작 -> 컨테이너 생성 -> 프록시 적용 -> 웹 요청 처리"까지 한 흐름으로 이어진다.
-

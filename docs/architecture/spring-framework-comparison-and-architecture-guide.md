@@ -56,14 +56,14 @@ flowchart TD
 
 | 역할 | Spring | `spring-lite` |
 | --- | --- | --- |
-| 컨텍스트 진입점 | `AbstractApplicationContext`, `AnnotationConfigApplicationContext` | [AnnotationConfigApplicationContext](/Users/hammac/Projects/spring-lite/spring-lite-context/src/main/java/lite/spring/context/support/AnnotationConfigApplicationContext.java:1) |
-| Bean 생성 저장소 | `DefaultListableBeanFactory` | [BeanDefinition](/Users/hammac/Projects/spring-lite/spring-lite-context/src/main/java/lite/spring/context/bean/BeanDefinition.java:1) + 내부 singleton map |
-| 컴포넌트 스캔 | classpath scanning infrastructure | [ClassPathScanner](/Users/hammac/Projects/spring-lite/spring-lite-context/src/main/java/lite/spring/context/scan/ClassPathScanner.java:1) |
-| Bean 후처리 | `BeanPostProcessor` 계열 | [BeanPostProcessor](/Users/hammac/Projects/spring-lite/spring-lite-context/src/main/java/lite/spring/context/factory/BeanPostProcessor.java:1) |
-| MVC front controller | `DispatcherServlet` | [DispatcherServlet](/Users/hammac/Projects/spring-lite/spring-lite-web/src/main/java/lite/spring/web/support/DispatcherServlet.java:1) |
-| 트랜잭션 AOP | `TransactionInterceptor`, transaction advisor | [TransactionalBeanPostProcessor](/Users/hammac/Projects/spring-lite/spring-lite-tx/src/main/java/lite/spring/tx/support/TransactionalBeanPostProcessor.java:1) |
-| JDBC template | `JdbcTemplate` | [JdbcTemplate](/Users/hammac/Projects/spring-lite/spring-lite-jdbc/src/main/java/lite/spring/jdbc/JdbcTemplate.java:1) |
-| Boot 실행 계층 | Spring Boot auto-configuration, embedded server factories | [MiniSpringApplication](/Users/hammac/Projects/spring-lite/spring-lite-boot/src/main/java/lite/spring/boot/MiniSpringApplication.java:1), [WebServer](/Users/hammac/Projects/spring-lite/spring-lite-boot/src/main/java/lite/spring/boot/web/WebServer.java:1) |
+| 컨텍스트 진입점 | `AbstractApplicationContext`, `AnnotationConfigApplicationContext` | [AnnotationConfigApplicationContext](../../spring-lite-context/src/main/java/lite/spring/context/support/AnnotationConfigApplicationContext.java) |
+| Bean 생성 저장소 | `DefaultListableBeanFactory` | [BeanDefinition](../../spring-lite-context/src/main/java/lite/spring/context/bean/BeanDefinition.java) + 내부 singleton map |
+| 컴포넌트 스캔 | classpath scanning infrastructure | [ClassPathScanner](../../spring-lite-context/src/main/java/lite/spring/context/scan/ClassPathScanner.java) |
+| Bean 후처리 | `BeanPostProcessor` 계열 | [BeanPostProcessor](../../spring-lite-context/src/main/java/lite/spring/context/factory/BeanPostProcessor.java) |
+| MVC front controller | `DispatcherServlet` | [DispatcherServlet](../../spring-lite-web/src/main/java/lite/spring/web/support/DispatcherServlet.java) |
+| 트랜잭션 AOP | `TransactionInterceptor`, transaction advisor | [TransactionalBeanPostProcessor](../../spring-lite-tx/src/main/java/lite/spring/tx/support/TransactionalBeanPostProcessor.java) |
+| JDBC template | `JdbcTemplate` | [JdbcTemplate](../../spring-lite-jdbc/src/main/java/lite/spring/jdbc/JdbcTemplate.java) |
+| Boot 실행 계층 | Spring Boot auto-configuration, embedded server factories | [MiniSpringApplication](../../spring-lite-boot/src/main/java/lite/spring/boot/MiniSpringApplication.java), [WebServer](../../spring-lite-boot/src/main/java/lite/spring/boot/web/WebServer.java) |
 
 ## 3. IoC Container 비교
 
@@ -87,8 +87,8 @@ Spring 공식 문서는 IoC 컨테이너를 `BeanFactory`와 `ApplicationContext
 
 `spring-lite`는 위 구조를 훨씬 얇게 줄였다.
 
-- Bean registry, singleton cache, lifecycle orchestration을 [AnnotationConfigApplicationContext](/Users/hammac/Projects/spring-lite/spring-lite-context/src/main/java/lite/spring/context/support/AnnotationConfigApplicationContext.java:1)에 모았다.
-- 실제 객체 생성 메타데이터는 [BeanDefinition](/Users/hammac/Projects/spring-lite/spring-lite-context/src/main/java/lite/spring/context/bean/BeanDefinition.java:1)에 둔다.
+- Bean registry, singleton cache, lifecycle orchestration을 [AnnotationConfigApplicationContext](../../spring-lite-context/src/main/java/lite/spring/context/support/AnnotationConfigApplicationContext.java)에 모았다.
+- 실제 객체 생성 메타데이터는 [BeanDefinition](../../spring-lite-context/src/main/java/lite/spring/context/bean/BeanDefinition.java)에 둔다.
 - 리프레시 흐름은 `instantiateBeanPostProcessors()`, `instantiateConfigurationBeans()`, `instantiateRemainingSingletons()` 정도로 축약돼 있다.
 
 ### 3.3 차이의 의미
@@ -122,9 +122,9 @@ flowchart LR
 
 관련 코드:
 
-- [ClassPathScanner](/Users/hammac/Projects/spring-lite/spring-lite-context/src/main/java/lite/spring/context/scan/ClassPathScanner.java:1)
-- [BeanNameGenerator](/Users/hammac/Projects/spring-lite/spring-lite-context/src/main/java/lite/spring/context/support/BeanNameGenerator.java:1)
-- [AnnotationConfigApplicationContext](/Users/hammac/Projects/spring-lite/spring-lite-context/src/main/java/lite/spring/context/support/AnnotationConfigApplicationContext.java:1)
+- [ClassPathScanner](../../spring-lite-context/src/main/java/lite/spring/context/scan/ClassPathScanner.java)
+- [BeanNameGenerator](../../spring-lite-context/src/main/java/lite/spring/context/support/BeanNameGenerator.java)
+- [AnnotationConfigApplicationContext](../../spring-lite-context/src/main/java/lite/spring/context/support/AnnotationConfigApplicationContext.java)
 
 ## 5. 의존성 주입 비교
 
@@ -143,7 +143,7 @@ Spring 공식 문서는 annotation-based container configuration 아래에 `@Aut
 - `@Value`
 - `ApplicationContext` 자기 주입
 
-이 로직은 [AnnotationConfigApplicationContext](/Users/hammac/Projects/spring-lite/spring-lite-context/src/main/java/lite/spring/context/support/AnnotationConfigApplicationContext.java:1)에 집중돼 있다.
+이 로직은 [AnnotationConfigApplicationContext](../../spring-lite-context/src/main/java/lite/spring/context/support/AnnotationConfigApplicationContext.java)에 집중돼 있다.
 
 ### 비교 포인트
 
@@ -171,8 +171,8 @@ Spring 공식 문서에서 classpath scanning은 IoC 컨테이너 핵심 기능�
 
 관련 코드:
 
-- [ClassPathScanner](/Users/hammac/Projects/spring-lite/spring-lite-context/src/main/java/lite/spring/context/scan/ClassPathScanner.java:1)
-- [AnnotationUtils](/Users/hammac/Projects/spring-lite/spring-lite-context/src/main/java/lite/spring/context/support/AnnotationUtils.java:1)
+- [ClassPathScanner](../../spring-lite-context/src/main/java/lite/spring/context/scan/ClassPathScanner.java)
+- [AnnotationUtils](../../spring-lite-context/src/main/java/lite/spring/context/support/AnnotationUtils.java)
 
 Spring과의 차이는 후보 탐지 파이프라인의 깊이다.
 
@@ -189,9 +189,9 @@ Spring 공식 문서는 Bean lifecycle과 container extension points를 독립 �
 
 `spring-lite`에서 이 축은 다음 코드로 연결된다.
 
-- [BeanPostProcessor](/Users/hammac/Projects/spring-lite/spring-lite-context/src/main/java/lite/spring/context/factory/BeanPostProcessor.java:1)
-- [AnnotationConfigApplicationContext](/Users/hammac/Projects/spring-lite/spring-lite-context/src/main/java/lite/spring/context/support/AnnotationConfigApplicationContext.java:1)
-- [TransactionalBeanPostProcessor](/Users/hammac/Projects/spring-lite/spring-lite-tx/src/main/java/lite/spring/tx/support/TransactionalBeanPostProcessor.java:1)
+- [BeanPostProcessor](../../spring-lite-context/src/main/java/lite/spring/context/factory/BeanPostProcessor.java)
+- [AnnotationConfigApplicationContext](../../spring-lite-context/src/main/java/lite/spring/context/support/AnnotationConfigApplicationContext.java)
+- [TransactionalBeanPostProcessor](../../spring-lite-tx/src/main/java/lite/spring/tx/support/TransactionalBeanPostProcessor.java)
 
 핵심 lifecycle 비교:
 
@@ -220,9 +220,9 @@ Spring 공식 문서는 AOP를 concepts, capabilities, proxies, `@AspectJ` suppo
 
 `spring-lite`는 현재 이 중 맨 안쪽 프록시/인터셉터 계층만 구현했다.
 
-- [MethodInterceptor](/Users/hammac/Projects/spring-lite/spring-lite-aop/src/main/java/lite/spring/aop/MethodInterceptor.java:1)
-- [MethodInvocation](/Users/hammac/Projects/spring-lite/spring-lite-aop/src/main/java/lite/spring/aop/MethodInvocation.java:1)
-- [ProxyFactory](/Users/hammac/Projects/spring-lite/spring-lite-aop/src/main/java/lite/spring/aop/support/ProxyFactory.java:1)
+- [MethodInterceptor](../../spring-lite-aop/src/main/java/lite/spring/aop/MethodInterceptor.java)
+- [MethodInvocation](../../spring-lite-aop/src/main/java/lite/spring/aop/MethodInvocation.java)
+- [ProxyFactory](../../spring-lite-aop/src/main/java/lite/spring/aop/support/ProxyFactory.java)
 
 ### 프록시 방식 비교
 
@@ -251,12 +251,12 @@ Spring 공식 문서에서 `DispatcherServlet`은 front controller이며, `Handl
 
 현재 구현은 Spring MVC의 전략 구조를 최소 재현한다.
 
-- front controller: [DispatcherServlet](/Users/hammac/Projects/spring-lite/spring-lite-web/src/main/java/lite/spring/web/support/DispatcherServlet.java:1)
-- mapping: [RequestMappingHandlerMapping](/Users/hammac/Projects/spring-lite/spring-lite-web/src/main/java/lite/spring/web/handler/RequestMappingHandlerMapping.java:1)
-- adapter: [RequestMappingHandlerAdapter](/Users/hammac/Projects/spring-lite/spring-lite-web/src/main/java/lite/spring/web/handler/RequestMappingHandlerAdapter.java:1)
-- argument resolvers: [PathVariableArgumentResolver](/Users/hammac/Projects/spring-lite/spring-lite-web/src/main/java/lite/spring/web/bind/PathVariableArgumentResolver.java:1), [RequestParamArgumentResolver](/Users/hammac/Projects/spring-lite/spring-lite-web/src/main/java/lite/spring/web/bind/RequestParamArgumentResolver.java:1), [RequestBodyArgumentResolver](/Users/hammac/Projects/spring-lite/spring-lite-web/src/main/java/lite/spring/web/bind/RequestBodyArgumentResolver.java:1)
-- return handler: [JsonReturnValueHandler](/Users/hammac/Projects/spring-lite/spring-lite-web/src/main/java/lite/spring/web/handler/JsonReturnValueHandler.java:1)
-- exception resolver: [DefaultExceptionResolver](/Users/hammac/Projects/spring-lite/spring-lite-web/src/main/java/lite/spring/web/exception/DefaultExceptionResolver.java:1)
+- front controller: [DispatcherServlet](../../spring-lite-web/src/main/java/lite/spring/web/support/DispatcherServlet.java)
+- mapping: [RequestMappingHandlerMapping](../../spring-lite-web/src/main/java/lite/spring/web/handler/RequestMappingHandlerMapping.java)
+- adapter: [RequestMappingHandlerAdapter](../../spring-lite-web/src/main/java/lite/spring/web/handler/RequestMappingHandlerAdapter.java)
+- argument resolvers: [PathVariableArgumentResolver](../../spring-lite-web/src/main/java/lite/spring/web/bind/PathVariableArgumentResolver.java), [RequestParamArgumentResolver](../../spring-lite-web/src/main/java/lite/spring/web/bind/RequestParamArgumentResolver.java), [RequestBodyArgumentResolver](../../spring-lite-web/src/main/java/lite/spring/web/bind/RequestBodyArgumentResolver.java)
+- return handler: [JsonReturnValueHandler](../../spring-lite-web/src/main/java/lite/spring/web/handler/JsonReturnValueHandler.java)
+- exception resolver: [DefaultExceptionResolver](../../spring-lite-web/src/main/java/lite/spring/web/exception/DefaultExceptionResolver.java)
 
 ```mermaid
 flowchart LR
@@ -296,8 +296,8 @@ Spring 공식 문서는 트랜잭션을 abstraction, declarative implementation,
 
 ### `spring-lite` 쪽 핵심
 
-- [TransactionalBeanPostProcessor](/Users/hammac/Projects/spring-lite/spring-lite-tx/src/main/java/lite/spring/tx/support/TransactionalBeanPostProcessor.java:1)가 Bean 후처리 시 프록시를 감싼다.
-- [TransactionManager](/Users/hammac/Projects/spring-lite/spring-lite-tx/src/main/java/lite/spring/tx/support/TransactionManager.java:1)가 `ThreadLocal` 기반으로 현재 커넥션을 관리한다.
+- [TransactionalBeanPostProcessor](../../spring-lite-tx/src/main/java/lite/spring/tx/support/TransactionalBeanPostProcessor.java)가 Bean 후처리 시 프록시를 감싼다.
+- [TransactionManager](../../spring-lite-tx/src/main/java/lite/spring/tx/support/TransactionManager.java)가 `ThreadLocal` 기반으로 현재 커넥션을 관리한다.
 
 ### 비교
 
@@ -318,10 +318,10 @@ Spring JDBC 레퍼런스는 JDBC core classes, database connections, parameter h
 
 `spring-lite`의 JDBC 계층은 다음 클래스들에 집중돼 있다.
 
-- [JdbcTemplate](/Users/hammac/Projects/spring-lite/spring-lite-jdbc/src/main/java/lite/spring/jdbc/JdbcTemplate.java:1)
-- [RowMapper](/Users/hammac/Projects/spring-lite/spring-lite-jdbc/src/main/java/lite/spring/jdbc/RowMapper.java:1)
-- [SingleConnectionProxy](/Users/hammac/Projects/spring-lite/spring-lite-jdbc/src/main/java/lite/spring/jdbc/SingleConnectionProxy.java:1)
-- [DriverManagerDataSource](/Users/hammac/Projects/spring-lite/spring-lite-jdbc/src/main/java/lite/spring/jdbc/datasource/DriverManagerDataSource.java:1)
+- [JdbcTemplate](../../spring-lite-jdbc/src/main/java/lite/spring/jdbc/JdbcTemplate.java)
+- [RowMapper](../../spring-lite-jdbc/src/main/java/lite/spring/jdbc/RowMapper.java)
+- [SingleConnectionProxy](../../spring-lite-jdbc/src/main/java/lite/spring/jdbc/SingleConnectionProxy.java)
+- [DriverManagerDataSource](../../spring-lite-jdbc/src/main/java/lite/spring/jdbc/datasource/DriverManagerDataSource.java)
 
 비교 포인트:
 
@@ -339,11 +339,11 @@ Spring JDBC 레퍼런스는 JDBC core classes, database connections, parameter h
 
 현재 `spring-lite-boot` 구성:
 
-- 실행 진입점: [MiniSpringApplication](/Users/hammac/Projects/spring-lite/spring-lite-boot/src/main/java/lite/spring/boot/MiniSpringApplication.java:1)
-- 합성 애노테이션: [MiniSpringBootApplication](/Users/hammac/Projects/spring-lite/spring-lite-boot/src/main/java/lite/spring/boot/annotation/MiniSpringBootApplication.java:1)
-- 자동 설정 등록기: [BootInfrastructureRegistrar](/Users/hammac/Projects/spring-lite/spring-lite-boot/src/main/java/lite/spring/boot/support/BootInfrastructureRegistrar.java:1)
-- 설정 모듈: [JsonAutoConfiguration](/Users/hammac/Projects/spring-lite/spring-lite-boot/src/main/java/lite/spring/boot/support/autoconfigure/JsonAutoConfiguration.java:1), [TransactionAutoConfiguration](/Users/hammac/Projects/spring-lite/spring-lite-boot/src/main/java/lite/spring/boot/support/autoconfigure/TransactionAutoConfiguration.java:1), [JdbcAutoConfiguration](/Users/hammac/Projects/spring-lite/spring-lite-boot/src/main/java/lite/spring/boot/support/autoconfigure/JdbcAutoConfiguration.java:1), [WebAutoConfiguration](/Users/hammac/Projects/spring-lite/spring-lite-boot/src/main/java/lite/spring/boot/support/autoconfigure/WebAutoConfiguration.java:1)
-- 서버 추상화: [WebServer](/Users/hammac/Projects/spring-lite/spring-lite-boot/src/main/java/lite/spring/boot/web/WebServer.java:1), [JdkWebServer](/Users/hammac/Projects/spring-lite/spring-lite-boot/src/main/java/lite/spring/boot/web/JdkWebServer.java:1)
+- 실행 진입점: [MiniSpringApplication](../../spring-lite-boot/src/main/java/lite/spring/boot/MiniSpringApplication.java)
+- 합성 애노테이션: [MiniSpringBootApplication](../../spring-lite-boot/src/main/java/lite/spring/boot/annotation/MiniSpringBootApplication.java)
+- 자동 설정 등록기: [BootInfrastructureRegistrar](../../spring-lite-boot/src/main/java/lite/spring/boot/support/BootInfrastructureRegistrar.java)
+- 설정 모듈: [JsonAutoConfiguration](../../spring-lite-boot/src/main/java/lite/spring/boot/support/autoconfigure/JsonAutoConfiguration.java), [TransactionAutoConfiguration](../../spring-lite-boot/src/main/java/lite/spring/boot/support/autoconfigure/TransactionAutoConfiguration.java), [JdbcAutoConfiguration](../../spring-lite-boot/src/main/java/lite/spring/boot/support/autoconfigure/JdbcAutoConfiguration.java), [WebAutoConfiguration](../../spring-lite-boot/src/main/java/lite/spring/boot/support/autoconfigure/WebAutoConfiguration.java)
+- 서버 추상화: [WebServer](../../spring-lite-boot/src/main/java/lite/spring/boot/web/WebServer.java), [JdkWebServer](../../spring-lite-boot/src/main/java/lite/spring/boot/web/JdkWebServer.java)
 
 ### Boot 비교
 
@@ -363,9 +363,9 @@ Spring 공식 문서는 `TestContext Framework`, `MockMvc`, web mocks, context c
 
 예:
 
-- [AnnotationConfigApplicationContextTest](/Users/hammac/Projects/spring-lite/spring-lite-context/src/test/java/lite/spring/context/AnnotationConfigApplicationContextTest.java:1)
-- [DispatcherServletTest](/Users/hammac/Projects/spring-lite/spring-lite-web/src/test/java/lite/spring/web/support/DispatcherServletTest.java:1)
-- [JdbcIntegrationTest](/Users/hammac/Projects/spring-lite/spring-lite-jdbc/src/test/java/lite/spring/jdbc/JdbcIntegrationTest.java:1)
+- [AnnotationConfigApplicationContextTest](../../spring-lite-context/src/test/java/lite/spring/context/AnnotationConfigApplicationContextTest.java)
+- [DispatcherServletTest](../../spring-lite-web/src/test/java/lite/spring/web/support/DispatcherServletTest.java)
+- [JdbcIntegrationTest](../../spring-lite-jdbc/src/test/java/lite/spring/jdbc/JdbcIntegrationTest.java)
 
 즉 테스트 철학은 비슷하지만, 프레임워크화된 테스트 지원은 아직 초기 단계다.
 
@@ -374,22 +374,22 @@ Spring 공식 문서는 `TestContext Framework`, `MockMvc`, web mocks, context c
 ### 1단계. 컨테이너
 
 - Spring: `AbstractApplicationContext.refresh()`, `DefaultListableBeanFactory`
-- `spring-lite`: [AnnotationConfigApplicationContext](/Users/hammac/Projects/spring-lite/spring-lite-context/src/main/java/lite/spring/context/support/AnnotationConfigApplicationContext.java:1)
+- `spring-lite`: [AnnotationConfigApplicationContext](../../spring-lite-context/src/main/java/lite/spring/context/support/AnnotationConfigApplicationContext.java)
 
 ### 2단계. Bean 정의와 등록
 
 - Spring: `@Configuration`, `@Bean`, classpath scanning 관련 레퍼런스
-- `spring-lite`: [BeanDefinition](/Users/hammac/Projects/spring-lite/spring-lite-context/src/main/java/lite/spring/context/bean/BeanDefinition.java:1), [ClassPathScanner](/Users/hammac/Projects/spring-lite/spring-lite-context/src/main/java/lite/spring/context/scan/ClassPathScanner.java:1)
+- `spring-lite`: [BeanDefinition](../../spring-lite-context/src/main/java/lite/spring/context/bean/BeanDefinition.java), [ClassPathScanner](../../spring-lite-context/src/main/java/lite/spring/context/scan/ClassPathScanner.java)
 
 ### 3단계. 웹 요청 처리
 
 - Spring: `DispatcherServlet`, `HandlerAdapter`, method arguments, `ResponseEntity`
-- `spring-lite`: [DispatcherServlet](/Users/hammac/Projects/spring-lite/spring-lite-web/src/main/java/lite/spring/web/support/DispatcherServlet.java:1), [RequestMappingHandlerAdapter](/Users/hammac/Projects/spring-lite/spring-lite-web/src/main/java/lite/spring/web/handler/RequestMappingHandlerAdapter.java:1), [ResponseEntity](/Users/hammac/Projects/spring-lite/spring-lite-web/src/main/java/lite/spring/web/http/ResponseEntity.java:1)
+- `spring-lite`: [DispatcherServlet](../../spring-lite-web/src/main/java/lite/spring/web/support/DispatcherServlet.java), [RequestMappingHandlerAdapter](../../spring-lite-web/src/main/java/lite/spring/web/handler/RequestMappingHandlerAdapter.java), [ResponseEntity](../../spring-lite-web/src/main/java/lite/spring/web/http/ResponseEntity.java)
 
 ### 4단계. 트랜잭션
 
 - Spring: declarative transaction management, `@Transactional`
-- `spring-lite`: [TransactionalBeanPostProcessor](/Users/hammac/Projects/spring-lite/spring-lite-tx/src/main/java/lite/spring/tx/support/TransactionalBeanPostProcessor.java:1), [TransactionManager](/Users/hammac/Projects/spring-lite/spring-lite-tx/src/main/java/lite/spring/tx/support/TransactionManager.java:1)
+- `spring-lite`: [TransactionalBeanPostProcessor](../../spring-lite-tx/src/main/java/lite/spring/tx/support/TransactionalBeanPostProcessor.java), [TransactionManager](../../spring-lite-tx/src/main/java/lite/spring/tx/support/TransactionManager.java)
 
 ## 15. 현재 `spring-lite`가 Spring을 닮은 부분과 아닌 부분
 
