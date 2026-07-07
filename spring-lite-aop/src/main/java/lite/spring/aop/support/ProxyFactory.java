@@ -1,5 +1,6 @@
 package lite.spring.aop.support;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -56,8 +57,12 @@ public final class ProxyFactory {
             if (index < interceptors.size()) {
                 return interceptors.get(index++).invoke(this);
             }
-            return method.invoke(target, arguments);
+            try {
+                method.setAccessible(true);
+                return method.invoke(target, arguments);
+            } catch (InvocationTargetException exception) {
+                throw exception.getTargetException();
+            }
         }
     }
 }
-

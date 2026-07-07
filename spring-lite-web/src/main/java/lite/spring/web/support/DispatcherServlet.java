@@ -5,6 +5,7 @@ import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.net.InetSocketAddress;
@@ -45,15 +46,26 @@ public class DispatcherServlet implements HttpHandler {
                 write(exchange, 404, Map.of("error", "Not Found"));
                 return;
             }
-            Object result = execution.handlerMethod().method().invoke(
-                execution.handlerMethod().bean(),
-                resolveArguments(execution, exchange)
-            );
+            Method method = execution.handlerMethod().method();
+            method.setAccessible(true);
+            Object result = invokeHandlerMethod(method, execution.handlerMethod().bean(), resolveArguments(execution, exchange));
             write(exchange, 200, result);
         } catch (Exception exception) {
             write(exchange, 500, Map.of("error", exception.getMessage()));
         } finally {
             exchange.close();
+        }
+    }
+
+    private Object invokeHandlerMethod(Method method, Object bean, Object[] arguments) throws Exception {
+        try {
+            return method.invoke(bean, arguments);
+        } catch (InvocationTargetException exception) {
+            Throwable targetException = exception.getTargetException();
+            if (targetException instanceof Exception target) {
+                throw target;
+            }
+            throw new IllegalStateException(targetException);
         }
     }
 
@@ -174,10 +186,10 @@ public class DispatcherServlet implements HttpHandler {
             return value;
         }
         if (targetType.equals(Long.class) || targetType.equals(long.class)) {
-            return Long.parseLong(value);
+            return value.contains(".") ? (long) Double.parseDouble(value) : Long.parseLong(value);
         }
         if (targetType.equals(Integer.class) || targetType.equals(int.class)) {
-            return Integer.parseInt(value);
+            return value.contains(".") ? (int) Double.parseDouble(value) : Integer.parseInt(value);
         }
         if (targetType.equals(Boolean.class) || targetType.equals(boolean.class)) {
             return Boolean.parseBoolean(value);
@@ -215,4 +227,3 @@ public class DispatcherServlet implements HttpHandler {
     private record HandlerExecution(HandlerMethod handlerMethod, Map<String, String> pathVariables) {
     }
 }
-
