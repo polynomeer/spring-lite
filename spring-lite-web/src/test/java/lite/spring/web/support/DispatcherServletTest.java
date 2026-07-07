@@ -24,6 +24,7 @@ import lite.spring.web.annotation.RequestBody;
 import lite.spring.web.annotation.RequestMapping;
 import lite.spring.web.annotation.RequestParam;
 import lite.spring.web.annotation.RestController;
+import lite.spring.web.http.ResponseEntity;
 import lite.spring.web.json.JsonMapper;
 import org.junit.jupiter.api.Test;
 
@@ -93,6 +94,33 @@ class DispatcherServletTest {
         }
     }
 
+    @Test
+    void supportsResponseEntityStatusHeadersAndBody() throws Exception {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
+            DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
+            StubHttpExchange exchange = new StubHttpExchange("GET", URI.create("/greetings/response-entity"), "");
+
+            dispatcherServlet.handle(exchange);
+
+            assertThat(exchange.statusCode()).isEqualTo(201);
+            assertThat(exchange.getResponseHeaders().getFirst("X-Trace-Id")).isEqualTo("trace-123");
+            assertThat(exchange.responseBodyAsString()).isEqualTo("{\"message\":\"created via response entity\"}");
+        }
+    }
+
+    @Test
+    void supportsEmptyResponseEntityBody() throws Exception {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
+            DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
+            StubHttpExchange exchange = new StubHttpExchange("GET", URI.create("/greetings/no-content"), "");
+
+            dispatcherServlet.handle(exchange);
+
+            assertThat(exchange.statusCode()).isEqualTo(204);
+            assertThat(exchange.responseBodyAsString()).isEmpty();
+        }
+    }
+
     @Configuration
     static class WebTestConfig {
         @Bean
@@ -122,6 +150,18 @@ class DispatcherServletTest {
         @GetMapping("/handled")
         public Response handled() {
             throw new CustomWebException("boom");
+        }
+
+        @GetMapping("/response-entity")
+        public ResponseEntity<Response> responseEntity() {
+            return ResponseEntity.status(201)
+                .header("X-Trace-Id", "trace-123")
+                .body(new Response("created via response entity"));
+        }
+
+        @GetMapping("/no-content")
+        public ResponseEntity<Void> noContent() {
+            return ResponseEntity.noContent();
         }
 
         @ExceptionHandler(CustomWebException.class)

@@ -4,6 +4,7 @@ import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import lite.spring.web.http.ResponseEntity;
 import lite.spring.web.json.JsonMapper;
 
 public class JsonReturnValueHandler implements ReturnValueHandler {
@@ -15,12 +16,22 @@ public class JsonReturnValueHandler implements ReturnValueHandler {
 
     @Override
     public void handleReturnValue(Object returnValue, HttpExchange exchange, int statusCode) throws IOException {
-        byte[] response = jsonMapper.write(returnValue).getBytes(StandardCharsets.UTF_8);
-        exchange.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
-        exchange.sendResponseHeaders(statusCode, response.length);
+        Object body = returnValue;
+        int responseStatus = statusCode;
+        if (returnValue instanceof ResponseEntity<?> responseEntity) {
+            responseStatus = responseEntity.statusCode();
+            responseEntity.headers().forEach((name, value) -> exchange.getResponseHeaders().set(name, value));
+            body = responseEntity.body();
+        }
+        if (body == null) {
+            exchange.sendResponseHeaders(responseStatus, 0);
+            return;
+        }
+        byte[] response = jsonMapper.write(body).getBytes(StandardCharsets.UTF_8);
+        exchange.getResponseHeaders().putIfAbsent("Content-Type", java.util.List.of("application/json; charset=utf-8"));
+        exchange.sendResponseHeaders(responseStatus, response.length);
         try (OutputStream outputStream = exchange.getResponseBody()) {
             outputStream.write(response);
         }
     }
 }
-
