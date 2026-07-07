@@ -3,6 +3,7 @@ package lite.spring.context.support;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.lang.reflect.AnnotatedElement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -22,6 +23,10 @@ import lite.spring.core.annotation.Autowired;
 import lite.spring.core.annotation.Bean;
 import lite.spring.core.annotation.Component;
 import lite.spring.core.annotation.ComponentScan;
+import lite.spring.core.annotation.ConditionalOnBean;
+import lite.spring.core.annotation.ConditionalOnClass;
+import lite.spring.core.annotation.ConditionalOnMissingBean;
+import lite.spring.core.annotation.ConditionalOnProperty;
 import lite.spring.core.annotation.Configuration;
 import lite.spring.core.annotation.PostConstruct;
 import lite.spring.core.annotation.PreDestroy;
@@ -181,6 +186,9 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
         if (!isManagedType(candidate)) {
             return;
         }
+        if (!matchesConditions(candidate, candidate)) {
+            return;
+        }
         BeanDefinition.Kind kind = AnnotationUtils.hasAnnotation(candidate, Configuration.class)
             ? Kind.CONFIGURATION
             : Kind.COMPONENT;
@@ -190,6 +198,9 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
             kind,
             extractQualifier(candidate)
         ));
+        if (kind == Kind.CONFIGURATION) {
+            registerBeanMethods(candidate);
+        }
     }
 
     private boolean isManagedType(Class<?> candidate) {
@@ -234,10 +245,6 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
                 case COMPONENT, CONFIGURATION, INFRASTRUCTURE -> instantiateClass(beanDefinition.beanType());
                 case FACTORY_METHOD -> invokeFactoryMethod(beanDefinition);
             };
-
-            if (beanDefinition.kind() == Kind.CONFIGURATION) {
-                registerBeanMethods(beanDefinition.beanType());
-            }
 
             Object initialized = initializeBean(beanName, instance);
             singletons.put(beanName, initialized);
@@ -324,6 +331,9 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
             if (bean == null) {
                 continue;
             }
+            if (!matchesConditions(method, method.getReturnType())) {
+                continue;
+            }
             String beanName = bean.value().isBlank() ? BeanNameGenerator.generateBeanName(method.getName()) : bean.value();
             if (beanDefinitions.containsKey(beanName)) {
                 continue;
@@ -335,6 +345,56 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
                 method,
                 extractQualifier(method)
             ));
+        }
+    }
+
+    private boolean matchesConditions(AnnotatedElement element, Class<?> defaultBeanType) {
+        ConditionalOnMissingBean conditionalOnMissingBean = element.getAnnotation(ConditionalOnMissingBean.class);
+        if (conditionalOnMissingBean != null && !matchesMissingBeanCondition(conditionalOnMissingBean, defaultBeanType)) {
+            return false;
+        }
+
+        ConditionalOnBean conditionalOnBean = element.getAnnotation(ConditionalOnBean.class);
+        if (conditionalOnBean != null && !matchesOnBeanCondition(conditionalOnBean)) {
+            return false;
+        }
+
+        ConditionalOnClass conditionalOnClass = element.getAnnotation(ConditionalOnClass.class);
+        if (conditionalOnClass != null && !matchesOnClassCondition(conditionalOnClass)) {
+            return false;
+        }
+
+        ConditionalOnProperty conditionalOnProperty = element.getAnnotation(ConditionalOnProperty.class);
+        return conditionalOnProperty == null || matchesOnPropertyCondition(conditionalOnProperty);
+    }
+
+    private boolean matchesMissingBeanCondition(ConditionalOnMissingBean condition, Class<?> defaultBeanType) {
+        Class<?>[] beanTypes = condition.value().length == 0 ? new Class<?>[]{defaultBeanType} : condition.value();
+        return Arrays.stream(beanTypes).noneMatch(this::containsBeanOfType);
+    }
+
+    private boolean matchesOnBeanCondition(ConditionalOnBean condition) {
+        return Arrays.stream(condition.value()).allMatch(this::containsBeanOfType);
+    }
+
+    private boolean matchesOnClassCondition(ConditionalOnClass condition) {
+        return Arrays.stream(condition.name()).allMatch(this::isPresent);
+    }
+
+    private boolean matchesOnPropertyCondition(ConditionalOnProperty condition) {
+        if (!propertyResolver.contains(condition.name())) {
+            return condition.matchIfMissing();
+        }
+        String value = propertyResolver.get(condition.name());
+        return condition.havingValue().isBlank() || condition.havingValue().equals(value);
+    }
+
+    private boolean isPresent(String className) {
+        try {
+            Class.forName(className, false, Thread.currentThread().getContextClassLoader());
+            return true;
+        } catch (ClassNotFoundException exception) {
+            return false;
         }
     }
 

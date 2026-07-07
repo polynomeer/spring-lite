@@ -2,11 +2,15 @@ package lite.spring.boot;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import javax.sql.DataSource;
 import lite.spring.boot.annotation.MiniSpringBootApplication;
 import lite.spring.context.support.AnnotationConfigApplicationContext;
 import lite.spring.core.annotation.Bean;
-import lite.spring.core.annotation.Service;
+import lite.spring.core.annotation.ConditionalOnClass;
+import lite.spring.core.annotation.ConditionalOnProperty;
+import lite.spring.jdbc.datasource.DriverManagerDataSource;
 import lite.spring.tx.annotation.Transactional;
+import lite.spring.web.json.JsonMapper;
 import org.junit.jupiter.api.Test;
 
 class MiniSpringApplicationTest {
@@ -18,6 +22,33 @@ class MiniSpringApplicationTest {
             assertThat(service.call("ok")).isEqualTo("ok");
             assertThat(context.containsBeanOfType(lite.spring.tx.support.TransactionManager.class)).isTrue();
             assertThat(context.containsBeanOfType(lite.spring.tx.support.TransactionalBeanPostProcessor.class)).isTrue();
+        }
+    }
+
+    @Test
+    void backsOffWhenUserProvidesJsonMapperBean() {
+        try (AnnotationConfigApplicationContext context = MiniSpringApplication.run(CustomJsonMapperApplication.class)) {
+            assertThat(context.getBeansOfType(JsonMapper.class)).hasSize(1);
+            assertThat(context.getBean(JsonMapper.class)).isSameAs(context.getBean("customJsonMapper"));
+        }
+    }
+
+    @Test
+    void registersJdbcTemplateOnlyWhenDataSourceExists() {
+        try (AnnotationConfigApplicationContext withoutDataSource = MiniSpringApplication.run(BootTestApplication.class)) {
+            assertThat(withoutDataSource.containsBeanOfType(lite.spring.jdbc.JdbcTemplate.class)).isFalse();
+        }
+        try (AnnotationConfigApplicationContext withDataSource = MiniSpringApplication.run(DataSourceApplication.class)) {
+            assertThat(withDataSource.containsBeanOfType(lite.spring.jdbc.JdbcTemplate.class)).isTrue();
+        }
+    }
+
+    @Test
+    void supportsConditionalAnnotationsOnApplicationBeans() {
+        try (AnnotationConfigApplicationContext context = MiniSpringApplication.run(ConditionalBeansApplication.class)) {
+            assertThat(context.containsBeanDefinition("classConditionBean")).isTrue();
+            assertThat(context.containsBeanDefinition("propertyConditionBean")).isTrue();
+            assertThat(context.containsBeanDefinition("missingClassConditionBean")).isFalse();
         }
     }
 
@@ -38,6 +69,43 @@ class MiniSpringApplicationTest {
         @Transactional
         public String call(String input) {
             return input;
+        }
+    }
+
+    @MiniSpringBootApplication
+    static class CustomJsonMapperApplication {
+        @Bean("customJsonMapper")
+        JsonMapper customJsonMapper() {
+            return new JsonMapper();
+        }
+    }
+
+    @MiniSpringBootApplication
+    static class DataSourceApplication {
+        @Bean
+        DataSource dataSource() {
+            return new DriverManagerDataSource("jdbc:h2:mem:boot-test;DB_CLOSE_DELAY=-1", "sa", "");
+        }
+    }
+
+    @MiniSpringBootApplication
+    static class ConditionalBeansApplication {
+        @Bean
+        @ConditionalOnClass(name = "java.lang.String")
+        String classConditionBean() {
+            return "class-ok";
+        }
+
+        @Bean
+        @ConditionalOnProperty(name = "test.feature.enabled", havingValue = "true")
+        Integer propertyConditionBean() {
+            return 7;
+        }
+
+        @Bean
+        @ConditionalOnClass(name = "lite.spring.missing.DoesNotExist")
+        Long missingClassConditionBean() {
+            return 1L;
         }
     }
 }

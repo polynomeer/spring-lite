@@ -38,6 +38,10 @@ public final class PropertyResolver {
         return values.getOrDefault(key, defaultValue);
     }
 
+    public boolean contains(String key) {
+        return values.containsKey(key);
+    }
+
     public String resolveRequiredPlaceholder(String expression) {
         Placeholder placeholder = parsePlaceholder(expression);
         String value = values.get(placeholder.key());
@@ -98,4 +102,3 @@ public final class PropertyResolver {
     private record Placeholder(String key, String defaultValue) {
     }
 }
-

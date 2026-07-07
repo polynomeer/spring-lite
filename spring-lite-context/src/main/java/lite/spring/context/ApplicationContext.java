@@ -9,7 +9,8 @@ public interface ApplicationContext extends AutoCloseable {
 
     <T> Map<String, T> getBeansOfType(Class<T> type);
 
+    boolean containsBeanOfType(Class<?> type);
+
     @Override
     void close();
 }
-
