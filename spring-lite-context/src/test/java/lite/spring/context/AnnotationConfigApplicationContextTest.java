@@ -12,6 +12,7 @@ import lite.spring.core.annotation.Configuration;
 import lite.spring.core.annotation.PostConstruct;
 import lite.spring.core.annotation.PreDestroy;
 import lite.spring.core.annotation.Qualifier;
+import lite.spring.core.annotation.Value;
 import lite.spring.core.exception.BeansException;
 import lite.spring.core.exception.NoSuchBeanException;
 import lite.spring.core.exception.NoUniqueBeanException;
@@ -89,6 +90,27 @@ class AnnotationConfigApplicationContextTest {
         assertThatThrownBy(() -> new AnnotationConfigApplicationContext(MissingQualifierConfig.class))
             .isInstanceOf(NoSuchBeanException.class)
             .hasMessageContaining("with qualifier missing");
+    }
+
+    @Test
+    void injectsValueIntoConstructorParametersAndFields() {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ValueConfig.class)) {
+            ValueClient client = context.getBean(ValueClient.class);
+            FieldValueBean fieldValueBean = context.getBean(FieldValueBean.class);
+
+            assertThat(client.message()).isEqualTo("hello-from-properties");
+            assertThat(client.enabled()).isTrue();
+            assertThat(client.count()).isEqualTo(42);
+            assertThat(client.defaultValue()).isEqualTo("fallback");
+            assertThat(fieldValueBean.message()).isEqualTo("hello-from-properties");
+        }
+    }
+
+    @Test
+    void failsWhenRequiredValueIsMissing() {
+        assertThatThrownBy(() -> new AnnotationConfigApplicationContext(MissingValueConfig.class))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("Missing required property");
     }
 
     @Test
@@ -213,6 +235,32 @@ class AnnotationConfigApplicationContextTest {
     }
 
     @Configuration
+    static class ValueConfig {
+        @Bean
+        ValueClient valueClient(
+            @Value("${app.greeting.message}") String message,
+            @Value("${app.feature.enabled}") boolean enabled,
+            @Value("${app.answer.count}") int count,
+            @Value("${app.greeting.default:fallback}") String defaultValue
+        ) {
+            return new ValueClient(message, enabled, count, defaultValue);
+        }
+
+        @Bean
+        FieldValueBean fieldValueBean() {
+            return new FieldValueBean();
+        }
+    }
+
+    @Configuration
+    static class MissingValueConfig {
+        @Bean
+        MissingValueClient missingValueClient(@Value("${app.missing.value}") String value) {
+            return new MissingValueClient(value);
+        }
+    }
+
+    @Configuration
     static class DestroyConfig {
         @Bean
         DestroyAwareBean destroyAwareBean() {
@@ -271,6 +319,50 @@ class AnnotationConfigApplicationContextTest {
 
         String value() {
             return formatter.value();
+        }
+    }
+
+    static class ValueClient {
+        private final String message;
+        private final boolean enabled;
+        private final int count;
+        private final String defaultValue;
+
+        ValueClient(String message, boolean enabled, int count, String defaultValue) {
+            this.message = message;
+            this.enabled = enabled;
+            this.count = count;
+            this.defaultValue = defaultValue;
+        }
+
+        String message() {
+            return message;
+        }
+
+        boolean enabled() {
+            return enabled;
+        }
+
+        int count() {
+            return count;
+        }
+
+        String defaultValue() {
+            return defaultValue;
+        }
+    }
+
+    static class FieldValueBean {
+        @Value("${app.greeting.message}")
+        private String message;
+
+        String message() {
+            return message;
+        }
+    }
+
+    static class MissingValueClient {
+        MissingValueClient(String value) {
         }
     }
 

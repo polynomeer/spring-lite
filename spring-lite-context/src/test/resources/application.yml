@@ -1,0 +1,8 @@
+app:
+  greeting:
+    message: hello-from-properties
+  feature:
+    enabled: true
+  answer:
+    count: 42
+

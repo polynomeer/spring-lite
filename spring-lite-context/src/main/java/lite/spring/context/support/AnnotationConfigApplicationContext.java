@@ -26,10 +26,12 @@ import lite.spring.core.annotation.Configuration;
 import lite.spring.core.annotation.PostConstruct;
 import lite.spring.core.annotation.PreDestroy;
 import lite.spring.core.annotation.Qualifier;
+import lite.spring.core.annotation.Value;
 import lite.spring.core.exception.BeansException;
 import lite.spring.core.exception.NoSuchBeanException;
 import lite.spring.core.exception.NoUniqueBeanException;
 import lite.spring.core.reflect.ReflectionUtils;
+import lite.spring.core.util.PropertyResolver;
 
 public class AnnotationConfigApplicationContext implements ConfigurableApplicationContext {
     private final Map<String, BeanDefinition> beanDefinitions = new LinkedHashMap<>();
@@ -38,6 +40,7 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
     private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
     private final Set<String> beansInCreation = new LinkedHashSet<>();
     private final ClassPathScanner classPathScanner = new ClassPathScanner();
+    private final PropertyResolver propertyResolver = PropertyResolver.loadFromClasspath("application.yml");
     private boolean refreshed;
 
     public AnnotationConfigApplicationContext(Class<?>... configurationClasses) {
@@ -262,9 +265,17 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
     private Object[] resolveExecutableArguments(Parameter[] parameters) {
         Object[] arguments = new Object[parameters.length];
         for (int index = 0; index < parameters.length; index++) {
-            arguments[index] = resolveDependency(parameters[index]);
+            arguments[index] = resolveArgument(parameters[index]);
         }
         return arguments;
+    }
+
+    private Object resolveArgument(Parameter parameter) {
+        Value value = parameter.getAnnotation(Value.class);
+        if (value != null) {
+            return convertValue(propertyResolver.resolveRequiredPlaceholder(value.value()), parameter.getType());
+        }
+        return resolveDependency(parameter);
     }
 
     private Object resolveDependency(Parameter parameter) {
@@ -347,6 +358,7 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
     }
 
     private Object initializeBean(String beanName, Object bean) {
+        injectFieldValues(bean);
         Object current = bean;
         for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
             current = beanPostProcessor.postProcessBeforeInitialization(beanName, current);
@@ -357,6 +369,20 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
         }
         registerDestroyCallback(beanName, current);
         return current;
+    }
+
+    private void injectFieldValues(Object bean) {
+        Arrays.stream(bean.getClass().getDeclaredFields())
+            .filter(field -> field.isAnnotationPresent(Value.class))
+            .forEach(field -> {
+                Value value = field.getAnnotation(Value.class);
+                Object converted = convertValue(propertyResolver.resolveRequiredPlaceholder(value.value()), field.getType());
+                try {
+                    ReflectionUtils.makeAccessible(field).set(bean, converted);
+                } catch (IllegalAccessException exception) {
+                    throw new IllegalStateException("Failed to inject field " + field, exception);
+                }
+            });
     }
 
     private void invokeLifecycleMethods(Object bean, Class<? extends java.lang.annotation.Annotation> annotationType) {
@@ -375,5 +401,24 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
             return;
         }
         destroyCallbacks.put(beanName, () -> destroyMethods.forEach(method -> ReflectionUtils.invoke(method, bean, new Object[0])));
+    }
+
+    private Object convertValue(String value, Class<?> targetType) {
+        if (targetType.equals(String.class)) {
+            return value;
+        }
+        if (targetType.equals(Integer.class) || targetType.equals(int.class)) {
+            return Integer.parseInt(value);
+        }
+        if (targetType.equals(Long.class) || targetType.equals(long.class)) {
+            return Long.parseLong(value);
+        }
+        if (targetType.equals(Boolean.class) || targetType.equals(boolean.class)) {
+            return Boolean.parseBoolean(value);
+        }
+        if (targetType.equals(Double.class) || targetType.equals(double.class)) {
+            return Double.parseDouble(value);
+        }
+        throw new IllegalStateException("Unsupported @Value target type " + targetType.getName());
     }
 }
