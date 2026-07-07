@@ -1,6 +1,6 @@
 # spring-lite
 
-`spring-lite`는 Spring Framework의 핵심 원리를 직접 구현하는 학습용 경량 프레임워크 프로젝트다. 현재 저장소에는 IoC/DI, Bean Lifecycle, MVC Dispatcher, 프록시 기반 `@Transactional`, 경량 부트스트랩, 예제 앱까지 동작 가능한 MVP가 포함되어 있다.
+`spring-lite`는 Spring Framework의 핵심 원리를 직접 구현하는 학습용 경량 프레임워크 프로젝트다. 현재 저장소에는 IoC/DI, Bean Lifecycle, MVC Dispatcher, 프록시 기반 `@Transactional`, 경량 부트스트랩, 예제 앱까지 포함된 MVP와 그 이후 핵심 확장 기능이 구현되어 있다.
 
 ## 목표 범위
 
@@ -18,12 +18,17 @@
 - `@Configuration` / `@Bean`
 - `@PostConstruct` / `@PreDestroy`
 - `BeanPostProcessor`
-- JDK Dynamic Proxy 기반 AOP 인프라
+- `@Qualifier`, `@Value`, 프로퍼티 해석
+- 파일 시스템 및 JAR 기반 클래스패스 스캔
+- JDK Dynamic Proxy 및 클래스 기반 프록시 AOP 인프라
 - `@Transactional` 기반 메서드 인터셉션
 - `JdbcTemplate`, `RowMapper`, `DriverManagerDataSource`
+- H2 기반 JDBC/트랜잭션 통합 테스트
 - `@RestController`, `@RequestMapping`, `@GetMapping`, `@PostMapping`
 - `@PathVariable`, `@RequestParam`, `@RequestBody`
+- `@ExceptionHandler`와 MVC 내부 역할 분리
 - 내장 JDK HTTP 서버 기반 `MiniSpringApplication.run()`
+- 기본 인프라 자동 등록 기반 부트스트랩
 - 주문 예제 앱과 기본 테스트
 
 ## 모듈 구성
@@ -44,20 +49,21 @@
 2. [아키텍처 개요](./docs/architecture/overview.md)
 3. [스프링 핵심 원리와 코드 가이드](./docs/architecture/spring-core-principles-and-code-guide.md)
 4. [Post-MVP 구현 계획](./docs/codex/post-mvp-implementation-plan.md)
-5. [구현 로드맵](./docs/codex/implementation-roadmap.md)
-6. [작업 백로그](./docs/codex/task-backlog.md)
-7. [모듈 맵](./docs/codex/module-map.md)
-8. [개발 규칙](./docs/guides/development-conventions.md)
-9. [커밋 규칙](./docs/guides/commit-conventions.md)
+5. [추가 구현 백로그](./docs/codex/next-implementation-backlog.md)
+6. [구현 로드맵](./docs/codex/implementation-roadmap.md)
+7. [작업 백로그](./docs/codex/task-backlog.md)
+8. [모듈 맵](./docs/codex/module-map.md)
+9. [개발 규칙](./docs/guides/development-conventions.md)
+10. [커밋 규칙](./docs/guides/commit-conventions.md)
 
 ## 현재 상태
 
-현재는 실행 가능한 MVP까지 구현된 상태다. 다만 다음 항목은 의도적으로 축소되어 있다.
+현재는 실행 가능한 MVP를 넘어서 컨테이너, AOP, MVC, JDBC, Boot 계층의 핵심 확장까지 반영된 상태다. 다만 다음 항목은 아직 축소되어 있거나 다음 단계 과제로 남아 있다.
 
-- AOP는 JDK Dynamic Proxy 기반이며 인터페이스 구현 Bean에 우선 대응한다.
-- 클래스패스 스캔은 파일 시스템 기반이며 JAR 스캔은 다루지 않는다.
-- JSON 바인딩은 경량 자체 구현으로, 복잡한 객체 그래프나 고급 직렬화 규칙은 지원하지 않는다.
-- 트랜잭션은 단일 데이터소스/단순 경계를 기준으로 설계되어 있다.
+- Boot 자동 설정은 조건부 등록까지는 아직 확장되지 않았다.
+- 웹 계층은 JSON API 중심이며 응답 모델과 검증 기능이 더 필요하다.
+- 트랜잭션은 단일 데이터소스와 단순 전파 정책을 기준으로 설계되어 있다.
+- 테스트 지원 모듈은 향후 별도 DSL과 헬퍼를 더 보강할 여지가 크다.
 
 ## 실행 방법
 
