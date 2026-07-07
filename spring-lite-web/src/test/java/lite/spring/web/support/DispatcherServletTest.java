@@ -17,6 +17,7 @@ import lite.spring.context.support.AnnotationConfigApplicationContext;
 import lite.spring.core.annotation.Bean;
 import lite.spring.core.annotation.Configuration;
 import lite.spring.web.annotation.GetMapping;
+import lite.spring.web.annotation.ExceptionHandler;
 import lite.spring.web.annotation.PathVariable;
 import lite.spring.web.annotation.PostMapping;
 import lite.spring.web.annotation.RequestBody;
@@ -66,6 +67,32 @@ class DispatcherServletTest {
         }
     }
 
+    @Test
+    void mapsIllegalArgumentExceptionTo400() throws Exception {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
+            DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
+            StubHttpExchange exchange = new StubHttpExchange("GET", URI.create("/greetings/error"), "");
+
+            dispatcherServlet.handle(exchange);
+
+            assertThat(exchange.statusCode()).isEqualTo(400);
+            assertThat(exchange.responseBodyAsString()).contains("invalid greeting request");
+        }
+    }
+
+    @Test
+    void usesExceptionHandlerMethodWhenPresent() throws Exception {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
+            DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
+            StubHttpExchange exchange = new StubHttpExchange("GET", URI.create("/greetings/handled"), "");
+
+            dispatcherServlet.handle(exchange);
+
+            assertThat(exchange.statusCode()).isEqualTo(400);
+            assertThat(exchange.responseBodyAsString()).isEqualTo("{\"message\":\"handled by controller\"}");
+        }
+    }
+
     @Configuration
     static class WebTestConfig {
         @Bean
@@ -86,12 +113,33 @@ class DispatcherServletTest {
         public Response create(@RequestBody Request request) {
             return new Response("created " + request.name() + " x" + request.quantity());
         }
+
+        @GetMapping("/error")
+        public Response error() {
+            throw new IllegalArgumentException("invalid greeting request");
+        }
+
+        @GetMapping("/handled")
+        public Response handled() {
+            throw new CustomWebException("boom");
+        }
+
+        @ExceptionHandler(CustomWebException.class)
+        public Response handleCustom(CustomWebException exception) {
+            return new Response("handled by controller");
+        }
     }
 
     public record Request(String name, int quantity) {
     }
 
     public record Response(String message) {
+    }
+
+    static class CustomWebException extends RuntimeException {
+        CustomWebException(String message) {
+            super(message);
+        }
     }
 
     static final class StubHttpExchange extends HttpExchange {
