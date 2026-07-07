@@ -7,6 +7,8 @@ plugins {
 val junitVersion = "5.10.2"
 val assertjVersion = "3.26.3"
 val h2Version = "2.2.224"
+val byteBuddyVersion = "1.14.18"
+val objenesisVersion = "3.4"
 
 allprojects {
     group = "lite.spring"
@@ -54,6 +56,8 @@ project(":spring-lite-aop") {
     description = "Proxy infrastructure, advisors, and method interception."
     dependencies {
         "api"(project(":spring-lite-context"))
+        "implementation"("net.bytebuddy:byte-buddy:$byteBuddyVersion")
+        "implementation"("org.objenesis:objenesis:$objenesisVersion")
     }
 }
 

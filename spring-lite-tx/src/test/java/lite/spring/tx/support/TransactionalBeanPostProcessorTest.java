@@ -49,6 +49,23 @@ class TransactionalBeanPostProcessorTest {
         assertThat(bean).isSameAs(target);
     }
 
+    @Test
+    void proxiesTransactionalConcreteClassWithoutInterface() {
+        RecordingTransactionManager transactionManager = new RecordingTransactionManager();
+        TransactionalBeanPostProcessor processor = new TransactionalBeanPostProcessor(transactionManager);
+        ConcreteTransactionalService target = new ConcreteTransactionalService();
+
+        ConcreteTransactionalService proxied =
+            (ConcreteTransactionalService) processor.postProcessAfterInitialization("concreteTransactionalService", target);
+        String result = proxied.call("ok");
+
+        assertThat(result).isEqualTo("ok");
+        assertThat(proxied).isNotSameAs(target);
+        assertThat(transactionManager.beginCalls).isEqualTo(1);
+        assertThat(transactionManager.commitCalls).isEqualTo(1);
+        assertThat(transactionManager.rollbackCalls).isZero();
+    }
+
     interface SampleService {
         String succeed(String input);
 
@@ -72,6 +89,13 @@ class TransactionalBeanPostProcessorTest {
     static class PlainService {
         String call() {
             return "plain";
+        }
+    }
+
+    public static class ConcreteTransactionalService {
+        @Transactional
+        public String call(String value) {
+            return value;
         }
     }
 
@@ -100,4 +124,3 @@ class TransactionalBeanPostProcessorTest {
         }
     }
 }
-
