@@ -46,12 +46,9 @@ public class RequestMappingHandlerMapping implements HandlerMapping {
     }
 
     private List<HandlerMethod> discoverHandlers(ApplicationContext applicationContext) {
-        Map<String, Object> candidates = applicationContext.getBeansOfType(Object.class);
+        Map<String, Object> candidates = applicationContext.getBeansWithAnnotation(RestController.class);
         List<HandlerMethod> discovered = new ArrayList<>();
         for (Object bean : candidates.values()) {
-            if (!bean.getClass().isAnnotationPresent(RestController.class)) {
-                continue;
-            }
             String classPath = bean.getClass().isAnnotationPresent(RequestMapping.class)
                 ? bean.getClass().getAnnotation(RequestMapping.class).value()
                 : "";

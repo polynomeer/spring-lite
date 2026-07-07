@@ -9,6 +9,8 @@ public interface ApplicationContext extends AutoCloseable {
 
     <T> Map<String, T> getBeansOfType(Class<T> type);
 
+    Map<String, Object> getBeansWithAnnotation(Class<? extends java.lang.annotation.Annotation> annotationType);
+
     boolean containsBeanOfType(Class<?> type);
 
     @Override

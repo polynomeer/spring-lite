@@ -9,6 +9,8 @@ import lite.spring.core.annotation.Bean;
 import lite.spring.core.annotation.ConditionalOnClass;
 import lite.spring.core.annotation.ConditionalOnProperty;
 import lite.spring.jdbc.datasource.DriverManagerDataSource;
+import lite.spring.boot.web.WebServer;
+import lite.spring.boot.web.WebServerFactory;
 import lite.spring.tx.annotation.Transactional;
 import lite.spring.web.json.JsonMapper;
 import lite.spring.web.support.DispatcherServlet;
@@ -24,6 +26,8 @@ class MiniSpringApplicationTest {
             assertThat(context.containsBeanOfType(lite.spring.tx.support.TransactionManager.class)).isTrue();
             assertThat(context.containsBeanOfType(lite.spring.tx.support.TransactionalBeanPostProcessor.class)).isTrue();
             assertThat(context.containsBeanOfType(DispatcherServlet.class)).isTrue();
+            assertThat(context.containsBeanOfType(WebServerFactory.class)).isTrue();
+            assertThat(context.containsBeanOfType(WebServer.class)).isTrue();
         }
     }
 
@@ -51,6 +55,15 @@ class MiniSpringApplicationTest {
             assertThat(context.containsBeanDefinition("classConditionBean")).isTrue();
             assertThat(context.containsBeanDefinition("propertyConditionBean")).isTrue();
             assertThat(context.containsBeanDefinition("missingClassConditionBean")).isFalse();
+        }
+    }
+
+    @Test
+    void usesCustomWebServerBeanWhenProvided() {
+        RecordingWebServer.started = false;
+        try (AnnotationConfigApplicationContext context = MiniSpringApplication.run(CustomWebServerApplication.class)) {
+            assertThat(context.getBean(WebServer.class)).isInstanceOf(RecordingWebServer.class);
+            assertThat(RecordingWebServer.started).isTrue();
         }
     }
 
@@ -108,6 +121,37 @@ class MiniSpringApplicationTest {
         @ConditionalOnClass(name = "lite.spring.missing.DoesNotExist")
         Long missingClassConditionBean() {
             return 1L;
+        }
+    }
+
+    @MiniSpringBootApplication
+    static class CustomWebServerApplication {
+        @Bean
+        WebServer webServer() {
+            return new RecordingWebServer(9191);
+        }
+    }
+
+    static final class RecordingWebServer implements WebServer {
+        private static boolean started;
+        private final int port;
+
+        private RecordingWebServer(int port) {
+            this.port = port;
+        }
+
+        @Override
+        public void start() {
+            started = true;
+        }
+
+        @Override
+        public int port() {
+            return port;
+        }
+
+        @Override
+        public void close() {
         }
     }
 }

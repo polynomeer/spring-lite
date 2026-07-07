@@ -165,6 +165,26 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
     }
 
     @Override
+    public Map<String, Object> getBeansWithAnnotation(Class<? extends java.lang.annotation.Annotation> annotationType) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        for (Map.Entry<String, BeanDefinition> entry : beanDefinitions.entrySet()) {
+            if (!entry.getValue().beanType().isAnnotationPresent(annotationType)) {
+                continue;
+            }
+            if (beansInCreation.contains(entry.getKey())) {
+                continue;
+            }
+            result.put(entry.getKey(), getBean(entry.getKey()));
+        }
+        for (Map.Entry<String, Object> entry : singletons.entrySet()) {
+            if (entry.getValue().getClass().isAnnotationPresent(annotationType)) {
+                result.putIfAbsent(entry.getKey(), entry.getValue());
+            }
+        }
+        return result;
+    }
+
+    @Override
     public void close() {
         List<Runnable> callbacks = new ArrayList<>(destroyCallbacks.values());
         for (int index = callbacks.size() - 1; index >= 0; index--) {
