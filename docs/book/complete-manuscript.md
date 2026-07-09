@@ -136,6 +136,25 @@ Part 2부터는 이 큰 그림의 바닥인 IoC 컨테이너부터 직접 구현
 
 실제 Spring의 `DefaultListableBeanFactory`와 `BeanDefinitionRegistry` 분리도 결국 같은 문제를 푼다. 학습용 구현에서는 이 개념을 더 작게 축소했지만, 메타데이터와 인스턴스를 분리하는 발상 자체는 그대로다.
 
+```java
+public final class BeanDefinition {
+    public enum Kind {
+        COMPONENT,
+        CONFIGURATION,
+        FACTORY_METHOD,
+        INFRASTRUCTURE
+    }
+
+    private final String name;
+    private final Class<?> beanType;
+    private final Kind kind;
+    private final Class<?> configurationClass;
+    private final Method factoryMethod;
+    private final boolean singleton;
+    private final String qualifier;
+}
+```
+
 ```mermaid
 flowchart TB
     A["Classpath Scan / @Configuration"] --> B["BeanDefinition Registry"]
@@ -153,6 +172,44 @@ DI를 "외부에서 주입한다"는 문장으로만 이해하면 핵심을 놓�
 
 생성자 주입은 순환 참조도 빨리 드러낸다. `A`를 만들려면 `B`가 필요하고, `B`를 만들려면 다시 `A`가 필요하면 어느 쪽도 완성될 수 없다. Spring은 역사적으로 이 문제를 더 복잡한 조기 노출 메커니즘으로 부분 해결해 왔지만, `spring-lite`는 오히려 이 실패를 그대로 드러내는 쪽을 택한다. 책의 목적이 구조를 설명하는 데 있기 때문이다. 생성자 순환 참조가 왜 구조적으로 어려운지 보이면, 이후 라이프사이클과 실패 전략 장이 훨씬 설득력 있게 이어진다.
 
+```java
+private Constructor<?> selectConstructor(Class<?> beanType) {
+    Constructor<?>[] constructors = beanType.getDeclaredConstructors();
+    List<Constructor<?>> autowiredConstructors = Arrays.stream(constructors)
+        .filter(constructor -> constructor.isAnnotationPresent(Autowired.class))
+        .toList();
+    if (autowiredConstructors.size() > 1) {
+        throw new BeansException("Multiple @Autowired constructors found in " + beanType.getName());
+    }
+    if (!autowiredConstructors.isEmpty()) {
+        return autowiredConstructors.getFirst();
+    }
+    if (constructors.length == 1) {
+        return constructors[0];
+    }
+    return Arrays.stream(constructors)
+        .filter(constructor -> constructor.getParameterCount() == 0)
+        .findFirst()
+        .orElseThrow(() -> new BeansException("No suitable constructor found for " + beanType.getName()));
+}
+
+private Object resolveDependency(Parameter parameter) {
+    Class<?> dependencyType = parameter.getType();
+    Map<String, ?> candidates = getBeansOfType(dependencyType);
+    if (candidates.isEmpty()) {
+        throw new NoSuchBeanException("No bean of type " + dependencyType.getName());
+    }
+    Qualifier qualifier = parameter.getAnnotation(Qualifier.class);
+    if (qualifier != null) {
+        return resolveQualifiedDependency(dependencyType, qualifier.value(), candidates);
+    }
+    if (candidates.size() > 1) {
+        throw new NoUniqueBeanException("Multiple beans of type " + dependencyType.getName() + ": " + candidates.keySet());
+    }
+    return candidates.values().iterator().next();
+}
+```
+
 ### Chapter 5. 컴포넌트 스캔과 메타 애너테이션
 
 수동 등록만으로는 프로젝트가 커질수록 유지 비용이 급격히 올라간다. 그래서 Spring은 어떤 클래스를 관리 대상으로 볼 것인지를 애너테이션 메타데이터로 선언하게 하고, 클래스패스를 스캔해 이를 자동 등록한다. `@Component`, `@Service`, `@Repository`는 모두 이 전략의 일부다.
@@ -160,6 +217,24 @@ DI를 "외부에서 주입한다"는 문장으로만 이해하면 핵심을 놓�
 여기서 흥미로운 점은 스캔이 단순 텍스트 검색이 아니라는 것이다. 개발 환경에서는 클래스가 디렉터리에 있지만, 배포 환경에서는 JAR 안에 있을 수 있다. 따라서 스캐너는 파일 시스템과 JAR 양쪽을 이해해야 한다. 또한 `@Service`가 왜 `@Component`처럼 동작하는지를 설명하려면 메타 애너테이션 탐색도 구현해야 한다. 결국 스캔은 "어떤 타입을 빈 후보로 볼 것인가"를 결정하는 클래스패스 메타데이터 시스템이다.
 
 빈 이름 생성 전략도 같이 중요해진다. 이름을 자동 생성하면 충돌이 생길 수 있고, 충돌이 생기면 예측 가능성이 깨진다. 그래서 클래스명 규칙, 메서드명 규칙, 명시적 이름 우선순위 같은 정책이 필요하다. 편의를 제공하는 만큼 규칙을 명확히 해야 한다는 점에서, 스캔은 프레임워크 설계의 성숙도를 보여주는 좋은 주제다.
+
+```java
+public List<Class<?>> scan(String basePackage) {
+    String path = basePackage.replace('.', '/');
+    Enumeration<URL> resources = Thread.currentThread().getContextClassLoader().getResources(path);
+    Map<String, Class<?>> classes = new LinkedHashMap<>();
+    while (resources.hasMoreElements()) {
+        URL resource = resources.nextElement();
+        if ("file".equals(resource.getProtocol())) {
+            addClasses(classes, scanDirectory(basePackage, directory));
+        } else if ("jar".equals(resource.getProtocol())) {
+            addClasses(classes, scanJar(basePackage, path, resource));
+        }
+    }
+    addClasses(classes, scanUrlsFromClassLoader(path));
+    return new ArrayList<>(classes.values());
+}
+```
 
 ### Chapter 6. `@Configuration`과 `@Bean`
 
@@ -169,6 +244,36 @@ DI를 "외부에서 주입한다"는 문장으로만 이해하면 핵심을 놓�
 
 실제 Spring은 여기서 한 걸음 더 나아가 `@Configuration` 클래스를 CGLIB로 강화해 `@Bean` 메서드 간 호출도 컨테이너의 동작 규칙을 따르도록 만든다. 학습용 구현은 그만큼 복잡하지 않지만, 왜 실제 Spring이 더 무거운 모델을 채택하는지는 충분히 설명된다.
 
+```java
+private void registerBeanMethods(Class<?> configurationClass) {
+    for (Method method : configurationClass.getDeclaredMethods()) {
+        Bean bean = method.getAnnotation(Bean.class);
+        if (bean == null) {
+            continue;
+        }
+        String beanName = bean.value().isBlank()
+            ? BeanNameGenerator.generateBeanName(method.getName())
+            : bean.value();
+        BeanDefinition beanDefinition = BeanDefinition.factoryMethod(
+            beanName,
+            method.getReturnType(),
+            configurationClass,
+            method,
+            isSingleton(method),
+            extractQualifier(method)
+        );
+        registerBeanDefinition(beanDefinition);
+    }
+}
+
+private Object invokeFactoryMethod(BeanDefinition beanDefinition) {
+    Object configurationBean = getBean(BeanNameGenerator.generateBeanName(beanDefinition.configurationClass()));
+    Method factoryMethod = beanDefinition.factoryMethod();
+    Object[] arguments = resolveExecutableArguments(factoryMethod.getParameters());
+    return ReflectionUtils.invoke(factoryMethod, configurationBean, arguments);
+}
+```
+
 ### Chapter 7. `@Qualifier`, `@Value`, 설정 값 주입
 
 같은 인터페이스의 구현이 여러 개 생기면 타입만으로는 어떤 빈을 주입할지 결정할 수 없다. `@Qualifier`는 이 모호성을 줄이는 장치다. 이름 매칭처럼 보일 수 있지만, 실제로는 타입 기반 자동화 위에 개발자의 의도를 추가로 얹는 장치다. 같은 타입 후보가 여러 개일 때, 컨테이너는 `@Qualifier`와 빈 메타데이터를 함께 사용해 선택을 좁힌다.
@@ -176,6 +281,39 @@ DI를 "외부에서 주입한다"는 문장으로만 이해하면 핵심을 놓�
 `@Value`는 또 다른 차원의 확장을 보여준다. 설정 값 주입은 단순 편의 기능처럼 보이지만, 실제로는 프로퍼티 리졸버, 플레이스홀더 문법, 기본값, 타입 변환, 환경별 재정의 우선순위가 모두 필요한 문제다. `spring-lite`는 YAML 기반 `PropertyResolver`, 프로파일 대응 `application-{profile}.yml` 병합, 공통 `ConversionService`를 통해 이 문제를 최소 구현한다.
 
 이 장은 컨테이너가 단순 생성기에서 정책 시스템으로 확장되는 과정을 보여준다. 타입 우선 규칙, qualifier 보조, 프로퍼티 로딩, 변환, 기본값, 프로파일 재정의가 쌓일수록 컨테이너는 더 많은 조립 결정을 대신하게 된다. 바로 이 지점에서 Spring Boot의 강력함과 복잡성이 함께 시작된다.
+
+```java
+public static PropertyResolver loadApplicationProperties() {
+    PropertyResolver baseResolver = loadSingleResource("application.yml");
+    Map<String, String> merged = new LinkedHashMap<>(baseResolver.values);
+    String activeProfiles = resolveActiveProfiles(baseResolver);
+    if (activeProfiles == null || activeProfiles.isBlank()) {
+        return new PropertyResolver(merged);
+    }
+    for (String profile : activeProfiles.split(",")) {
+        String trimmed = profile.trim();
+        if (trimmed.isEmpty()) {
+            continue;
+        }
+        PropertyResolver profileResolver = loadSingleResource("application-" + trimmed + ".yml");
+        merged.putAll(profileResolver.values);
+    }
+    merged.putAll(RUNTIME_OVERRIDES.get());
+    return new PropertyResolver(merged);
+}
+
+public String resolveRequiredPlaceholder(String expression) {
+    Placeholder placeholder = parsePlaceholder(expression);
+    String value = values.get(placeholder.key());
+    if (value != null) {
+        return value;
+    }
+    if (placeholder.defaultValue() != null) {
+        return placeholder.defaultValue();
+    }
+    throw new IllegalStateException("Missing required property " + placeholder.key());
+}
+```
 
 ### Chapter 8. Scope와 컨테이너 이벤트
 
@@ -212,6 +350,22 @@ sequenceDiagram
 
 `@PostConstruct`, `@PreDestroy`, `AutoCloseable` 지원은 이 흐름을 독자 눈앞에 드러낸다. 초기화와 파괴를 생성자 하나에 모두 넣지 않고, 컨테이너가 관리하는 생명주기 단계로 분리하는 이유가 명확해진다. 실제 Spring에서도 라이프사이클은 독립 주제로 다뤄질 만큼 중요하다. 프레임워크는 객체를 만드는 것뿐 아니라 "어떤 순서로 준비하고 정리할 것인가"를 관리하는 시스템이기 때문이다.
 
+```java
+private Object initializeBean(String beanName, Object bean) {
+    injectFieldValues(bean);
+    Object current = bean;
+    for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
+        current = beanPostProcessor.postProcessBeforeInitialization(beanName, current);
+    }
+    invokeLifecycleMethods(current, PostConstruct.class);
+    for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
+        current = beanPostProcessor.postProcessAfterInitialization(beanName, current);
+    }
+    registerDestroyCallback(beanName, bean, current);
+    return current;
+}
+```
+
 ```mermaid
 flowchart LR
     A["Instantiate"] --> B["Resolve Dependencies"]
@@ -228,6 +382,18 @@ Spring이 강력한 이유를 하나만 꼽으라면, 많은 경우 답은 `Bean
 
 `spring-lite`에서도 후처리기는 초기화 전과 후 두 단계로 나뉜다. 초기화 전 훅은 메타데이터 준비나 값 주입 같은 작업에 적합하고, 초기화 후 훅은 프록시 생성처럼 완성된 빈을 다른 객체로 대체해야 하는 작업에 적합하다. 특히 트랜잭션과 AOP는 둘 다 이 단계에서 빈을 감싸는 방식으로 동작한다. 이 사실을 이해하면 Part 4의 프록시/AOP 장은 전혀 새로운 세계가 아니라, 지금 만든 컨테이너 위에 올라가는 자연스러운 확장처럼 보인다.
 
+```java
+public interface BeanPostProcessor {
+    default Object postProcessBeforeInitialization(String beanName, Object bean) {
+        return bean;
+    }
+
+    default Object postProcessAfterInitialization(String beanName, Object bean) {
+        return bean;
+    }
+}
+```
+
 ### Chapter 11. 순환 참조, 실패 전략, 설계 판단
 
 프레임워크는 모든 문제를 해결해주는 시스템이 아니라, 어떤 문제를 어느 시점에 드러낼지까지 포함해 설계된 시스템이다. 생성자 순환 참조는 대표적인 예다. `spring-lite`는 이를 즉시 실패시킨다. 메시지가 좋을수록 학습용 프레임워크의 가치는 올라간다. 실패 원인과 의존성 경로가 빨리 드러날수록 독자는 구조 문제를 더 빨리 이해할 수 있기 때문이다.
@@ -243,6 +409,24 @@ Spring이 강력한 이유를 하나만 꼽으라면, 많은 경우 답은 `Bean
 Spring이 객체 대신 프록시를 반환하는 이유는 단순한 우회가 아니라 "호출 경계에 개입할 수 있는 구조"를 만들기 위해서다. 클라이언트는 서비스를 호출한다고 생각하지만, 실제로는 그 앞에 놓인 프록시를 호출한다. 프록시는 메서드 진입 전후에 로직을 끼워 넣거나, 심지어 호출 자체를 다른 방식으로 바꿀 수 있다.
 
 `spring-lite`는 JDK 동적 프록시와 클래스 기반 프록시를 모두 보여준다. 인터페이스가 있으면 표준 동적 프록시가 가능하고, 인터페이스가 없으면 ByteBuddy 기반 프록시를 생성한다. 여기서 독자가 얻어야 할 핵심은 프록시 전략이 곧 프레임워크의 제약과 확장성을 결정한다는 점이다. 또한 `MethodInvocation`이 왜 중요한지도 이 장에서 분명해진다. 호출 대상, 메서드, 인자, `proceed()`를 하나의 객체로 묶으면 호출 자체를 데이터처럼 다룰 수 있고, 인터셉터 체인은 이 호출 객체를 순차적으로 감싼다.
+
+```java
+public interface MethodInterceptor {
+    Object invoke(MethodInvocation invocation) throws Throwable;
+}
+
+public static Object createProxy(Object target, List<MethodInterceptor> interceptors) {
+    ProxyDescriptor descriptor = unwrapProxy(target);
+    Object proxyTarget = descriptor.target();
+    List<MethodInterceptor> mergedInterceptors = mergeInterceptors(descriptor.interceptors(), interceptors);
+    Class<?>[] interfaces = proxyTarget.getClass().getInterfaces();
+    if (interfaces.length == 0) {
+        return createClassProxy(proxyTarget, mergedInterceptors);
+    }
+    SpringLiteInvocationHandler invocationHandler = new SpringLiteInvocationHandler(proxyTarget, mergedInterceptors);
+    return Proxy.newProxyInstance(proxyTarget.getClass().getClassLoader(), interfaces, invocationHandler);
+}
+```
 
 ### Chapter 13. 최소 AOP 인프라
 
@@ -270,6 +454,38 @@ flowchart LR
 `@Transactional`은 Spring에서 가장 널리 쓰이는 애너테이션이지만, 가장 자주 오해되는 기능이기도 하다. 메서드 본문이 자동으로 바뀌는 것이 아니라, 프록시가 메서드 호출 경로를 감싸 트랜잭션 경계를 여는 방식으로 동작하기 때문이다. 후처리기는 트랜잭션 대상 빈을 찾아 프록시를 만들고, 인터셉터는 메서드 진입 시 `begin()`, 정상 종료 시 `commit()`, 예외 발생 시 롤백 정책에 따라 `rollback()` 또는 `commit()`을 수행한다.
 
 이 구조를 이해하면 자기 호출(self-invocation) 문제가 왜 생기는지도 선명해진다. 같은 클래스 안에서 `this.someTransactionalMethod()`를 호출하면 프록시를 거치지 않는다. 트랜잭션이 기대대로 동작하지 않는 이유는 데이터베이스나 선언식 자체가 아니라, 호출 경로가 프록시를 우회했기 때문이다.
+
+```java
+@Override
+public Object postProcessAfterInitialization(String beanName, Object bean) {
+    if (!requiresTransactionProxy(bean)) {
+        return bean;
+    }
+    return ProxyFactory.createProxy(bean, List.of(transactionInterceptor(bean)));
+}
+
+@Override
+public Object invoke(MethodInvocation invocation) throws Throwable {
+    Method targetMethod = targetClass.getMethod(invocation.getMethod().getName(), invocation.getMethod().getParameterTypes());
+    Transactional transactional = resolveTransactionalMetadata(targetClass, targetMethod);
+    if (transactional == null) {
+        return invocation.proceed();
+    }
+    transactionManager.begin();
+    try {
+        Object result = invocation.proceed();
+        transactionManager.commit();
+        return result;
+    } catch (Throwable throwable) {
+        if (shouldRollback(throwable, transactional)) {
+            transactionManager.rollback();
+        } else {
+            transactionManager.commit();
+        }
+        throw throwable;
+    }
+}
+```
 
 ```mermaid
 sequenceDiagram
@@ -302,6 +518,25 @@ sequenceDiagram
 
 `spring-lite`도 같은 구조를 따른다. 모든 요청은 먼저 디스패처로 들어오고, 디스패처는 핸들러 매핑으로 컨트롤러 메서드를 찾고, 핸들러 어댑터로 메서드를 실행하고, 리턴값 핸들러로 응답을 작성한다. 예외는 별도 resolver가 처리한다. 이 구조 덕분에 컨트롤러 메서드는 전체 요청 흐름의 한 가운데 있는 도메인 처리 지점으로만 남을 수 있다.
 
+```java
+public DispatcherServlet(ApplicationContext applicationContext, JsonMapper jsonMapper) {
+    TypeConverter typeConverter = new TypeConverter();
+    Validator validator = new SimpleValidator();
+    this.handlerMapping = new RequestMappingHandlerMapping(applicationContext);
+    this.handlerAdapter = new RequestMappingHandlerAdapter(
+        List.of(
+            new PathVariableArgumentResolver(typeConverter),
+            new RequestParamArgumentResolver(typeConverter),
+            new RequestBodyArgumentResolver(jsonMapper, typeConverter),
+            new HttpExchangeArgumentResolver()
+        ),
+        validator
+    );
+    this.returnValueHandler = new JsonReturnValueHandler(jsonMapper);
+    this.exceptionResolver = new DefaultExceptionResolver(applicationContext);
+}
+```
+
 ```mermaid
 flowchart LR
     A["HTTP Request"] --> B["DispatcherServlet"]
@@ -321,11 +556,56 @@ HTTP 요청을 자바 메서드 호출로 바꾸는 과정은 생각보다 많�
 
 여기서 공통 `ConversionService`가 등장한다. 웹 바인딩과 `@Value` 주입이 서로 다른 변환 규칙을 사용하면 설명도, 동작도 흔들린다. 그래서 숫자, 불리언, enum 변환을 동일한 서비스로 끌어올리면 프레임워크 설명이 훨씬 단단해진다. 실제 Spring도 결국 변환과 바인딩을 웹 밖의 더 일반적인 인프라로 연결한다.
 
+```java
+@Override
+public Object resolveArgument(Parameter parameter, HandlerMethodMatch handlerMethodMatch, HttpExchange exchange) {
+    String name = parameter.getAnnotation(RequestParam.class).value();
+    String value = parseQuery(exchange.getRequestURI().getRawQuery()).get(name);
+    return typeConverter.convert(value, parameter.getType());
+}
+
+private Map<String, String> parseQuery(String rawQuery) {
+    Map<String, String> result = new LinkedHashMap<>();
+    for (String pair : rawQuery.split("&")) {
+        String[] parts = pair.split("=", 2);
+        String key = URLDecoder.decode(parts[0], StandardCharsets.UTF_8);
+        String value = parts.length > 1 ? URLDecoder.decode(parts[1], StandardCharsets.UTF_8) : "";
+        result.put(key, value);
+    }
+    return result;
+}
+```
+
 ### Chapter 19. JSON, 응답 모델, 예외 처리
 
 컨트롤러 메서드가 값을 반환해도 요청 처리는 끝나지 않는다. 값을 JSON으로 직렬화해야 할 수도 있고, 상태 코드와 헤더를 함께 제어해야 할 수도 있으며, 예외가 발생했다면 이를 HTTP 응답으로 바꿔야 할 수도 있다. `JsonMapper`, `ResponseEntity`, `JsonReturnValueHandler`, `DefaultExceptionResolver`는 이 후반부 파이프라인을 담당한다.
 
 예외 처리에서도 계층 구조가 중요하다. 컨트롤러 내부의 `@ExceptionHandler`는 해당 컨트롤러 범위에서 로컬 정책을 제공한다. 여기에 `@ControllerAdvice`를 추가하면 여러 컨트롤러에 공통된 에러 정책을 적용할 수 있다. 실제 Spring MVC를 설명할 때 빠지기 쉬운 부분이 바로 이 계층 차이다. 로컬 예외 처리와 전역 예외 처리의 우선순위, 그리고 예외가 응답 모델로 바뀌는 위치를 정확히 설명해야 한다.
+
+```java
+@Override
+public ExceptionHandlingResult resolve(Exception exception, HandlerMethodMatch handlerMethodMatch) {
+    if (handlerMethodMatch != null) {
+        Method handler = findExceptionHandlerMethod(handlerMethodMatch.handlerMethod().bean().getClass(), exception);
+        if (handler != null) {
+            return invokeHandler(handlerMethodMatch.handlerMethod().bean(), handler, exception);
+        }
+    }
+    for (Object adviceBean : applicationContext.getBeansWithAnnotation(ControllerAdvice.class).values()) {
+        Method handler = findExceptionHandlerMethod(adviceBean.getClass(), exception);
+        if (handler != null) {
+            return invokeHandler(adviceBean, handler, exception);
+        }
+    }
+    if (exception instanceof ValidationException validationException) {
+        return new ExceptionHandlingResult(400, Map.of(
+            "error", "Validation failed",
+            "violations", toViolationPayload(validationException.violations())
+        ));
+    }
+    return new ExceptionHandlingResult(500, Map.of("error", exception.getMessage()));
+}
+```
 
 ### Chapter 20. 조건 매핑과 검증
 
@@ -352,11 +632,64 @@ HTTP 요청을 자바 메서드 호출로 바꾸는 과정은 생각보다 많�
 
 여기서 트랜잭션과의 연결도 중요하다. 같은 트랜잭션 문맥 안에서는 커넥션을 재사용해야 한다. `spring-lite`의 `TransactionManager`와 `SingleConnectionProxy`는 이 지점을 드러낸다. JDBC 추상화는 단순 편의 도구가 아니라, 트랜잭션 문맥을 데이터 접근 계층으로 전달하는 장치다.
 
+```java
+public int update(String sql, Object... args) {
+    try (
+        Connection connection = obtainConnectionIfNeeded();
+        PreparedStatement statement = connection.prepareStatement(sql)
+    ) {
+        bind(statement, args);
+        int updated = statement.executeUpdate();
+        if (transactionManager.currentConnection() != null) {
+            statement.close();
+        }
+        return updated;
+    } catch (SQLException exception) {
+        throw new IllegalStateException("Failed to execute update: " + sql, exception);
+    }
+}
+
+private Connection obtainConnectionIfNeeded() throws SQLException {
+    Connection current = transactionManager.currentConnection();
+    if (current != null) {
+        return new SingleConnectionProxy(current);
+    }
+    return dataSource.getConnection();
+}
+```
+
 ### Chapter 22. 예제 앱으로 연결하기
 
 예제 앱은 책에서 매우 중요한 역할을 한다. 앞 장들의 구조가 각각 따로 이해되더라도, 하나의 비즈니스 시나리오 안에서 모두 연결되어 보이지 않으면 프레임워크가 완성된 느낌이 들지 않기 때문이다. 주문 생성 요청은 컨트롤러에서 시작해, 서비스로 전달되고, 트랜잭션 프록시를 거쳐, JDBC 저장소를 호출하고, 결과가 다시 JSON 응답으로 돌아온다.
 
 이 흐름을 테스트로 함께 보면 설명은 더 강해진다. 검증 실패는 400으로 매핑되고, 저장소는 같은 트랜잭션 커넥션을 사용하며, 성공 시에는 seed 데이터 뒤에 새 주문이 추가된다. 예제 앱은 데모가 아니라 증거다. 프레임워크 설명이 실제 런타임에서 성립한다는 증거다.
+
+```java
+@RestController
+@RequestMapping("/orders")
+public class OrderController {
+    private final OrderService orderService;
+
+    @GetMapping
+    public List<Order> listOrders() {
+        return orderService.listOrders();
+    }
+
+    @PostMapping
+    public Order createOrder(@Valid @RequestBody CreateOrderRequest request) {
+        return orderService.createOrder(request.product(), request.quantity());
+    }
+}
+
+@Service
+public class DefaultOrderService implements OrderService {
+    @Override
+    @Transactional
+    public Order createOrder(String product, int quantity) {
+        return orderRepository.save(product, quantity, defaultStatus);
+    }
+}
+```
 
 ### Chapter 23. `SpringLiteApplication`
 
@@ -365,6 +698,24 @@ HTTP 요청을 자바 메서드 호출로 바꾸는 과정은 생각보다 많�
 여기서 프로파일 대응 프로퍼티 로딩이 등장하면 Boot 계층의 설명력이 크게 올라간다. `application.yml`과 `application-{profile}.yml`이 병합되고, `spring.profiles.active`가 실행 환경에 따라 다른 조립 결과를 만든다는 사실은 실제 Spring Boot의 핵심 개념과도 닿아 있다.
 
 물론 실제 Spring Boot는 이보다 훨씬 더 크다. starter, 조건부 자동 설정, 방대한 환경 추상화, 내장 서버 생태계, 관측성, 운영 지원이 있다. 하지만 축소판이기 때문에 오히려 본질이 잘 보인다. 사용자가 한 줄로 애플리케이션을 시작한다는 사실 뒤에, 얼마나 많은 조립 논리가 숨어 있는지를 드러내는 것이 이 장의 목적이다.
+
+```java
+public static AnnotationConfigApplicationContext run(Class<?> applicationClass, String... args) {
+    AnnotationConfigApplicationContext context = PropertyResolver.withOverrides(parseCommandLineArgs(args), () -> {
+        AnnotationConfigApplicationContext createdContext = new AnnotationConfigApplicationContext();
+        createdContext.register(applicationClass);
+        createdContext.registerSingleton(
+            "commandLineApplicationProperties",
+            ApplicationProperties.from(PropertyResolver.loadApplicationProperties())
+        );
+        BootInfrastructureRegistrar.registerDefaults(createdContext);
+        createdContext.refresh();
+        return createdContext;
+    });
+    context.getBean(WebServer.class).start();
+    return context;
+}
+```
 
 ```mermaid
 flowchart TB
@@ -382,6 +733,29 @@ flowchart TB
 프레임워크는 테스트 없이는 설명되기 어렵다. 애플리케이션 테스트가 기능을 검증한다면, 프레임워크 테스트는 계약과 경계를 검증한다. 컨테이너가 언제 실패해야 하는지, 프록시가 어떤 순서로 동작해야 하는지, MVC가 어떤 요청을 어떤 응답으로 바꿔야 하는지, 트랜잭션이 언제 rollback해야 하는지를 테스트가 문서처럼 보여준다.
 
 `@SpringLiteTest`와 `MockMvc`는 이 테스트 문서화를 돕는 최소 도구다. 여기에 트랜잭션 테스트 지원까지 들어가면, 테스트 메서드가 트랜잭션 안에서 실행되고 종료 후 롤백된다는 Spring Test의 중요한 감각도 전달할 수 있다. 이 장을 통해 독자는 "테스트 지원도 프레임워크의 일부"라는 사실을 받아들이게 된다. 실제 Spring 생태계가 TestContext, MockMvc, 트랜잭션 테스트 지원을 오랫동안 중요한 축으로 유지해 온 이유도 바로 여기에 있다.
+
+```java
+@Override
+public void beforeEach(ExtensionContext extensionContext) {
+    if (!isTransactionalTest(extensionContext)) {
+        extensionContext.getStore(NAMESPACE).put(TRANSACTION_ACTIVE_KEY, false);
+        return;
+    }
+    AnnotationConfigApplicationContext context = getOrCreateContext(extensionContext);
+    context.getBean(TransactionManager.class).begin();
+    extensionContext.getStore(NAMESPACE).put(TRANSACTION_ACTIVE_KEY, true);
+}
+
+@Override
+public void afterEach(ExtensionContext extensionContext) {
+    Boolean transactionActive = extensionContext.getStore(NAMESPACE).remove(TRANSACTION_ACTIVE_KEY, Boolean.class);
+    if (!Boolean.TRUE.equals(transactionActive)) {
+        return;
+    }
+    AnnotationConfigApplicationContext context = getOrCreateContext(extensionContext);
+    context.getBean(TransactionManager.class).rollback();
+}
+```
 
 ---
 
