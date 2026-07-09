@@ -1,5 +1,9 @@
 # Part 6 Draft
 
+> 편집 상태: 작업 초안
+>
+> 이 문서는 집필 과정에서 남긴 초안이다. 최종 기준 본문은 [complete-manuscript.md](./complete-manuscript.md)이며, 이 파일은 비교 참고용으로만 유지한다.
+
 ## Part 6. JDBC, 예제 앱, Boot 계층으로 완성한다
 
 Part 6은 지금까지 만든 조각들을 실제 애플리케이션 형태로 엮는 단계다. 컨테이너와 AOP, MVC가 각각 따로 이해되더라도, 데이터 접근과 애플리케이션 실행 모델까지 연결되지 않으면 독자는 아직 "프레임워크가 완성되었다"는 감각을 얻기 어렵다. 이 파트는 `JdbcTemplate`, 예제 앱, `SpringLiteApplication`, 테스트 지원을 통해 그 감각을 만들어준다.
