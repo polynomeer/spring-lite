@@ -277,9 +277,10 @@ flowchart LR
 | 항목 | Spring MVC | `spring-lite-web` |
 | --- | --- | --- |
 | front controller | `DispatcherServlet` | `DispatcherServlet` |
-| handler mappings | 다수 전략 | 단일 `RequestMappingHandlerMapping` |
+| handler mappings | 다수 전략 | 단일 `RequestMappingHandlerMapping` + 조건 매핑 |
 | handler adapters | 다수 전략 | 단일 `RequestMappingHandlerAdapter` |
 | return value handling | 매우 풍부 | JSON + `ResponseEntity` |
+| request conditions | 풍부 | path + method + `consumes`/`produces`/`headers`/`params` 최소 지원 |
 | message converter | 풍부, Jackson 등 | 자체 `JsonMapper` |
 | validation | Bean Validation 통합 | 미지원 |
 | controller advice | `@ControllerAdvice` 지원 | 미지원 |

@@ -27,6 +27,7 @@
 - H2 기반 JDBC/트랜잭션 통합 테스트
 - `@RestController`, `@RequestMapping`, `@GetMapping`, `@PostMapping`
 - `@PathVariable`, `@RequestParam`, `@RequestBody`
+- `consumes`, `produces`, `headers`, `params` 기반 요청 매핑 조건
 - `@ExceptionHandler`와 MVC 내부 역할 분리
 - 내장 JDK HTTP 서버 기반 `MiniSpringApplication.run()`
 - 기본 인프라 자동 등록 기반 부트스트랩

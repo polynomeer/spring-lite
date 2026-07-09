@@ -8,6 +8,7 @@ import lite.spring.web.http.ResponseEntity;
 import lite.spring.web.json.JsonMapper;
 
 public class JsonReturnValueHandler implements ReturnValueHandler {
+    private static final String PRODUCES_ATTRIBUTE = "springLite.produces";
     private final JsonMapper jsonMapper;
 
     public JsonReturnValueHandler(JsonMapper jsonMapper) {
@@ -28,7 +29,9 @@ public class JsonReturnValueHandler implements ReturnValueHandler {
             return;
         }
         byte[] response = jsonMapper.write(body).getBytes(StandardCharsets.UTF_8);
-        exchange.getResponseHeaders().putIfAbsent("Content-Type", java.util.List.of("application/json; charset=utf-8"));
+        Object produces = exchange.getAttribute(PRODUCES_ATTRIBUTE);
+        String contentType = produces instanceof String value ? value : "application/json; charset=utf-8";
+        exchange.getResponseHeaders().putIfAbsent("Content-Type", java.util.List.of(contentType));
         exchange.sendResponseHeaders(responseStatus, response.length);
         try (OutputStream outputStream = exchange.getResponseBody()) {
             outputStream.write(response);

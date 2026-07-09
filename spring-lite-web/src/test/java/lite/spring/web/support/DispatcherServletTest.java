@@ -13,6 +13,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import lite.spring.context.support.AnnotationConfigApplicationContext;
 import lite.spring.core.annotation.Bean;
 import lite.spring.core.annotation.Configuration;
@@ -121,6 +123,75 @@ class DispatcherServletTest {
         }
     }
 
+    @Test
+    void selectsHandlerByRequestParamCondition() throws Exception {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
+            DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
+            StubHttpExchange exchange = new StubHttpExchange("GET", URI.create("/greetings/conditional?mode=summary"), "");
+
+            dispatcherServlet.handle(exchange);
+
+            assertThat(exchange.statusCode()).isEqualTo(200);
+            assertThat(exchange.responseBodyAsString()).isEqualTo("{\"message\":\"summary\"}");
+        }
+    }
+
+    @Test
+    void selectsHandlerByHeaderCondition() throws Exception {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
+            DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
+            StubHttpExchange exchange = new StubHttpExchange("GET", URI.create("/greetings/header-check"), "");
+            exchange.getRequestHeaders().set("X-Mode", "debug");
+
+            dispatcherServlet.handle(exchange);
+
+            assertThat(exchange.statusCode()).isEqualTo(200);
+            assertThat(exchange.responseBodyAsString()).isEqualTo("{\"message\":\"header\"}");
+        }
+    }
+
+    @Test
+    void selectsHandlerByConsumesCondition() throws Exception {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
+            DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
+            StubHttpExchange exchange = new StubHttpExchange("POST", URI.create("/greetings/typed"), "{\"name\":\"typed\",\"quantity\":1}");
+            exchange.getRequestHeaders().set("Content-Type", "application/vnd.demo+json");
+
+            dispatcherServlet.handle(exchange);
+
+            assertThat(exchange.statusCode()).isEqualTo(200);
+            assertThat(exchange.responseBodyAsString()).isEqualTo("{\"message\":\"typed\"}");
+        }
+    }
+
+    @Test
+    void selectsHandlerByProducesConditionAndAppliesResponseContentType() throws Exception {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
+            DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
+            StubHttpExchange exchange = new StubHttpExchange("GET", URI.create("/greetings/produces"), "");
+            exchange.getRequestHeaders().set("Accept", "application/vnd.demo+json");
+
+            dispatcherServlet.handle(exchange);
+
+            assertThat(exchange.statusCode()).isEqualTo(200);
+            assertThat(exchange.getResponseHeaders().getFirst("Content-Type")).isEqualTo("application/vnd.demo+json");
+            assertThat(exchange.responseBodyAsString()).isEqualTo("{\"message\":\"produced\"}");
+        }
+    }
+
+    @Test
+    void returnsNotFoundWhenRequestConditionsDoNotMatch() throws Exception {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
+            DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
+            StubHttpExchange exchange = new StubHttpExchange("POST", URI.create("/greetings/typed"), "{\"name\":\"typed\",\"quantity\":1}");
+            exchange.getRequestHeaders().set("Content-Type", "application/json");
+
+            dispatcherServlet.handle(exchange);
+
+            assertThat(exchange.statusCode()).isEqualTo(404);
+        }
+    }
+
     @Configuration
     static class WebTestConfig {
         @Bean
@@ -164,6 +235,26 @@ class DispatcherServletTest {
             return ResponseEntity.noContent();
         }
 
+        @GetMapping(value = "/conditional", params = "mode=summary")
+        public Response conditionalByParam() {
+            return new Response("summary");
+        }
+
+        @GetMapping(value = "/header-check", headers = "X-Mode=debug")
+        public Response conditionalByHeader() {
+            return new Response("header");
+        }
+
+        @PostMapping(value = "/typed", consumes = "application/vnd.demo+json")
+        public Response conditionalByConsumes(@RequestBody Request request) {
+            return new Response(request.name());
+        }
+
+        @GetMapping(value = "/produces", produces = "application/vnd.demo+json")
+        public Response conditionalByProduces() {
+            return new Response("produced");
+        }
+
         @ExceptionHandler(CustomWebException.class)
         public Response handleCustom(CustomWebException exception) {
             return new Response("handled by controller");
@@ -189,6 +280,7 @@ class DispatcherServletTest {
         private final URI uri;
         private final InputStream requestBody;
         private final ByteArrayOutputStream responseBody = new ByteArrayOutputStream();
+        private final Map<String, Object> attributes = new LinkedHashMap<>();
         private int statusCode;
 
         StubHttpExchange(String method, URI uri, String body) {
@@ -271,11 +363,12 @@ class DispatcherServletTest {
 
         @Override
         public Object getAttribute(String name) {
-            return null;
+            return attributes.get(name);
         }
 
         @Override
         public void setAttribute(String name, Object value) {
+            attributes.put(name, value);
         }
 
         @Override
