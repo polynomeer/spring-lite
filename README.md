@@ -36,7 +36,7 @@
 - `@SpringLiteTest`, `MockMvc` 스타일 테스트 지원
 - 내장 JDK HTTP 서버 기반 `MiniSpringApplication.run()`
 - 기본 인프라 자동 등록 기반 부트스트랩
-- 주문 예제 앱과 기본 테스트
+- JDBC/H2 기반 주문 예제 앱과 통합 테스트
 
 ## 모듈 구성
 
@@ -48,7 +48,7 @@
 - `spring-lite-tx`: `@Transactional`, `TransactionManager`, `TransactionalBeanPostProcessor`
 - `spring-lite-boot`: 자동 설정, 애플리케이션 실행, 내장 서버 연동 지점
 - `spring-lite-test`: JUnit 확장, 컨텍스트 로딩, mock web 테스트 지원
-- `example-app`: 주문 조회/생성 예제 애플리케이션
+- `example-app`: JDBC/H2와 설정 기반 정책을 사용하는 주문 예제 애플리케이션
 
 ## 문서 읽기 순서
 

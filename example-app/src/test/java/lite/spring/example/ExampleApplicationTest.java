@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import lite.spring.context.support.AnnotationConfigApplicationContext;
 import lite.spring.example.order.Order;
+import lite.spring.example.order.OrderRepository;
 import lite.spring.example.order.OrderService;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +16,7 @@ class ExampleApplicationTest {
             OrderService orderService = context.getBean(OrderService.class);
 
             assertThat(orderService.listOrders()).hasSize(1);
-            assertThat(orderService.createOrder("book", 2).status()).isEqualTo("CREATED");
+            assertThat(orderService.createOrder("book", 2).status()).isEqualTo("PENDING_APPROVAL");
         }
     }
 
@@ -28,6 +29,7 @@ class ExampleApplicationTest {
             Order created = orderService.createOrder("pen", 3);
 
             assertThat(seeded.product()).isEqualTo("starter-kit");
+            assertThat(seeded.status()).isEqualTo("SEEDED");
             assertThat(created.id()).isEqualTo(2L);
             assertThat(orderService.listOrders()).extracting(Order::product).containsExactly("starter-kit", "pen");
         }
@@ -41,6 +43,13 @@ class ExampleApplicationTest {
             assertThatThrownBy(() -> orderService.getOrder(999L))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Order not found");
+        }
+    }
+
+    @Test
+    void usesJdbcBackedRepository() {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ExampleApplication.class)) {
+            assertThat(context.getBean(OrderRepository.class).getClass().getSimpleName()).isEqualTo("JdbcOrderRepository");
         }
     }
 }

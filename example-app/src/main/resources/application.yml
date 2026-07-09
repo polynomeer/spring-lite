@@ -1,4 +1,12 @@
 spring-lite:
   application:
     name: example-app
-
+example:
+  datasource:
+    url: jdbc:h2:mem:example-app;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+  order:
+    default-status: PENDING_APPROVAL
+    seed-product: starter-kit
+    seed-quantity: 1

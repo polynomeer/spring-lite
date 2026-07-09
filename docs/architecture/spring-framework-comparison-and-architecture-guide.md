@@ -335,12 +335,13 @@ Spring 공식 문서는 트랜잭션을 abstraction, declarative implementation,
 
 Spring JDBC 레퍼런스는 JDBC core classes, database connections, parameter handling, embedded DB support 등을 별도 주제로 정리한다. [Spring JDBC reference](https://docs.spring.io/spring-framework/reference/data-access/jdbc.html)
 
-`spring-lite`의 JDBC 계층은 다음 클래스들에 집중돼 있다.
+`spring-lite`의 JDBC 계층은 다음 클래스들에 집중돼 있고, 예제 앱도 이제 이 계층을 직접 사용한다.
 
 - [JdbcTemplate](../../spring-lite-jdbc/src/main/java/lite/spring/jdbc/JdbcTemplate.java)
 - [RowMapper](../../spring-lite-jdbc/src/main/java/lite/spring/jdbc/RowMapper.java)
 - [SingleConnectionProxy](../../spring-lite-jdbc/src/main/java/lite/spring/jdbc/SingleConnectionProxy.java)
 - [DriverManagerDataSource](../../spring-lite-jdbc/src/main/java/lite/spring/jdbc/datasource/DriverManagerDataSource.java)
+- [JdbcOrderRepository](../../example-app/src/main/java/lite/spring/example/order/JdbcOrderRepository.java)
 
 비교 포인트:
 
@@ -451,4 +452,4 @@ Spring 공식 문서는 `TestContext Framework`, `MockMvc`, web mocks, context c
 1. `Advisor` / pointcut / ordered advice 도입
 2. conversion service / controller advice 확장
 3. transaction synchronization / read-only 같은 정책 확장
-4. 예제 앱을 JDBC 중심으로 확장
+4. read-only / multi-resource 같은 트랜잭션 정책 확장

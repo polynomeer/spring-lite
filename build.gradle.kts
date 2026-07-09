@@ -107,6 +107,7 @@ project(":example-app") {
     dependencies {
         "implementation"(project(":spring-lite-boot"))
         "testImplementation"(project(":spring-lite-test"))
+        "runtimeOnly"("com.h2database:h2:$h2Version")
     }
 
     extensions.configure<org.gradle.api.plugins.JavaApplication> {
