@@ -2,6 +2,8 @@ package lite.spring.web.handler;
 
 import com.sun.net.httpserver.HttpExchange;
 import java.lang.reflect.Method;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -191,8 +193,8 @@ public class RequestMappingHandlerMapping implements HandlerMapping {
         }
         for (String pair : query.split("&")) {
             String[] parts = pair.split("=", 2);
-            String key = parts[0];
-            String value = parts.length > 1 ? parts[1] : "";
+            String key = URLDecoder.decode(parts[0], StandardCharsets.UTF_8);
+            String value = parts.length > 1 ? URLDecoder.decode(parts[1], StandardCharsets.UTF_8) : "";
             result.put(key, value);
         }
         return result;

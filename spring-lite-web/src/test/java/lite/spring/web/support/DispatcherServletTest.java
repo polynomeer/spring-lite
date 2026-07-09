@@ -142,6 +142,19 @@ class DispatcherServletTest {
     }
 
     @Test
+    void selectsHandlerByDecodedRequestParamCondition() throws Exception {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
+            DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
+            StubHttpExchange exchange = new StubHttpExchange("GET", URI.create("/greetings/conditional/encoded?name=spring%20lite"), "");
+
+            dispatcherServlet.handle(exchange);
+
+            assertThat(exchange.statusCode()).isEqualTo(200);
+            assertThat(exchange.responseBodyAsString()).isEqualTo("{\"message\":\"decoded\"}");
+        }
+    }
+
+    @Test
     void selectsHandlerByHeaderCondition() throws Exception {
         try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
             DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
@@ -297,6 +310,11 @@ class DispatcherServletTest {
         @GetMapping(value = "/conditional", params = "mode=summary")
         public Response conditionalByParam() {
             return new Response("summary");
+        }
+
+        @GetMapping(value = "/conditional/encoded", params = "name=spring lite")
+        public Response conditionalByDecodedParam() {
+            return new Response("decoded");
         }
 
         @GetMapping(value = "/header-check", headers = "X-Mode=debug")
