@@ -1,0 +1,7 @@
+app:
+  name: spring-lite
+  feature:
+    enabled: true
+  answer:
+    count: 42
+
