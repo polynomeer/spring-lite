@@ -8,6 +8,7 @@ import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 import lite.spring.aop.MethodInterceptor;
+import lite.spring.core.util.OrderUtils;
 import lite.spring.aop.MethodInvocation;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
@@ -21,20 +22,29 @@ public final class ProxyFactory {
     private ProxyFactory() {
     }
 
+    public static Object getTarget(Object candidate) {
+        return unwrapProxy(candidate).target();
+    }
+
+    public static Class<?> getTargetClass(Object candidate) {
+        return getTarget(candidate).getClass();
+    }
+
     public static Object createProxy(Object target, List<MethodInterceptor> interceptors) {
-        Class<?>[] interfaces = target.getClass().getInterfaces();
+        ProxyDescriptor descriptor = unwrapProxy(target);
+        Object proxyTarget = descriptor.target();
+        List<MethodInterceptor> mergedInterceptors = mergeInterceptors(descriptor.interceptors(), interceptors);
+        Class<?>[] interfaces = proxyTarget.getClass().getInterfaces();
         if (interfaces.length == 0) {
-            return createClassProxy(target, interceptors);
+            return createClassProxy(proxyTarget, mergedInterceptors);
         }
-        InvocationHandler invocationHandler = (proxy, method, args) ->
-            new SimpleMethodInvocation(target, method, args == null ? new Object[0] : args, interceptors).proceed();
-        return Proxy.newProxyInstance(target.getClass().getClassLoader(), interfaces, invocationHandler);
+        SpringLiteInvocationHandler invocationHandler = new SpringLiteInvocationHandler(proxyTarget, mergedInterceptors);
+        return Proxy.newProxyInstance(proxyTarget.getClass().getClassLoader(), interfaces, invocationHandler);
     }
 
     private static Object createClassProxy(Object target, List<MethodInterceptor> interceptors) {
         try {
-            InvocationHandler invocationHandler = (proxy, method, args) ->
-                new SimpleMethodInvocation(target, method, args == null ? new Object[0] : args, interceptors).proceed();
+            SpringLiteInvocationHandler invocationHandler = new SpringLiteInvocationHandler(target, interceptors);
             Class<?> proxyClass = new ByteBuddy()
                 .subclass(target.getClass())
                 .defineField(HANDLER_FIELD, InvocationHandler.class)
@@ -55,6 +65,59 @@ public final class ProxyFactory {
             return proxy;
         } catch (Exception exception) {
             throw new IllegalStateException("Failed to create class-based proxy for " + target.getClass().getName(), exception);
+        }
+    }
+
+    private static ProxyDescriptor unwrapProxy(Object target) {
+        if (Proxy.isProxyClass(target.getClass())) {
+            InvocationHandler invocationHandler = Proxy.getInvocationHandler(target);
+            if (invocationHandler instanceof SpringLiteInvocationHandler springLiteInvocationHandler) {
+                return new ProxyDescriptor(springLiteInvocationHandler.target(), springLiteInvocationHandler.interceptors());
+            }
+        }
+        try {
+            Field handlerField = target.getClass().getDeclaredField(HANDLER_FIELD);
+            handlerField.setAccessible(true);
+            Object handler = handlerField.get(target);
+            if (handler instanceof SpringLiteInvocationHandler springLiteInvocationHandler) {
+                return new ProxyDescriptor(springLiteInvocationHandler.target(), springLiteInvocationHandler.interceptors());
+            }
+        } catch (NoSuchFieldException | IllegalAccessException ignored) {
+        }
+        return new ProxyDescriptor(target, List.of());
+    }
+
+    private static List<MethodInterceptor> mergeInterceptors(List<MethodInterceptor> existing, List<MethodInterceptor> additional) {
+        List<MethodInterceptor> merged = new ArrayList<>(existing.size() + additional.size());
+        merged.addAll(existing);
+        merged.addAll(additional);
+        merged.sort(OrderUtils.comparator());
+        return merged;
+    }
+
+    private record ProxyDescriptor(Object target, List<MethodInterceptor> interceptors) {
+    }
+
+    private static final class SpringLiteInvocationHandler implements InvocationHandler {
+        private final Object target;
+        private final List<MethodInterceptor> interceptors;
+
+        private SpringLiteInvocationHandler(Object target, List<MethodInterceptor> interceptors) {
+            this.target = target;
+            this.interceptors = List.copyOf(interceptors);
+        }
+
+        @Override
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            return new SimpleMethodInvocation(target, method, args == null ? new Object[0] : args, interceptors).proceed();
+        }
+
+        private Object target() {
+            return target;
+        }
+
+        private List<MethodInterceptor> interceptors() {
+            return interceptors;
         }
     }
 

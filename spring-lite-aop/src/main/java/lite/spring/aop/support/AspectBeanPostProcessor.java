@@ -15,7 +15,9 @@ import lite.spring.aop.annotation.Aspect;
 import lite.spring.aop.annotation.Before;
 import lite.spring.context.ApplicationContext;
 import lite.spring.context.factory.BeanPostProcessor;
+import lite.spring.core.Ordered;
 import lite.spring.core.annotation.Configuration;
+import lite.spring.core.util.OrderUtils;
 import lite.spring.core.reflect.ReflectionUtils;
 import lite.spring.context.support.AnnotationUtils;
 
@@ -28,44 +30,49 @@ public class AspectBeanPostProcessor implements BeanPostProcessor {
 
     @Override
     public Object postProcessAfterInitialization(String beanName, Object bean) {
-        if (bean.getClass().isAnnotationPresent(Aspect.class) || AnnotationUtils.hasAnnotation(bean.getClass(), Configuration.class)) {
+        Class<?> targetClass = ProxyFactory.getTargetClass(bean);
+        if (targetClass.isAnnotationPresent(Aspect.class) || AnnotationUtils.hasAnnotation(targetClass, Configuration.class)) {
             return bean;
         }
-        List<MethodInterceptor> interceptors = createInterceptors(bean);
+        List<MethodInterceptor> interceptors = createInterceptors(bean, targetClass);
         if (interceptors.isEmpty()) {
             return bean;
         }
         return ProxyFactory.createProxy(bean, interceptors);
     }
 
-    private List<MethodInterceptor> createInterceptors(Object bean) {
+    private List<MethodInterceptor> createInterceptors(Object bean, Class<?> targetClass) {
         Map<String, Object> aspectBeans = applicationContext.getBeansWithAnnotation(Aspect.class);
         List<AdviceDescriptor> descriptors = new ArrayList<>();
         for (Object aspectBean : aspectBeans.values()) {
             if (aspectBean == bean) {
                 continue;
             }
+            int aspectOrder = OrderUtils.getOrder(aspectBean);
             for (Method adviceMethod : aspectBean.getClass().getDeclaredMethods()) {
-                AdviceDescriptor descriptor = toDescriptor(aspectBean, adviceMethod);
-                if (descriptor != null && matchesTarget(bean.getClass(), descriptor)) {
+                AdviceDescriptor descriptor = toDescriptor(aspectBean, adviceMethod, aspectOrder);
+                if (descriptor != null && matchesTarget(targetClass, descriptor)) {
                     descriptors.add(descriptor);
                 }
             }
         }
-        descriptors.sort(Comparator.comparingInt(descriptor -> descriptor.adviceType().order));
+        descriptors.sort(Comparator
+            .comparingInt(AdviceDescriptor::order)
+            .thenComparingInt(descriptor -> descriptor.adviceType().order));
         return descriptors.stream()
             .map(this::toInterceptor)
             .toList();
     }
 
-    private AdviceDescriptor toDescriptor(Object aspectBean, Method adviceMethod) {
+    private AdviceDescriptor toDescriptor(Object aspectBean, Method adviceMethod, int aspectOrder) {
+        int adviceOrder = OrderUtils.getOrder(adviceMethod, aspectOrder);
         Around around = adviceMethod.getAnnotation(Around.class);
         if (around != null) {
-            return new AdviceDescriptor(aspectBean, adviceMethod, AdviceType.AROUND, around.methodName(), around.annotation());
+            return new AdviceDescriptor(aspectBean, adviceMethod, AdviceType.AROUND, around.methodName(), around.annotation(), adviceOrder);
         }
         Before before = adviceMethod.getAnnotation(Before.class);
         if (before != null) {
-            return new AdviceDescriptor(aspectBean, adviceMethod, AdviceType.BEFORE, before.methodName(), before.annotation());
+            return new AdviceDescriptor(aspectBean, adviceMethod, AdviceType.BEFORE, before.methodName(), before.annotation(), adviceOrder);
         }
         AfterReturning afterReturning = adviceMethod.getAnnotation(AfterReturning.class);
         if (afterReturning != null) {
@@ -74,7 +81,8 @@ public class AspectBeanPostProcessor implements BeanPostProcessor {
                 adviceMethod,
                 AdviceType.AFTER_RETURNING,
                 afterReturning.methodName(),
-                afterReturning.annotation()
+                afterReturning.annotation(),
+                adviceOrder
             );
         }
         return null;
@@ -99,25 +107,7 @@ public class AspectBeanPostProcessor implements BeanPostProcessor {
     }
 
     private MethodInterceptor toInterceptor(AdviceDescriptor descriptor) {
-        return switch (descriptor.adviceType()) {
-            case BEFORE -> invocation -> {
-                if (!matchesInvocation(invocation, descriptor)) {
-                    return invocation.proceed();
-                }
-                invokeAdvice(descriptor, invocation, null);
-                return invocation.proceed();
-            };
-            case AROUND -> invocation -> matchesInvocation(invocation, descriptor)
-                ? invokeAdvice(descriptor, invocation, null)
-                : invocation.proceed();
-            case AFTER_RETURNING -> invocation -> {
-                Object result = invocation.proceed();
-                if (matchesInvocation(invocation, descriptor)) {
-                    invokeAdvice(descriptor, invocation, result);
-                }
-                return result;
-            };
-        };
+        return new OrderedAdviceInterceptor(descriptor);
     }
 
     private boolean matchesInvocation(MethodInvocation invocation, AdviceDescriptor descriptor) {
@@ -185,7 +175,44 @@ public class AspectBeanPostProcessor implements BeanPostProcessor {
         Method method,
         AdviceType adviceType,
         String methodName,
-        Class<? extends Annotation> annotationType
+        Class<? extends Annotation> annotationType,
+        int order
     ) {
+    }
+
+    private final class OrderedAdviceInterceptor implements MethodInterceptor, Ordered {
+        private final AdviceDescriptor descriptor;
+
+        private OrderedAdviceInterceptor(AdviceDescriptor descriptor) {
+            this.descriptor = descriptor;
+        }
+
+        @Override
+        public int getOrder() {
+            return descriptor.order();
+        }
+
+        @Override
+        public Object invoke(MethodInvocation invocation) throws Throwable {
+            return switch (descriptor.adviceType()) {
+                case BEFORE -> {
+                    if (!matchesInvocation(invocation, descriptor)) {
+                        yield invocation.proceed();
+                    }
+                    invokeAdvice(descriptor, invocation, null);
+                    yield invocation.proceed();
+                }
+                case AROUND -> matchesInvocation(invocation, descriptor)
+                    ? invokeAdvice(descriptor, invocation, null)
+                    : invocation.proceed();
+                case AFTER_RETURNING -> {
+                    Object result = invocation.proceed();
+                    if (matchesInvocation(invocation, descriptor)) {
+                        invokeAdvice(descriptor, invocation, result);
+                    }
+                    yield result;
+                }
+            };
+        }
     }
 }

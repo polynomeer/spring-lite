@@ -5,6 +5,7 @@ import java.util.List;
 import lite.spring.aop.MethodInterceptor;
 import lite.spring.aop.support.ProxyFactory;
 import lite.spring.context.factory.BeanPostProcessor;
+import lite.spring.core.Ordered;
 import lite.spring.tx.annotation.Transactional;
 
 public class TransactionalBeanPostProcessor implements BeanPostProcessor {
@@ -23,10 +24,11 @@ public class TransactionalBeanPostProcessor implements BeanPostProcessor {
     }
 
     private boolean requiresTransactionProxy(Object bean) {
-        if (bean.getClass().isAnnotationPresent(Transactional.class)) {
+        Class<?> targetClass = ProxyFactory.getTargetClass(bean);
+        if (targetClass.isAnnotationPresent(Transactional.class)) {
             return true;
         }
-        for (Method method : bean.getClass().getMethods()) {
+        for (Method method : targetClass.getMethods()) {
             if (method.isAnnotationPresent(Transactional.class)) {
                 return true;
             }
@@ -35,26 +37,7 @@ public class TransactionalBeanPostProcessor implements BeanPostProcessor {
     }
 
     private MethodInterceptor transactionInterceptor(Object bean) {
-        return invocation -> {
-            Method targetMethod = bean.getClass().getMethod(invocation.getMethod().getName(), invocation.getMethod().getParameterTypes());
-            Transactional transactional = resolveTransactionalMetadata(bean.getClass(), targetMethod);
-            if (transactional == null) {
-                return invocation.proceed();
-            }
-            transactionManager.begin();
-            try {
-                Object result = invocation.proceed();
-                transactionManager.commit();
-                return result;
-            } catch (Throwable throwable) {
-                if (shouldRollback(throwable, transactional)) {
-                    transactionManager.rollback();
-                } else {
-                    transactionManager.commit();
-                }
-                throw throwable;
-            }
-        };
+        return new TransactionInterceptor(ProxyFactory.getTargetClass(bean));
     }
 
     private Transactional resolveTransactionalMetadata(Class<?> beanType, Method targetMethod) {
@@ -74,5 +57,40 @@ public class TransactionalBeanPostProcessor implements BeanPostProcessor {
             }
         }
         return true;
+    }
+
+    private final class TransactionInterceptor implements MethodInterceptor, Ordered {
+        private final Class<?> targetClass;
+
+        private TransactionInterceptor(Class<?> targetClass) {
+            this.targetClass = targetClass;
+        }
+
+        @Override
+        public int getOrder() {
+            return Ordered.LOWEST_PRECEDENCE;
+        }
+
+        @Override
+        public Object invoke(lite.spring.aop.MethodInvocation invocation) throws Throwable {
+            Method targetMethod = targetClass.getMethod(invocation.getMethod().getName(), invocation.getMethod().getParameterTypes());
+            Transactional transactional = resolveTransactionalMetadata(targetClass, targetMethod);
+            if (transactional == null) {
+                return invocation.proceed();
+            }
+            transactionManager.begin();
+            try {
+                Object result = invocation.proceed();
+                transactionManager.commit();
+                return result;
+            } catch (Throwable throwable) {
+                if (shouldRollback(throwable, transactional)) {
+                    transactionManager.rollback();
+                } else {
+                    transactionManager.commit();
+                }
+                throw throwable;
+            }
+        }
     }
 }

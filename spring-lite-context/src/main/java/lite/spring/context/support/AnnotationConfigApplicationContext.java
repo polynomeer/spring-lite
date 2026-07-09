@@ -42,6 +42,7 @@ import lite.spring.core.exception.BeansException;
 import lite.spring.core.exception.NoSuchBeanException;
 import lite.spring.core.exception.NoUniqueBeanException;
 import lite.spring.core.reflect.ReflectionUtils;
+import lite.spring.core.util.OrderUtils;
 import lite.spring.core.util.PropertyResolver;
 
 public class AnnotationConfigApplicationContext implements ConfigurableApplicationContext {
@@ -113,6 +114,7 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
     @Override
     public void addBeanPostProcessor(BeanPostProcessor beanPostProcessor) {
         beanPostProcessors.add(beanPostProcessor);
+        sortBeanPostProcessors();
     }
 
     @Override
@@ -253,6 +255,7 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
             BeanPostProcessor beanPostProcessor = (BeanPostProcessor) getBean(beanName);
             if (!beanPostProcessors.contains(beanPostProcessor)) {
                 beanPostProcessors.add(beanPostProcessor);
+                sortBeanPostProcessors();
             }
         }
     }
@@ -292,6 +295,7 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
             }
             if (initialized instanceof BeanPostProcessor beanPostProcessor && !beanPostProcessors.contains(beanPostProcessor)) {
                 beanPostProcessors.add(beanPostProcessor);
+                sortBeanPostProcessors();
             }
             return initialized;
         } finally {
@@ -523,6 +527,10 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
             return;
         }
         destroyCallbacks.put(beanName, () -> destroyMethods.forEach(method -> ReflectionUtils.invoke(method, bean, new Object[0])));
+    }
+
+    private void sortBeanPostProcessors() {
+        beanPostProcessors.sort(OrderUtils.comparator());
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
