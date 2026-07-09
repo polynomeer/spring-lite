@@ -6,8 +6,10 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 public final class PropertyResolver {
+    private static final ThreadLocal<Map<String, String>> RUNTIME_OVERRIDES = ThreadLocal.withInitial(Map::of);
     private final Map<String, String> values;
 
     private PropertyResolver(Map<String, String> values) {
@@ -37,7 +39,20 @@ public final class PropertyResolver {
             PropertyResolver profileResolver = loadSingleResource("application-" + trimmed + ".yml");
             merged.putAll(profileResolver.values);
         }
+        merged.putAll(RUNTIME_OVERRIDES.get());
         return new PropertyResolver(merged);
+    }
+
+    public static <T> T withOverrides(Map<String, String> overrides, Supplier<T> supplier) {
+        Map<String, String> previous = RUNTIME_OVERRIDES.get();
+        Map<String, String> merged = new LinkedHashMap<>(previous);
+        merged.putAll(overrides);
+        RUNTIME_OVERRIDES.set(Map.copyOf(merged));
+        try {
+            return supplier.get();
+        } finally {
+            RUNTIME_OVERRIDES.set(previous);
+        }
     }
 
     public Map<String, String> asMap() {
@@ -57,6 +72,10 @@ public final class PropertyResolver {
     }
 
     private static String resolveActiveProfiles(PropertyResolver baseResolver) {
+        String override = RUNTIME_OVERRIDES.get().get("spring.profiles.active");
+        if (override != null && !override.isBlank()) {
+            return override;
+        }
         String systemProperty = System.getProperty("spring.profiles.active");
         if (systemProperty != null && !systemProperty.isBlank()) {
             return systemProperty;

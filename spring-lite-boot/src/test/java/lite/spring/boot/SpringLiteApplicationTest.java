@@ -27,7 +27,7 @@ import org.junit.jupiter.api.Test;
 class SpringLiteApplicationTest {
     @Test
     void autoRegistersTransactionalInfrastructure() {
-        try (AnnotationConfigApplicationContext context = SpringLiteApplication.run(BootTestApplication.class)) {
+        try (AnnotationConfigApplicationContext context = runWithRandomPort(BootTestApplication.class)) {
             BootSampleService service = context.getBean(BootSampleService.class);
 
             assertThat(service.call("ok")).isEqualTo("ok");
@@ -43,7 +43,7 @@ class SpringLiteApplicationTest {
     @Test
     void appliesAspectStyleAdviceViaBootInfrastructure() {
         BootRecordingAspect.events.clear();
-        try (AnnotationConfigApplicationContext context = SpringLiteApplication.run(AspectApplication.class)) {
+        try (AnnotationConfigApplicationContext context = runWithRandomPort(AspectApplication.class)) {
             AspectSampleService service = context.getBean(AspectSampleService.class);
 
             String result = service.call("ok");
@@ -55,7 +55,7 @@ class SpringLiteApplicationTest {
 
     @Test
     void backsOffWhenUserProvidesJsonMapperBean() {
-        try (AnnotationConfigApplicationContext context = SpringLiteApplication.run(CustomJsonMapperApplication.class)) {
+        try (AnnotationConfigApplicationContext context = runWithRandomPort(CustomJsonMapperApplication.class)) {
             assertThat(context.getBeansOfType(JsonMapper.class)).hasSize(1);
             assertThat(context.getBean(JsonMapper.class)).isSameAs(context.getBean("customJsonMapper"));
         }
@@ -63,17 +63,17 @@ class SpringLiteApplicationTest {
 
     @Test
     void registersJdbcTemplateOnlyWhenDataSourceExists() {
-        try (AnnotationConfigApplicationContext withoutDataSource = SpringLiteApplication.run(BootTestApplication.class)) {
+        try (AnnotationConfigApplicationContext withoutDataSource = runWithRandomPort(BootTestApplication.class)) {
             assertThat(withoutDataSource.containsBeanOfType(lite.spring.jdbc.JdbcTemplate.class)).isFalse();
         }
-        try (AnnotationConfigApplicationContext withDataSource = SpringLiteApplication.run(DataSourceApplication.class)) {
+        try (AnnotationConfigApplicationContext withDataSource = runWithRandomPort(DataSourceApplication.class)) {
             assertThat(withDataSource.containsBeanOfType(lite.spring.jdbc.JdbcTemplate.class)).isTrue();
         }
     }
 
     @Test
     void supportsConditionalAnnotationsOnApplicationBeans() {
-        try (AnnotationConfigApplicationContext context = SpringLiteApplication.run(ConditionalBeansApplication.class)) {
+        try (AnnotationConfigApplicationContext context = runWithRandomPort(ConditionalBeansApplication.class)) {
             assertThat(context.containsBeanDefinition("classConditionBean")).isTrue();
             assertThat(context.containsBeanDefinition("propertyConditionBean")).isTrue();
             assertThat(context.containsBeanDefinition("missingClassConditionBean")).isFalse();
@@ -89,11 +89,39 @@ class SpringLiteApplicationTest {
         }
     }
 
+    @Test
+    void appliesCommandLinePropertyOverridesToBootInfrastructure() {
+        try (AnnotationConfigApplicationContext context = SpringLiteApplication.run(
+            ProfileAwareApplication.class,
+            "--spring.profiles.active=local"
+        )) {
+            assertThat(context.getBeansOfType(lite.spring.boot.support.ApplicationProperties.class)).hasSize(1);
+            assertThat(context.getBean(lite.spring.boot.support.ApplicationProperties.class).get("test.feature.name", "missing"))
+                .isEqualTo("local-profile");
+        }
+    }
+
+    @Test
+    void appliesCommandLineProfileOverridesDuringBootstrap() {
+        try (AnnotationConfigApplicationContext context = SpringLiteApplication.run(
+            ProfileAwareApplication.class,
+            "--server.port=0",
+            "--spring.profiles.active=local"
+        )) {
+            assertThat(context.getBean(ProfileAwareBean.class).featureName()).isEqualTo("local-profile");
+        }
+    }
+
     @SpringLiteBootApplication
     static class BootTestApplication {
         @Bean
         BootSampleService bootSampleService() {
             return new BootSampleServiceImpl();
+        }
+
+        @Bean
+        WebServerFactory webServerFactory() {
+            return new TestWebServerFactory();
         }
     }
 
@@ -119,6 +147,11 @@ class SpringLiteApplicationTest {
         @Bean
         BootRecordingAspect bootRecordingAspect() {
             return new BootRecordingAspect();
+        }
+
+        @Bean
+        WebServerFactory webServerFactory() {
+            return new TestWebServerFactory();
         }
     }
 
@@ -154,6 +187,11 @@ class SpringLiteApplicationTest {
         JsonMapper customJsonMapper() {
             return new JsonMapper();
         }
+
+        @Bean
+        WebServerFactory webServerFactory() {
+            return new TestWebServerFactory();
+        }
     }
 
     @SpringLiteBootApplication
@@ -161,6 +199,11 @@ class SpringLiteApplicationTest {
         @Bean
         DataSource dataSource() {
             return new DriverManagerDataSource("jdbc:h2:mem:boot-test;DB_CLOSE_DELAY=-1", "sa", "");
+        }
+
+        @Bean
+        WebServerFactory webServerFactory() {
+            return new TestWebServerFactory();
         }
     }
 
@@ -183,6 +226,11 @@ class SpringLiteApplicationTest {
         Long missingClassConditionBean() {
             return 1L;
         }
+
+        @Bean
+        WebServerFactory webServerFactory() {
+            return new TestWebServerFactory();
+        }
     }
 
     @SpringLiteBootApplication
@@ -190,6 +238,19 @@ class SpringLiteApplicationTest {
         @Bean
         WebServer webServer() {
             return new RecordingWebServer(9191);
+        }
+    }
+
+    @SpringLiteBootApplication
+    static class ProfileAwareApplication {
+        @Bean
+        ProfileAwareBean profileAwareBean(lite.spring.boot.support.ApplicationProperties properties) {
+            return new ProfileAwareBean(properties.get("test.feature.name", "missing"));
+        }
+
+        @Bean
+        WebServerFactory webServerFactory() {
+            return new TestWebServerFactory();
         }
     }
 
@@ -214,5 +275,59 @@ class SpringLiteApplicationTest {
         @Override
         public void close() {
         }
+    }
+
+    static final class TestWebServerFactory implements WebServerFactory {
+        @Override
+        public WebServer create(DispatcherServlet dispatcherServlet, int port) {
+            return new TestWebServer(port);
+        }
+    }
+
+    static final class TestWebServer implements WebServer {
+        private final int port;
+        private boolean started;
+
+        private TestWebServer(int port) {
+            this.port = port;
+        }
+
+        @Override
+        public void start() {
+            started = true;
+        }
+
+        @Override
+        public int port() {
+            return port;
+        }
+
+        @Override
+        public void close() {
+            started = false;
+        }
+
+        boolean started() {
+            return started;
+        }
+    }
+
+    static final class ProfileAwareBean {
+        private final String featureName;
+
+        private ProfileAwareBean(String featureName) {
+            this.featureName = featureName;
+        }
+
+        String featureName() {
+            return featureName;
+        }
+    }
+
+    private AnnotationConfigApplicationContext runWithRandomPort(Class<?> applicationClass, String... args) {
+        String[] commandLineArgs = new String[args.length + 1];
+        commandLineArgs[0] = "--server.port=0";
+        System.arraycopy(args, 0, commandLineArgs, 1, args.length);
+        return SpringLiteApplication.run(applicationClass, commandLineArgs);
     }
 }

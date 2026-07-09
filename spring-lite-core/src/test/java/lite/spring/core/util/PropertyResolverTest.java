@@ -3,6 +3,7 @@ package lite.spring.core.util;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 class PropertyResolverTest {
@@ -53,6 +54,20 @@ class PropertyResolverTest {
         } finally {
             restoreProperty("spring.profiles.active", previousProfiles);
         }
+    }
+
+    @Test
+    void appliesRuntimeOverridesWithoutLeakingToSubsequentLoads() {
+        PropertyResolver overridden = PropertyResolver.withOverrides(
+            Map.of("spring.profiles.active", "local", "app.name", "runtime-override"),
+            PropertyResolver::loadApplicationProperties
+        );
+
+        assertThat(overridden.get("app.name")).isEqualTo("runtime-override");
+        assertThat(overridden.get("app.feature.enabled")).isEqualTo("false");
+
+        PropertyResolver fresh = PropertyResolver.loadApplicationProperties();
+        assertThat(fresh.get("app.name")).isEqualTo("spring-lite");
     }
 
     private void restoreProperty(String key, String value) {
