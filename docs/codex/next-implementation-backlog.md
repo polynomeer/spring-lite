@@ -16,6 +16,14 @@
 - `@ExceptionHandler` 기반 웹 예외 처리
 - 기본 인프라 자동 등록을 포함한 `MiniSpringApplication`
 
+이미 완료된 확장 항목도 있다.
+
+- 조건부 자동 설정 기본 모델
+- 자동 설정 모듈 분리
+- 서버 추상화
+- `ResponseEntity` 기반 응답 모델
+- `@Aspect` 스타일 최소 구현
+
 ## Priority 1. Boot 완성도
 
 ### 1. 조건부 자동 설정
@@ -65,23 +73,7 @@
 
 ## Priority 2. AOP 재현도
 
-### 4. `@Aspect` 스타일 최소 구현
-
-지금 AOP는 인프라는 있지만 선언적 Aspect 모델은 없다. 학습용 프레임워크 가치 측면에서 우선순위가 높다.
-
-구현 후보:
-
-- `@Aspect`
-- `@Around`
-- `@Before`
-- `@AfterReturning`
-
-완료 기준:
-
-- 별도 Aspect 클래스로 공통 관심사를 선언할 수 있다.
-- 메서드 이름 또는 애노테이션 기반 최소 포인트컷이 동작한다.
-
-### 5. Advisor 정렬과 체인 고도화
+### 4. Advisor 정렬과 체인 고도화
 
 트랜잭션, 로깅, 측정이 함께 적용될 때 실행 순서가 명확해야 한다.
 
@@ -284,18 +276,211 @@
 
 - 설정값이 실제 애플리케이션 동작을 바꾸는 예제가 존재한다.
 
-## 추천 구현 순서
+## 현재 이후 추천 구현 순서
 
 현 시점에서 가장 효율적인 순서는 아래다.
 
-1. 조건부 자동 설정
-2. 서버 추상화
-3. `ResponseEntity`와 웹 응답 모델 확장
-4. `@Aspect` 스타일 최소 구현
-5. Bean scope 확장
-6. 트랜잭션 전파 정책
-7. `spring-lite-test` 실체화
-8. 예제 앱 JDBC 전환
+1. 요청 매핑 조건 확장
+2. 검증 계층 추가
+3. Bean scope 확장
+4. 이벤트 모델
+5. 트랜잭션 전파 정책
+6. `spring-lite-test` 실체화
+7. 예제 앱 JDBC 전환
+8. 설정 프로파일 지원
+
+## 추가 확장 후보
+
+아래 항목들은 현재 백로그 이후에 고려할 만한 중장기 확장 목록이다.
+
+## Priority 8. Configuration And Environment
+
+### 19. 설정 프로파일 지원
+
+Spring의 `application-{profile}.yml`과 유사한 개념이 들어가면 Boot 계층 설명력이 크게 올라간다.
+
+구현 후보:
+
+- active profile 지정
+- profile별 설정 파일 병합
+- 기본값과 override 우선순위
+
+완료 기준:
+
+- 개발/테스트/로컬 설정을 분리해서 애플리케이션 동작을 바꿀 수 있다.
+
+### 20. 타입 변환 서비스 분리
+
+현재 타입 변환은 웹과 `@Value`에서 각각 단순하게 처리된다. 공통 `ConversionService`로 끌어올리면 구조가 좋아진다.
+
+구현 후보:
+
+- 문자열 -> 숫자/불리언/enum 변환
+- 커스텀 converter 등록 지점
+- 웹 바인딩과 설정 주입 공통 사용
+
+완료 기준:
+
+- 타입 변환 규칙이 한 곳으로 수렴한다.
+
+## Priority 9. Web MVC 고도화
+
+### 21. `@ControllerAdvice`와 전역 예외 처리
+
+현재 예외 처리는 컨트롤러 내부 `@ExceptionHandler` 위주다. 전역 처리기가 있으면 실제 Spring MVC와 더 닮아진다.
+
+구현 후보:
+
+- `@ControllerAdvice`
+- 전역 `@ExceptionHandler`
+- 예외 resolver 우선순위
+
+완료 기준:
+
+- 여러 컨트롤러에 공통 에러 응답 정책을 적용할 수 있다.
+
+### 22. 콘텐츠 협상과 메시지 변환기 추상화
+
+현재는 JSON 고정이다. 메시지 변환기 추상화를 도입하면 MVC 구조가 더 Spring답게 변한다.
+
+구현 후보:
+
+- `HttpMessageConverter`
+- JSON converter 분리
+- `text/plain` 또는 `application/json` 최소 협상
+
+완료 기준:
+
+- 반환 타입과 `Content-Type` 처리 계층이 분리된다.
+
+### 23. 정적 리소스 서빙
+
+내장 서버와 MVC가 있는 만큼 정적 파일 제공도 좋은 학습 포인트다.
+
+구현 후보:
+
+- `/static/**` 클래스패스 리소스 매핑
+- 기본 캐시 헤더
+
+완료 기준:
+
+- HTML/CSS/JS 파일을 간단히 서비스할 수 있다.
+
+## Priority 10. Container And Extension Model
+
+### 24. `FactoryBean` 유사 모델
+
+Spring에서 "Bean 자체"와 "Bean을 만들어내는 팩토리"를 구분하는 개념은 중요하다.
+
+구현 후보:
+
+- 팩토리 객체 계약
+- 팩토리 결과물과 팩토리 자신 조회 구분
+
+완료 기준:
+
+- 인프라성 Bean 생성 패턴을 일반화할 수 있다.
+
+### 25. Aware 인터페이스 최소 지원
+
+컨테이너 확장 학습을 위해 `ApplicationContextAware` 같은 콜백 모델은 의미가 있다.
+
+구현 후보:
+
+- `ApplicationContextAware`
+- `BeanNameAware`
+
+완료 기준:
+
+- 특정 Bean이 컨테이너 메타정보를 안전하게 받을 수 있다.
+
+## Priority 11. Transactions And Data
+
+### 26. 선언적 읽기 전용 트랜잭션
+
+트랜잭션 속성 모델의 첫 확장으로 `readOnly`는 비교적 단순하고 설명 가치가 높다.
+
+구현 후보:
+
+- `@Transactional(readOnly = true)`
+- JDBC connection 힌트 반영 여부 검토
+
+완료 기준:
+
+- 읽기 전용 서비스 메서드의 정책이 애노테이션에 드러난다.
+
+### 27. 간단한 repository 추상화
+
+JDBC 위에 한 단계 더 올려 학습용 data abstraction을 만들 수 있다.
+
+구현 후보:
+
+- CRUD repository 인터페이스
+- entity row mapping 헬퍼
+
+완료 기준:
+
+- 반복적인 JDBC repository 코드가 줄어든다.
+
+## Priority 12. Observability And Operations
+
+### 28. 요청 로깅 / 실행 시간 측정
+
+프레임워크를 학습할 때 observability는 좋은 공통 관심사 예제다.
+
+구현 후보:
+
+- 요청 로그 interceptor
+- 메서드 실행 시간 측정 aspect
+- 간단한 metrics registry
+
+완료 기준:
+
+- 웹 요청과 서비스 호출의 실행 흐름을 눈으로 확인할 수 있다.
+
+### 29. 헬스체크와 정보 엔드포인트
+
+Boot 계층 설명용으로 actuator-lite 성격의 기능을 넣을 수 있다.
+
+구현 후보:
+
+- `/actuator/health`
+- `/actuator/info`
+- 등록된 Bean 수나 서버 포트 노출
+
+완료 기준:
+
+- 러닝 애플리케이션의 상태를 최소 수준으로 확인할 수 있다.
+
+## Priority 13. Developer Experience
+
+### 30. 코드 생성 없는 API 문서화
+
+웹 애노테이션 메타데이터를 읽어서 문서를 뽑아내면 학습 프로젝트로서 만족도가 높다.
+
+구현 후보:
+
+- 엔드포인트 목록 출력
+- 요청/응답 타입 요약
+- 간단한 OpenAPI-lite JSON
+
+완료 기준:
+
+- 현재 등록된 REST API를 코드 외부에서도 확인할 수 있다.
+
+### 31. CLI 진단 도구
+
+컨테이너 상태를 점검하는 개발 도구가 있으면 디버깅이 쉬워진다.
+
+구현 후보:
+
+- 등록 Bean 목록 출력
+- 의존성 그래프 출력
+- 조건부 자동 설정 평가 결과 출력
+
+완료 기준:
+
+- 실행 없이도 컨테이너 구성을 진단할 수 있다.
 
 ## 커밋 단위 권장안
 

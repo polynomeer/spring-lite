@@ -33,7 +33,7 @@ Spring과 `spring-lite`는 둘 다 아래 질문에 답하는 구조다.
 | --- | --- | --- |
 | 컨테이너 계층 | `BeanFactory` + `ApplicationContext` + 다양한 post-processor | 단일 `AnnotationConfigApplicationContext` 중심 |
 | Bean 메타데이터 | 매우 풍부한 `BeanDefinition`, scope, parent, aliases, merged definition | 단순 `BeanDefinition` |
-| AOP | `Advice`, `Advisor`, `Pointcut`, auto proxy creator, `@AspectJ` | `MethodInterceptor` 체인과 `ProxyFactory` |
+| AOP | `Advice`, `Advisor`, `Pointcut`, auto proxy creator, `@AspectJ` | `MethodInterceptor`, `ProxyFactory`, 최소 `@Aspect` 모델 |
 | MVC | `DispatcherServlet` + 전략 인터페이스 다수 + message converter + validation | `DispatcherServlet` + mapping/adapter/argument/return handler 최소 버전 |
 | 트랜잭션 | `PlatformTransactionManager`, propagation, rollback rules, synchronization | 단일 `TransactionManager`, 단순 begin/commit/rollback |
 | Boot 성격 | 대규모 조건부 자동 설정과 환경 추상화 | 소수의 조건부 자동 설정과 단순 서버 부트스트랩 |
@@ -218,11 +218,12 @@ Spring 공식 문서는 AOP를 concepts, capabilities, proxies, `@AspectJ` suppo
 - auto-proxy creator
 - declarative aspect model
 
-`spring-lite`는 현재 이 중 맨 안쪽 프록시/인터셉터 계층만 구현했다.
+`spring-lite`는 현재 프록시/인터셉터 계층과 최소 `@Aspect` 선언 모델까지 구현했다.
 
 - [MethodInterceptor](../../spring-lite-aop/src/main/java/lite/spring/aop/MethodInterceptor.java)
 - [MethodInvocation](../../spring-lite-aop/src/main/java/lite/spring/aop/MethodInvocation.java)
 - [ProxyFactory](../../spring-lite-aop/src/main/java/lite/spring/aop/support/ProxyFactory.java)
+- [AspectBeanPostProcessor](../../spring-lite-aop/src/main/java/lite/spring/aop/support/AspectBeanPostProcessor.java)
 
 ### 프록시 방식 비교
 
@@ -233,13 +234,13 @@ Spring 공식 문서는 proxying mechanisms를 별도 항목으로 둔다. `spri
 | JDK proxy | 지원 | 지원 |
 | class-based proxy | 지원 | 지원 |
 | `Advisor` 체인 | 지원 | 미지원 |
-| `@Aspect` | 지원 | 미지원 |
+| `@Aspect` | 지원 | 최소 지원 |
 | pointcut 표현식 | 지원 | 미지원 |
 | ordered advice | 지원 | 미지원 |
 
 ### 현재 해석
 
-`spring-lite`의 AOP는 "프록시가 공통 관심사를 메서드 호출 전후에 삽입한다"는 핵심 원리를 보여주기에는 충분하다. 하지만 실제 Spring AOP를 닮았다고 보기 위해서는 `Advisor`, pointcut 매칭, auto-proxy creator, `@Aspect` 선언 모델이 추가로 필요하다.
+`spring-lite`의 AOP는 이제 프록시 기반 메서드 인터셉션과 별도 Aspect 클래스를 이용한 최소 선언 모델까지 보여준다. 하지만 실제 Spring AOP를 닮았다고 보기 위해서는 `Advisor`, pointcut 표현식, ordered advice, auto-proxy creator의 고도화가 추가로 필요하다.
 
 ## 9. MVC 아키텍처 비교
 
@@ -404,7 +405,7 @@ Spring 공식 문서는 `TestContext Framework`, `MockMvc`, web mocks, context c
 
 ### 아직 의도적으로 단순한 부분
 
-- `Advisor`, pointcut, `@Aspect`
+- `Advisor`, pointcut, ordered advice
 - `@Primary`, 컬렉션 주입, optional/lazy dependency
 - validation, conversion service, message converter 확장성
 - propagation, rollback rule, transaction synchronization
@@ -422,7 +423,7 @@ Spring 공식 문서는 `TestContext Framework`, `MockMvc`, web mocks, context c
 
 이 프로젝트를 더 Spring답게 만들려면 다음 순서가 자연스럽다.
 
-1. `Advisor` / pointcut / `@Aspect` 도입
+1. `Advisor` / pointcut / ordered advice 도입
 2. scope / event / validation 확장
 3. transaction propagation 과 rollback rules 추가
 4. `spring-lite-test` 실체화

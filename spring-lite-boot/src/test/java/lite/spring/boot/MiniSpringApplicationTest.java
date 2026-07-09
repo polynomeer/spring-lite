@@ -3,6 +3,14 @@ package lite.spring.boot;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import javax.sql.DataSource;
+import java.util.ArrayList;
+import java.util.List;
+import lite.spring.aop.MethodInvocation;
+import lite.spring.aop.annotation.AfterReturning;
+import lite.spring.aop.annotation.Around;
+import lite.spring.aop.annotation.Aspect;
+import lite.spring.aop.annotation.Before;
+import lite.spring.aop.support.AspectBeanPostProcessor;
 import lite.spring.boot.annotation.MiniSpringBootApplication;
 import lite.spring.context.support.AnnotationConfigApplicationContext;
 import lite.spring.core.annotation.Bean;
@@ -26,8 +34,22 @@ class MiniSpringApplicationTest {
             assertThat(context.containsBeanOfType(lite.spring.tx.support.TransactionManager.class)).isTrue();
             assertThat(context.containsBeanOfType(lite.spring.tx.support.TransactionalBeanPostProcessor.class)).isTrue();
             assertThat(context.containsBeanOfType(DispatcherServlet.class)).isTrue();
+            assertThat(context.containsBeanOfType(AspectBeanPostProcessor.class)).isTrue();
             assertThat(context.containsBeanOfType(WebServerFactory.class)).isTrue();
             assertThat(context.containsBeanOfType(WebServer.class)).isTrue();
+        }
+    }
+
+    @Test
+    void appliesAspectStyleAdviceViaBootInfrastructure() {
+        BootRecordingAspect.events.clear();
+        try (AnnotationConfigApplicationContext context = MiniSpringApplication.run(AspectApplication.class)) {
+            AspectSampleService service = context.getBean(AspectSampleService.class);
+
+            String result = service.call("ok");
+
+            assertThat(result).isEqualTo("ok!");
+            assertThat(BootRecordingAspect.events).containsExactly("before:call", "after:ok");
         }
     }
 
@@ -84,6 +106,45 @@ class MiniSpringApplicationTest {
         @Transactional
         public String call(String input) {
             return input;
+        }
+    }
+
+    @MiniSpringBootApplication
+    static class AspectApplication {
+        @Bean
+        AspectSampleService aspectSampleService() {
+            return new AspectSampleService();
+        }
+
+        @Bean
+        BootRecordingAspect bootRecordingAspect() {
+            return new BootRecordingAspect();
+        }
+    }
+
+    static class AspectSampleService {
+        public String call(String value) {
+            return value;
+        }
+    }
+
+    @Aspect
+    static class BootRecordingAspect {
+        private static final List<String> events = new ArrayList<>();
+
+        @Before(methodName = "call")
+        void before(MethodInvocation invocation) {
+            events.add("before:" + invocation.getMethod().getName());
+        }
+
+        @Around(methodName = "call")
+        Object around(MethodInvocation invocation) throws Throwable {
+            return invocation.proceed() + "!";
+        }
+
+        @AfterReturning(methodName = "call")
+        void afterReturning(String returnValue) {
+            events.add("after:" + returnValue);
         }
     }
 

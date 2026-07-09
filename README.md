@@ -21,6 +21,7 @@
 - `@Qualifier`, `@Value`, 프로퍼티 해석
 - 파일 시스템 및 JAR 기반 클래스패스 스캔
 - JDK Dynamic Proxy 및 클래스 기반 프록시 AOP 인프라
+- `@Aspect`, `@Before`, `@Around`, `@AfterReturning` 최소 버전
 - `@Transactional` 기반 메서드 인터셉션
 - `JdbcTemplate`, `RowMapper`, `DriverManagerDataSource`
 - H2 기반 JDBC/트랜잭션 통합 테스트
