@@ -6,6 +6,7 @@ IoC 컨테이너의 중심 모듈이다. Bean 등록, 조회, 생성, 생명주�
 
 - `lite.spring.context`
 - `lite.spring.context.bean`
+- `lite.spring.context.event`
 - `lite.spring.context.factory`
 - `lite.spring.context.support`
 - `lite.spring.context.scan`
@@ -16,4 +17,6 @@ IoC 컨테이너의 중심 모듈이다. Bean 등록, 조회, 생성, 생명주�
 - `BeanDefinition`
 - `AnnotationConfigApplicationContext`
 - `ClassPathScanner`
+- singleton / prototype scope
+- `ApplicationListener`, `ContextRefreshedEvent`, `ContextClosedEvent`
 - Bean lifecycle, `BeanPostProcessor`, JAR 스캔

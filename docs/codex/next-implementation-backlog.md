@@ -25,6 +25,7 @@
 - `@Aspect` 스타일 최소 구현
 - 요청 매핑 조건 확장
 - 최소 검증 계층 추가
+- `@Scope("prototype")`와 기본 컨텍스트 이벤트
 
 ## Priority 1. Boot 완성도
 
@@ -107,19 +108,6 @@
 
 ## Priority 4. Container 심화
 
-### 9. Bean scope 확장
-
-현재는 사실상 singleton 중심이다. scope 개념이 있어야 컨테이너 설명력이 올라간다.
-
-구현 후보:
-
-- `@Scope("prototype")`
-- scope별 생성 전략 분리
-
-완료 기준:
-
-- singleton과 prototype의 생성/조회 차이가 실제 동작으로 드러난다.
-
 ### 10. 순환 의존성 정책 명시
 
 현재 구조에서 순환 참조는 실패하거나 우연히 통과할 수 있다. 정책을 명확히 해야 한다.
@@ -133,20 +121,6 @@
 완료 기준:
 
 - 순환 의존 시 실패 이유와 경로를 한 번에 확인할 수 있다.
-
-### 11. 이벤트 모델
-
-컨테이너 내부 확장성과 Spring 학습 가치를 위해 이벤트 모델이 유용하다.
-
-구현 후보:
-
-- `ApplicationEvent`
-- `ApplicationListener`
-- `ContextRefreshedEvent`
-
-완료 기준:
-
-- 컨텍스트 생명주기 이벤트를 구독할 수 있다.
 
 ## Priority 5. JDBC / Transaction 고도화
 

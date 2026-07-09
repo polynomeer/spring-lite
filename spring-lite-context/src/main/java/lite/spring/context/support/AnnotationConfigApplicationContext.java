@@ -4,6 +4,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -16,6 +18,9 @@ import java.util.stream.Collectors;
 import lite.spring.context.ApplicationContext;
 import lite.spring.context.bean.BeanDefinition;
 import lite.spring.context.bean.BeanDefinition.Kind;
+import lite.spring.context.event.ApplicationListener;
+import lite.spring.context.event.ContextClosedEvent;
+import lite.spring.context.event.ContextRefreshedEvent;
 import lite.spring.context.factory.BeanPostProcessor;
 import lite.spring.context.factory.ConfigurableApplicationContext;
 import lite.spring.context.scan.ClassPathScanner;
@@ -31,6 +36,7 @@ import lite.spring.core.annotation.Configuration;
 import lite.spring.core.annotation.PostConstruct;
 import lite.spring.core.annotation.PreDestroy;
 import lite.spring.core.annotation.Qualifier;
+import lite.spring.core.annotation.Scope;
 import lite.spring.core.annotation.Value;
 import lite.spring.core.exception.BeansException;
 import lite.spring.core.exception.NoSuchBeanException;
@@ -47,6 +53,7 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
     private final ClassPathScanner classPathScanner = new ClassPathScanner();
     private final PropertyResolver propertyResolver = PropertyResolver.loadFromClasspath("application.yml");
     private boolean refreshed;
+    private boolean closed;
 
     public AnnotationConfigApplicationContext() {
     }
@@ -118,6 +125,7 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
         instantiateConfigurationBeans();
         instantiateBeanPostProcessors();
         instantiateRemainingSingletons();
+        publishEvent(new ContextRefreshedEvent(this));
     }
 
     @Override
@@ -150,9 +158,6 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
         for (String beanName : beanDefinitions.keySet()) {
             BeanDefinition beanDefinition = beanDefinitions.get(beanName);
             if (type.isAssignableFrom(beanDefinition.beanType())) {
-                if (beansInCreation.contains(beanName)) {
-                    continue;
-                }
                 result.put(beanName, type.cast(getBean(beanName)));
             }
         }
@@ -171,9 +176,6 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
             if (!entry.getValue().beanType().isAnnotationPresent(annotationType)) {
                 continue;
             }
-            if (beansInCreation.contains(entry.getKey())) {
-                continue;
-            }
             result.put(entry.getKey(), getBean(entry.getKey()));
         }
         for (Map.Entry<String, Object> entry : singletons.entrySet()) {
@@ -185,7 +187,17 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
     }
 
     @Override
+    public void publishEvent(Object event) {
+        getBeansOfType(ApplicationListener.class).values().forEach(listener -> notifyListener(listener, event));
+    }
+
+    @Override
     public void close() {
+        if (closed) {
+            return;
+        }
+        closed = true;
+        publishEvent(new ContextClosedEvent(this));
         List<Runnable> callbacks = new ArrayList<>(destroyCallbacks.values());
         for (int index = callbacks.size() - 1; index >= 0; index--) {
             callbacks.get(index).run();
@@ -219,6 +231,7 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
             BeanNameGenerator.generateBeanName(candidate),
             candidate,
             kind,
+            isSingleton(candidate),
             extractQualifier(candidate)
         ));
         if (kind == Kind.CONFIGURATION) {
@@ -253,7 +266,11 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
     }
 
     private void instantiateRemainingSingletons() {
-        new ArrayList<>(beanDefinitions.keySet()).forEach(this::getBean);
+        beanDefinitions.values().stream()
+            .filter(BeanDefinition::singleton)
+            .map(BeanDefinition::name)
+            .collect(Collectors.toList())
+            .forEach(this::getBean);
     }
 
     private Object createBean(String beanName, BeanDefinition beanDefinition) {
@@ -270,7 +287,9 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
             };
 
             Object initialized = initializeBean(beanName, instance);
-            singletons.put(beanName, initialized);
+            if (beanDefinition.singleton()) {
+                singletons.put(beanName, initialized);
+            }
             if (initialized instanceof BeanPostProcessor beanPostProcessor && !beanPostProcessors.contains(beanPostProcessor)) {
                 beanPostProcessors.add(beanPostProcessor);
             }
@@ -366,6 +385,7 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
                 method.getReturnType(),
                 configurationClass,
                 method,
+                isSingleton(method),
                 extractQualifier(method)
             ));
         }
@@ -454,6 +474,11 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
         return qualifier == null || qualifier.value().isBlank() ? null : qualifier.value();
     }
 
+    private boolean isSingleton(AnnotatedElement element) {
+        Scope scope = element.getAnnotation(Scope.class);
+        return scope == null || !"prototype".equals(scope.value());
+    }
+
     private Object initializeBean(String beanName, Object bean) {
         injectFieldValues(bean);
         Object current = bean;
@@ -498,6 +523,33 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
             return;
         }
         destroyCallbacks.put(beanName, () -> destroyMethods.forEach(method -> ReflectionUtils.invoke(method, bean, new Object[0])));
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private void notifyListener(ApplicationListener listener, Object event) {
+        if (!supportsEvent(listener.getClass(), event)) {
+            return;
+        }
+        listener.onApplicationEvent(event);
+    }
+
+    private boolean supportsEvent(Class<?> listenerType, Object event) {
+        for (Type type : listenerType.getGenericInterfaces()) {
+            if (!(type instanceof ParameterizedType parameterizedType)) {
+                continue;
+            }
+            if (!(parameterizedType.getRawType() instanceof Class<?> rawType)) {
+                continue;
+            }
+            if (!ApplicationListener.class.equals(rawType)) {
+                continue;
+            }
+            Type argumentType = parameterizedType.getActualTypeArguments()[0];
+            if (argumentType instanceof Class<?> eventType) {
+                return eventType.isAssignableFrom(event.getClass());
+            }
+        }
+        return true;
     }
 
     private Object convertValue(String value, Class<?> targetType) {

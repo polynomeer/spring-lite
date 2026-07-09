@@ -4,14 +4,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lite.spring.context.support.AnnotationConfigApplicationContext;
+import lite.spring.context.event.ApplicationListener;
+import lite.spring.context.event.ContextClosedEvent;
+import lite.spring.context.event.ContextRefreshedEvent;
 import lite.spring.core.annotation.Bean;
 import lite.spring.core.annotation.ComponentScan;
 import lite.spring.core.annotation.Configuration;
 import lite.spring.core.annotation.PostConstruct;
 import lite.spring.core.annotation.PreDestroy;
 import lite.spring.core.annotation.Qualifier;
+import lite.spring.core.annotation.Scope;
 import lite.spring.core.annotation.Value;
 import lite.spring.core.exception.BeansException;
 import lite.spring.core.exception.NoSuchBeanException;
@@ -143,6 +148,39 @@ class AnnotationConfigApplicationContextTest {
 
             assertThat(greetingService.greet()).isEqualTo("hello from scan");
         }
+    }
+
+    @Test
+    void createsPrototypeBeansOnEachLookup() {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(PrototypeConfig.class)) {
+            PrototypeBean first = context.getBean(PrototypeBean.class);
+            PrototypeBean second = context.getBean(PrototypeBean.class);
+
+            assertThat(first).isNotSameAs(second);
+        }
+    }
+
+    @Test
+    void keepsSingletonBeansCachedByDefault() {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(PrototypeConfig.class)) {
+            SingletonBean first = context.getBean(SingletonBean.class);
+            SingletonBean second = context.getBean(SingletonBean.class);
+
+            assertThat(first).isSameAs(second);
+        }
+    }
+
+    @Test
+    void publishesRefreshAndCloseEventsToListeners() {
+        EventCollectorListener listener;
+
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(EventConfig.class)) {
+            listener = context.getBean(EventCollectorListener.class);
+
+            assertThat(listener.events()).containsExactly("refreshed");
+        }
+
+        assertThat(listener.events()).containsExactly("refreshed", "closed");
     }
 
     @Configuration
@@ -291,6 +329,28 @@ class AnnotationConfigApplicationContextTest {
     static class ScannedConfig {
     }
 
+    @Configuration
+    static class PrototypeConfig {
+        @Bean
+        @Scope("prototype")
+        PrototypeBean prototypeBean() {
+            return new PrototypeBean();
+        }
+
+        @Bean
+        SingletonBean singletonBean() {
+            return new SingletonBean();
+        }
+    }
+
+    @Configuration
+    static class EventConfig {
+        @Bean
+        EventCollectorListener eventCollectorListener() {
+            return new EventCollectorListener();
+        }
+    }
+
     static class GreetingService {
         private final GreetingFormatter greetingFormatter;
 
@@ -420,5 +480,29 @@ class AnnotationConfigApplicationContextTest {
     }
 
     static class MissingBean {
+    }
+
+    static class PrototypeBean {
+    }
+
+    static class SingletonBean {
+    }
+
+    static class EventCollectorListener implements ApplicationListener<Object> {
+        private final CopyOnWriteArrayList<String> events = new CopyOnWriteArrayList<>();
+
+        @Override
+        public void onApplicationEvent(Object event) {
+            if (event instanceof ContextRefreshedEvent) {
+                events.add("refreshed");
+            }
+            if (event instanceof ContextClosedEvent) {
+                events.add("closed");
+            }
+        }
+
+        java.util.List<String> events() {
+            return events;
+        }
     }
 }

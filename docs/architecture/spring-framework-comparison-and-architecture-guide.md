@@ -57,7 +57,7 @@ flowchart TD
 | 역할 | Spring | `spring-lite` |
 | --- | --- | --- |
 | 컨텍스트 진입점 | `AbstractApplicationContext`, `AnnotationConfigApplicationContext` | [AnnotationConfigApplicationContext](../../spring-lite-context/src/main/java/lite/spring/context/support/AnnotationConfigApplicationContext.java) |
-| Bean 생성 저장소 | `DefaultListableBeanFactory` | [BeanDefinition](../../spring-lite-context/src/main/java/lite/spring/context/bean/BeanDefinition.java) + 내부 singleton map |
+| Bean 생성 저장소 | `DefaultListableBeanFactory` | [BeanDefinition](../../spring-lite-context/src/main/java/lite/spring/context/bean/BeanDefinition.java) + singleton/prototype 생성 전략 |
 | 컴포넌트 스캔 | classpath scanning infrastructure | [ClassPathScanner](../../spring-lite-context/src/main/java/lite/spring/context/scan/ClassPathScanner.java) |
 | Bean 후처리 | `BeanPostProcessor` 계열 | [BeanPostProcessor](../../spring-lite-context/src/main/java/lite/spring/context/factory/BeanPostProcessor.java) |
 | MVC front controller | `DispatcherServlet` | [DispatcherServlet](../../spring-lite-web/src/main/java/lite/spring/web/support/DispatcherServlet.java) |
@@ -87,7 +87,7 @@ Spring 공식 문서는 IoC 컨테이너를 `BeanFactory`와 `ApplicationContext
 
 `spring-lite`는 위 구조를 훨씬 얇게 줄였다.
 
-- Bean registry, singleton cache, lifecycle orchestration을 [AnnotationConfigApplicationContext](../../spring-lite-context/src/main/java/lite/spring/context/support/AnnotationConfigApplicationContext.java)에 모았다.
+- Bean registry, singleton/prototype 생성 전략, lifecycle orchestration, event publication을 [AnnotationConfigApplicationContext](../../spring-lite-context/src/main/java/lite/spring/context/support/AnnotationConfigApplicationContext.java)에 모았다.
 - 실제 객체 생성 메타데이터는 [BeanDefinition](../../spring-lite-context/src/main/java/lite/spring/context/bean/BeanDefinition.java)에 둔다.
 - 리프레시 흐름은 `instantiateBeanPostProcessors()`, `instantiateConfigurationBeans()`, `instantiateRemainingSingletons()` 정도로 축약돼 있다.
 
@@ -97,7 +97,7 @@ Spring 공식 문서는 IoC 컨테이너를 `BeanFactory`와 `ApplicationContext
 | --- | --- | --- | --- |
 | 컨텍스트와 팩토리 분리 | 명확 | 거의 합쳐짐 | 학습은 쉬워지지만 확장 지점은 적다 |
 | 이벤트 인프라 | 내장 | 아직 없음 | 생명주기 확장성이 줄어든다 |
-| scope 모델 | 다양함 | singleton 중심 | 생성 전략 이해는 쉽지만 실제 Spring 재현도는 낮다 |
+| scope 모델 | 다양함 | singleton + prototype | 최소 scope 차이는 드러나지만 request/session/custom scope는 아직 없다 |
 | Bean metadata | 풍부함 | 최소 필드만 보유 | 디버깅은 쉬우나 기능 확장은 제한적 |
 
 ## 4. Bean Definition 과 생성 모델 비교
@@ -204,6 +204,21 @@ Spring 공식 문서는 Bean lifecycle과 container extension points를 독립 �
 | `BeanPostProcessor#after` | 있음 | 있음 |
 | destroy callback | 있음 | `@PreDestroy` + `AutoCloseable` |
 | `FactoryBean`, aware interfaces | 폭넓음 | 미지원 |
+
+### 7.1 scope 와 이벤트 모델
+
+Spring은 `BeanFactory` 수준의 scope와 `ApplicationEventPublisher` 기반 이벤트 시스템을 폭넓게 제공한다. `spring-lite`는 이 축을 최소 범위로 반영했다.
+
+- `@Scope("prototype")`로 bean definition 단계에서 singleton 여부를 결정한다.
+- `ApplicationListener<E>`를 구현한 Bean은 refresh/close 시점의 이벤트를 구독할 수 있다.
+- 현재 제공 이벤트는 `ContextRefreshedEvent`, `ContextClosedEvent`다.
+
+관련 코드:
+
+- [Scope](../../spring-lite-core/src/main/java/lite/spring/core/annotation/Scope.java)
+- [ApplicationListener](../../spring-lite-context/src/main/java/lite/spring/context/event/ApplicationListener.java)
+- [ContextRefreshedEvent](../../spring-lite-context/src/main/java/lite/spring/context/event/ContextRefreshedEvent.java)
+- [ContextClosedEvent](../../spring-lite-context/src/main/java/lite/spring/context/event/ContextClosedEvent.java)
 
 ## 8. AOP 비교
 

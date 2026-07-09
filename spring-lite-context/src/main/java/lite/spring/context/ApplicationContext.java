@@ -13,6 +13,8 @@ public interface ApplicationContext extends AutoCloseable {
 
     boolean containsBeanOfType(Class<?> type);
 
+    void publishEvent(Object event);
+
     @Override
     void close();
 }

@@ -37,11 +37,26 @@ public final class BeanDefinition {
     }
 
     public static BeanDefinition component(String name, Class<?> beanType, Kind kind, String qualifier) {
-        return new BeanDefinition(name, beanType, kind, null, null, true, qualifier);
+        return component(name, beanType, kind, true, qualifier);
+    }
+
+    public static BeanDefinition component(String name, Class<?> beanType, Kind kind, boolean singleton, String qualifier) {
+        return new BeanDefinition(name, beanType, kind, null, null, singleton, qualifier);
     }
 
     public static BeanDefinition factoryMethod(String name, Class<?> beanType, Class<?> configurationClass, Method factoryMethod, String qualifier) {
-        return new BeanDefinition(name, beanType, Kind.FACTORY_METHOD, configurationClass, factoryMethod, true, qualifier);
+        return factoryMethod(name, beanType, configurationClass, factoryMethod, true, qualifier);
+    }
+
+    public static BeanDefinition factoryMethod(
+        String name,
+        Class<?> beanType,
+        Class<?> configurationClass,
+        Method factoryMethod,
+        boolean singleton,
+        String qualifier
+    ) {
+        return new BeanDefinition(name, beanType, Kind.FACTORY_METHOD, configurationClass, factoryMethod, singleton, qualifier);
     }
 
     public String name() {

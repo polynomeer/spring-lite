@@ -19,7 +19,9 @@
 - `@PostConstruct` / `@PreDestroy`
 - `BeanPostProcessor`
 - `@Qualifier`, `@Value`, 프로퍼티 해석
+- `@Scope("prototype")`
 - 파일 시스템 및 JAR 기반 클래스패스 스캔
+- `ApplicationListener`, `ContextRefreshedEvent`, `ContextClosedEvent`
 - JDK Dynamic Proxy 및 클래스 기반 프록시 AOP 인프라
 - `@Aspect`, `@Before`, `@Around`, `@AfterReturning` 최소 버전
 - `@Transactional` 기반 메서드 인터셉션
@@ -37,7 +39,7 @@
 ## 모듈 구성
 
 - `spring-lite-core`: 공통 유틸리티, 메타데이터, 리플렉션 도우미
-- `spring-lite-context`: BeanDefinition, BeanFactory, ApplicationContext, 스캐닝, 라이프사이클
+- `spring-lite-context`: BeanDefinition, ApplicationContext, scope, 이벤트, 스캐닝, 라이프사이클
 - `spring-lite-aop`: `MethodInterceptor`, `MethodInvocation`, `ProxyFactory`
 - `spring-lite-web`: DispatcherServlet, HandlerMapping, ArgumentResolver, JSON 응답
 - `spring-lite-jdbc`: JdbcTemplate, RowMapper, DataSource 유틸리티
@@ -66,6 +68,7 @@
 
 - Boot 자동 설정은 조건부 등록과 모듈 분리까지 반영됐지만, 더 다양한 조건과 조립 전략은 남아 있다.
 - 웹 계층은 JSON API 중심이며 검증은 최소 애노테이션 세트 기준으로 제공된다.
+- 컨테이너는 singleton/prototype scope와 기본 컨텍스트 이벤트를 제공하지만, 더 고급 생명주기 훅은 남아 있다.
 - 트랜잭션은 단일 데이터소스와 단순 전파 정책을 기준으로 설계되어 있다.
 - 테스트 지원 모듈은 아직 실체화 전이며, 향후 별도 DSL과 헬퍼를 추가할 계획이다.
 
