@@ -62,14 +62,15 @@
 8. [Part 3 원고 초안](./docs/book/part-3-draft.md)
 9. [Part 4 원고 초안](./docs/book/part-4-draft.md)
 10. [Part 5 원고 초안](./docs/book/part-5-draft.md)
-11. [실제 Spring 비교 아키텍처 가이드](./docs/architecture/spring-framework-comparison-and-architecture-guide.md)
-12. [Post-MVP 구현 계획](./docs/codex/post-mvp-implementation-plan.md)
-13. [추가 구현 백로그](./docs/codex/next-implementation-backlog.md)
-14. [구현 로드맵](./docs/codex/implementation-roadmap.md)
-15. [작업 백로그](./docs/codex/task-backlog.md)
-16. [모듈 맵](./docs/codex/module-map.md)
-17. [개발 규칙](./docs/guides/development-conventions.md)
-18. [커밋 규칙](./docs/guides/commit-conventions.md)
+11. [Part 6 원고 초안](./docs/book/part-6-draft.md)
+12. [실제 Spring 비교 아키텍처 가이드](./docs/architecture/spring-framework-comparison-and-architecture-guide.md)
+13. [Post-MVP 구현 계획](./docs/codex/post-mvp-implementation-plan.md)
+14. [추가 구현 백로그](./docs/codex/next-implementation-backlog.md)
+15. [구현 로드맵](./docs/codex/implementation-roadmap.md)
+16. [작업 백로그](./docs/codex/task-backlog.md)
+17. [모듈 맵](./docs/codex/module-map.md)
+18. [개발 규칙](./docs/guides/development-conventions.md)
+19. [커밋 규칙](./docs/guides/commit-conventions.md)
 
 ## 현재 상태
 
