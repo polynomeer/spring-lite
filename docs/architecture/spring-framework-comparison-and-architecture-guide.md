@@ -248,14 +248,14 @@ Spring 공식 문서는 proxying mechanisms를 별도 항목으로 둔다. `spri
 | --- | --- | --- |
 | JDK proxy | 지원 | 지원 |
 | class-based proxy | 지원 | 지원 |
-| `Advisor` 체인 | 지원 | 미지원 |
+| `Advisor` 체인 | 지원 | interceptor chain + ordering 중심 최소 지원 |
 | `@Aspect` | 지원 | 최소 지원 |
 | pointcut 표현식 | 지원 | 미지원 |
-| ordered advice | 지원 | 미지원 |
+| ordered advice | 지원 | `@Order` 기반 최소 지원 |
 
 ### 현재 해석
 
-`spring-lite`의 AOP는 이제 프록시 기반 메서드 인터셉션과 별도 Aspect 클래스를 이용한 최소 선언 모델까지 보여준다. 하지만 실제 Spring AOP를 닮았다고 보기 위해서는 `Advisor`, pointcut 표현식, ordered advice, auto-proxy creator의 고도화가 추가로 필요하다.
+`spring-lite`의 AOP는 이제 프록시 기반 메서드 인터셉션, 별도 Aspect 클래스를 이용한 최소 선언 모델, `@Order` 기반 체인 정렬, 트랜잭션 인터셉터와의 프록시 합성까지 보여준다. 하지만 실제 Spring AOP를 닮았다고 보기 위해서는 더 풍부한 `Advisor`, pointcut 표현식, auto-proxy creator 고도화가 추가로 필요하다.
 
 ## 9. MVC 아키텍처 비교
 
@@ -299,8 +299,8 @@ flowchart LR
 | request conditions | 풍부 | path + method + `consumes`/`produces`/`headers`/`params` 최소 지원 |
 | message converter | 풍부, Jackson 등 | 자체 `JsonMapper` |
 | validation | Bean Validation 통합 | `@Valid`, `@NotNull`, `@Min`, `@Size` 최소 지원 |
-| controller advice | `@ControllerAdvice` 지원 | 미지원 |
-| exception mapping | 풍부 | `@ExceptionHandler` 최소 버전 |
+| controller advice | `@ControllerAdvice` 지원 | `@ControllerAdvice` + 로컬 `@ExceptionHandler` 최소 지원 |
+| exception mapping | 풍부 | 로컬/전역 `@ExceptionHandler` 최소 버전 |
 
 ## 10. 트랜잭션 비교
 
@@ -371,7 +371,7 @@ Spring JDBC 레퍼런스는 JDBC core classes, database connections, parameter h
 | --- | --- | --- |
 | conditional auto-config | 매우 풍부 | 일부 지원 |
 | externalized config | 풍부 | 단순 YAML property loading |
-| environment abstraction | 강력 | 최소 버전 |
+| environment abstraction | 강력 | profile-aware property resolver 중심 최소 버전 |
 | embedded servers | Tomcat/Jetty/Undertow 등 | JDK HTTP server 추상화 |
 | actuator/metrics | 지원 | 미지원 |
 
@@ -394,7 +394,7 @@ Spring 공식 문서는 `TestContext Framework`, `MockMvc`, web mocks, context c
 | mock mvc | 지원 | `MockMvc` 최소 지원 |
 | web mocks | 지원 | `MockHttpRequest` / `MockHttpResponse` |
 | context caching | 지원 | JUnit extension store 수준 |
-| transactional test support | 지원 | 미지원 |
+| transactional test support | 지원 | `@SpringLiteTest` + `@Transactional` 롤백 최소 지원 |
 
 ## 14. 실제 Spring 소스와 `spring-lite`를 함께 읽는 순서
 

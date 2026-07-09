@@ -14,7 +14,11 @@
 - `@Transactional`, `JdbcTemplate`, H2 통합 테스트
 - `DispatcherServlet`, 매핑/어댑터/인자 해석/응답 처리 분리
 - `@ExceptionHandler` 기반 웹 예외 처리
+- `@ControllerAdvice` 기반 전역 웹 예외 처리
 - 기본 인프라 자동 등록을 포함한 `SpringLiteApplication`
+- profile-aware property loading과 공통 conversion service
+- `@Order` 기반 interceptor chain 정렬과 프록시 합성
+- `@Transactional` 테스트 롤백 지원
 
 이미 완료된 확장 항목도 있다.
 
@@ -148,8 +152,8 @@
 
 현 시점에서 가장 효율적인 순서는 아래다.
 
-1. 설정 프로파일 지원
-2. `@ControllerAdvice`와 전역 예외 처리
+1. 콘텐츠 협상과 메시지 변환기 추상화
+2. 더 풍부한 auto-configuration 조건과 조립 전략
 
 ## 추가 확장 후보
 
@@ -157,21 +161,7 @@
 
 ## Priority 8. Configuration And Environment
 
-### 19. 설정 프로파일 지원
-
-Spring의 `application-{profile}.yml`과 유사한 개념이 들어가면 Boot 계층 설명력이 크게 올라간다.
-
-구현 후보:
-
-- active profile 지정
-- profile별 설정 파일 병합
-- 기본값과 override 우선순위
-
-완료 기준:
-
-- 개발/테스트/로컬 설정을 분리해서 애플리케이션 동작을 바꿀 수 있다.
-
-### 20. 타입 변환 서비스 분리
+### 19. 타입 변환 서비스 분리
 
 현재 타입 변환은 웹과 `@Value`에서 각각 단순하게 처리된다. 공통 `ConversionService`로 끌어올리면 구조가 좋아진다.
 
@@ -187,21 +177,7 @@ Spring의 `application-{profile}.yml`과 유사한 개념이 들어가면 Boot �
 
 ## Priority 9. Web MVC 고도화
 
-### 21. `@ControllerAdvice`와 전역 예외 처리
-
-현재 예외 처리는 컨트롤러 내부 `@ExceptionHandler` 위주다. 전역 처리기가 있으면 실제 Spring MVC와 더 닮아진다.
-
-구현 후보:
-
-- `@ControllerAdvice`
-- 전역 `@ExceptionHandler`
-- 예외 resolver 우선순위
-
-완료 기준:
-
-- 여러 컨트롤러에 공통 에러 응답 정책을 적용할 수 있다.
-
-### 22. 콘텐츠 협상과 메시지 변환기 추상화
+### 20. 콘텐츠 협상과 메시지 변환기 추상화
 
 현재는 JSON 고정이다. 메시지 변환기 추상화를 도입하면 MVC 구조가 더 Spring답게 변한다.
 
@@ -215,7 +191,7 @@ Spring의 `application-{profile}.yml`과 유사한 개념이 들어가면 Boot �
 
 - 반환 타입과 `Content-Type` 처리 계층이 분리된다.
 
-### 23. 정적 리소스 서빙
+### 21. 정적 리소스 서빙
 
 내장 서버와 MVC가 있는 만큼 정적 파일 제공도 좋은 학습 포인트다.
 
