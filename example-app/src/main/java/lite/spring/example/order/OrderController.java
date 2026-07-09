@@ -1,6 +1,7 @@
 package lite.spring.example.order;
 
 import java.util.List;
+import lite.spring.core.validation.Valid;
 import lite.spring.web.annotation.GetMapping;
 import lite.spring.web.annotation.PathVariable;
 import lite.spring.web.annotation.PostMapping;
@@ -28,8 +29,7 @@ public class OrderController {
     }
 
     @PostMapping
-    public Order createOrder(@RequestBody CreateOrderRequest request) {
+    public Order createOrder(@Valid @RequestBody CreateOrderRequest request) {
         return orderService.createOrder(request.product(), request.quantity());
     }
 }
-

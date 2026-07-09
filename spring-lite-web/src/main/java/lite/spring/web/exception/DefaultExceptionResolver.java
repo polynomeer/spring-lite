@@ -2,8 +2,12 @@ package lite.spring.web.exception;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import lite.spring.context.ApplicationContext;
+import lite.spring.core.validation.ConstraintViolation;
+import lite.spring.core.validation.ValidationException;
 import lite.spring.web.annotation.ExceptionHandler;
 import lite.spring.web.handler.HandlerMethodMatch;
 
@@ -28,10 +32,28 @@ public class DefaultExceptionResolver implements ExceptionResolver {
                 }
             }
         }
+        if (exception instanceof ValidationException validationException) {
+            return new ExceptionHandlingResult(400, Map.of(
+                "error", "Validation failed",
+                "violations", toViolationPayload(validationException.violations())
+            ));
+        }
         if (exception instanceof IllegalArgumentException) {
             return new ExceptionHandlingResult(400, Map.of("error", exception.getMessage()));
         }
         return new ExceptionHandlingResult(500, Map.of("error", exception.getMessage()));
+    }
+
+    private List<Map<String, Object>> toViolationPayload(List<ConstraintViolation> violations) {
+        return violations.stream()
+            .map(violation -> {
+                Map<String, Object> payload = new LinkedHashMap<>();
+                payload.put("path", violation.path());
+                payload.put("message", violation.message());
+                payload.put("rejectedValue", violation.rejectedValue());
+                return payload;
+            })
+            .toList();
     }
 
     private Method findExceptionHandlerMethod(Class<?> beanType, Exception exception) {
@@ -49,4 +71,3 @@ public class DefaultExceptionResolver implements ExceptionResolver {
         return null;
     }
 }
-

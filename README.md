@@ -28,6 +28,7 @@
 - `@RestController`, `@RequestMapping`, `@GetMapping`, `@PostMapping`
 - `@PathVariable`, `@RequestParam`, `@RequestBody`
 - `consumes`, `produces`, `headers`, `params` 기반 요청 매핑 조건
+- `@Valid`, `@NotNull`, `@Min`, `@Size` 기반 입력 검증
 - `@ExceptionHandler`와 MVC 내부 역할 분리
 - 내장 JDK HTTP 서버 기반 `MiniSpringApplication.run()`
 - 기본 인프라 자동 등록 기반 부트스트랩
@@ -64,7 +65,7 @@
 현재는 실행 가능한 MVP를 넘어서 컨테이너, AOP, MVC, JDBC, Boot 계층의 핵심 확장까지 반영된 상태다. 다만 다음 항목은 아직 축소되어 있거나 다음 단계 과제로 남아 있다.
 
 - Boot 자동 설정은 조건부 등록과 모듈 분리까지 반영됐지만, 더 다양한 조건과 조립 전략은 남아 있다.
-- 웹 계층은 JSON API 중심이며 응답 모델과 검증 기능이 더 필요하다.
+- 웹 계층은 JSON API 중심이며 검증은 최소 애노테이션 세트 기준으로 제공된다.
 - 트랜잭션은 단일 데이터소스와 단순 전파 정책을 기준으로 설계되어 있다.
 - 테스트 지원 모듈은 아직 실체화 전이며, 향후 별도 DSL과 헬퍼를 추가할 계획이다.
 

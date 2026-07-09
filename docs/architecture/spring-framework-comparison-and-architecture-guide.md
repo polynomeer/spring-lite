@@ -34,7 +34,7 @@ Spring과 `spring-lite`는 둘 다 아래 질문에 답하는 구조다.
 | 컨테이너 계층 | `BeanFactory` + `ApplicationContext` + 다양한 post-processor | 단일 `AnnotationConfigApplicationContext` 중심 |
 | Bean 메타데이터 | 매우 풍부한 `BeanDefinition`, scope, parent, aliases, merged definition | 단순 `BeanDefinition` |
 | AOP | `Advice`, `Advisor`, `Pointcut`, auto proxy creator, `@AspectJ` | `MethodInterceptor`, `ProxyFactory`, 최소 `@Aspect` 모델 |
-| MVC | `DispatcherServlet` + 전략 인터페이스 다수 + message converter + validation | `DispatcherServlet` + mapping/adapter/argument/return handler 최소 버전 |
+| MVC | `DispatcherServlet` + 전략 인터페이스 다수 + message converter + validation | `DispatcherServlet` + mapping/adapter/argument/return handler + 최소 validation |
 | 트랜잭션 | `PlatformTransactionManager`, propagation, rollback rules, synchronization | 단일 `TransactionManager`, 단순 begin/commit/rollback |
 | Boot 성격 | 대규모 조건부 자동 설정과 환경 추상화 | 소수의 조건부 자동 설정과 단순 서버 부트스트랩 |
 
@@ -258,6 +258,7 @@ Spring 공식 문서에서 `DispatcherServlet`은 front controller이며, `Handl
 - argument resolvers: [PathVariableArgumentResolver](../../spring-lite-web/src/main/java/lite/spring/web/bind/PathVariableArgumentResolver.java), [RequestParamArgumentResolver](../../spring-lite-web/src/main/java/lite/spring/web/bind/RequestParamArgumentResolver.java), [RequestBodyArgumentResolver](../../spring-lite-web/src/main/java/lite/spring/web/bind/RequestBodyArgumentResolver.java)
 - return handler: [JsonReturnValueHandler](../../spring-lite-web/src/main/java/lite/spring/web/handler/JsonReturnValueHandler.java)
 - exception resolver: [DefaultExceptionResolver](../../spring-lite-web/src/main/java/lite/spring/web/exception/DefaultExceptionResolver.java)
+- validation: [SimpleValidator](../../spring-lite-core/src/main/java/lite/spring/core/validation/SimpleValidator.java) + `RequestMappingHandlerAdapter` 연동
 
 ```mermaid
 flowchart LR

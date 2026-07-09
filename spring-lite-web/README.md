@@ -18,5 +18,6 @@ MVC 요청 디스패치와 컨트롤러 실행 파이프라인을 담당한다.
 - `HandlerMapping`, `HandlerAdapter`, `ReturnValueHandler`
 - `@RequestBody`, `@RequestParam`, `@PathVariable`
 - `consumes`, `produces`, `headers`, `params` 조건 매핑
+- `@Valid`, `@NotNull`, `@Min`, `@Size` 기반 검증과 400 응답 매핑
 - `@ExceptionHandler`
 - `ResponseEntity`, `JsonMapper`

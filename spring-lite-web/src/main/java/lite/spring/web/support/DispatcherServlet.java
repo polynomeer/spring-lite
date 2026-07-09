@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import lite.spring.context.ApplicationContext;
+import lite.spring.core.validation.SimpleValidator;
+import lite.spring.core.validation.Validator;
 import lite.spring.web.bind.HandlerMethodArgumentResolver;
 import lite.spring.web.bind.HttpExchangeArgumentResolver;
 import lite.spring.web.bind.PathVariableArgumentResolver;
@@ -32,13 +34,17 @@ public class DispatcherServlet implements HttpHandler {
 
     public DispatcherServlet(ApplicationContext applicationContext, JsonMapper jsonMapper) {
         TypeConverter typeConverter = new TypeConverter();
+        Validator validator = new SimpleValidator();
         this.handlerMapping = new RequestMappingHandlerMapping(applicationContext);
-        this.handlerAdapter = new RequestMappingHandlerAdapter(java.util.List.<HandlerMethodArgumentResolver>of(
-            new PathVariableArgumentResolver(typeConverter),
-            new RequestParamArgumentResolver(typeConverter),
-            new RequestBodyArgumentResolver(jsonMapper, typeConverter),
-            new HttpExchangeArgumentResolver()
-        ));
+        this.handlerAdapter = new RequestMappingHandlerAdapter(
+            java.util.List.<HandlerMethodArgumentResolver>of(
+                new PathVariableArgumentResolver(typeConverter),
+                new RequestParamArgumentResolver(typeConverter),
+                new RequestBodyArgumentResolver(jsonMapper, typeConverter),
+                new HttpExchangeArgumentResolver()
+            ),
+            validator
+        );
         this.returnValueHandler = new JsonReturnValueHandler(jsonMapper);
         this.exceptionResolver = new DefaultExceptionResolver(applicationContext);
     }

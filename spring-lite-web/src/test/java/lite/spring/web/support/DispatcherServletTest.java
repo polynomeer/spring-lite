@@ -18,6 +18,10 @@ import java.util.Map;
 import lite.spring.context.support.AnnotationConfigApplicationContext;
 import lite.spring.core.annotation.Bean;
 import lite.spring.core.annotation.Configuration;
+import lite.spring.core.validation.Min;
+import lite.spring.core.validation.NotNull;
+import lite.spring.core.validation.Size;
+import lite.spring.core.validation.Valid;
 import lite.spring.web.annotation.GetMapping;
 import lite.spring.web.annotation.ExceptionHandler;
 import lite.spring.web.annotation.PathVariable;
@@ -192,6 +196,50 @@ class DispatcherServletTest {
         }
     }
 
+    @Test
+    void validatesRequestBodyRecordsWhenAnnotatedWithValid() throws Exception {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
+            DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
+            StubHttpExchange exchange = new StubHttpExchange("POST", URI.create("/greetings/validated"), "{\"name\":\"x\",\"quantity\":0}");
+            exchange.getRequestHeaders().set("Content-Type", "application/json");
+
+            dispatcherServlet.handle(exchange);
+
+            assertThat(exchange.statusCode()).isEqualTo(400);
+            assertThat(exchange.responseBodyAsString()).contains("\"error\":\"Validation failed\"");
+            assertThat(exchange.responseBodyAsString()).contains("\"path\":\"request.name\"");
+            assertThat(exchange.responseBodyAsString()).contains("\"path\":\"request.quantity\"");
+        }
+    }
+
+    @Test
+    void validatesRequestParameters() throws Exception {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
+            DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
+            StubHttpExchange exchange = new StubHttpExchange("GET", URI.create("/greetings/validate-param?count=0"), "");
+
+            dispatcherServlet.handle(exchange);
+
+            assertThat(exchange.statusCode()).isEqualTo(400);
+            assertThat(exchange.responseBodyAsString()).contains("\"path\":\"count\"");
+            assertThat(exchange.responseBodyAsString()).contains("greater than or equal to 1");
+        }
+    }
+
+    @Test
+    void acceptsValidatedRequestsWhenConstraintsPass() throws Exception {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
+            DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
+            StubHttpExchange exchange = new StubHttpExchange("POST", URI.create("/greetings/validated"), "{\"name\":\"valid-name\",\"quantity\":2}");
+            exchange.getRequestHeaders().set("Content-Type", "application/json");
+
+            dispatcherServlet.handle(exchange);
+
+            assertThat(exchange.statusCode()).isEqualTo(200);
+            assertThat(exchange.responseBodyAsString()).isEqualTo("{\"message\":\"validated valid-name x2\"}");
+        }
+    }
+
     @Configuration
     static class WebTestConfig {
         @Bean
@@ -255,6 +303,16 @@ class DispatcherServletTest {
             return new Response("produced");
         }
 
+        @PostMapping("/validated")
+        public Response validated(@Valid @RequestBody ValidatedRequest request) {
+            return new Response("validated " + request.name() + " x" + request.quantity());
+        }
+
+        @GetMapping("/validate-param")
+        public Response validateParam(@RequestParam("count") @Min(1) int count) {
+            return new Response("count " + count);
+        }
+
         @ExceptionHandler(CustomWebException.class)
         public Response handleCustom(CustomWebException exception) {
             return new Response("handled by controller");
@@ -265,6 +323,9 @@ class DispatcherServletTest {
     }
 
     public record Response(String message) {
+    }
+
+    public record ValidatedRequest(@NotNull @Size(min = 2, max = 20) String name, @Min(1) int quantity) {
     }
 
     static class CustomWebException extends RuntimeException {
