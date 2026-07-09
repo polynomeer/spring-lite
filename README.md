@@ -58,14 +58,15 @@
 4. [책 전체 목차 설계](./docs/book/book-outline.md)
 5. [장별 시놉시스와 집필 분량 계획](./docs/book/chapter-synopsis-and-writing-plan.md)
 6. [Part 1 원고 초안](./docs/book/part-1-draft.md)
-7. [실제 Spring 비교 아키텍처 가이드](./docs/architecture/spring-framework-comparison-and-architecture-guide.md)
-8. [Post-MVP 구현 계획](./docs/codex/post-mvp-implementation-plan.md)
-9. [추가 구현 백로그](./docs/codex/next-implementation-backlog.md)
-10. [구현 로드맵](./docs/codex/implementation-roadmap.md)
-11. [작업 백로그](./docs/codex/task-backlog.md)
-12. [모듈 맵](./docs/codex/module-map.md)
-13. [개발 규칙](./docs/guides/development-conventions.md)
-14. [커밋 규칙](./docs/guides/commit-conventions.md)
+7. [Part 2 원고 초안](./docs/book/part-2-draft.md)
+8. [실제 Spring 비교 아키텍처 가이드](./docs/architecture/spring-framework-comparison-and-architecture-guide.md)
+9. [Post-MVP 구현 계획](./docs/codex/post-mvp-implementation-plan.md)
+10. [추가 구현 백로그](./docs/codex/next-implementation-backlog.md)
+11. [구현 로드맵](./docs/codex/implementation-roadmap.md)
+12. [작업 백로그](./docs/codex/task-backlog.md)
+13. [모듈 맵](./docs/codex/module-map.md)
+14. [개발 규칙](./docs/guides/development-conventions.md)
+15. [커밋 규칙](./docs/guides/commit-conventions.md)
 
 ## 현재 상태
 

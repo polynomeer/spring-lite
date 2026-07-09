@@ -73,9 +73,9 @@
 - 상세 시놉시스:
   단순 `new` 호출과 컨테이너 기반 생성의 차이를 보여주고, 객체 생성 정책을 데이터로 들고 있어야 하는 이유를 설명한다. `BeanDefinition`의 필드가 무엇을 표현하는지, 등록소와 싱글톤 캐시가 왜 분리되는지, 이름과 타입 조회가 어떤 책임을 나눠 가지는지 해설한다. 마지막에는 Spring의 `BeanFactory`와 `BeanDefinitionRegistry`가 왜 분리되는지도 비교한다.
 - 연결 코드:
-  `/Users/hammac/Projects/spring-lite/spring-lite-context/src/main/java/.../BeanDefinition.java`
-  `/Users/hammac/Projects/spring-lite/spring-lite-context/src/main/java/.../DefaultApplicationContext.java`
-  `/Users/hammac/Projects/spring-lite/spring-lite-context/src/test/java/...`
+  `spring-lite-context/src/main/java/.../BeanDefinition.java`
+  `spring-lite-context/src/main/java/.../DefaultApplicationContext.java`
+  `spring-lite-context/src/test/java/...`
 - 권장 분량:
   10~12쪽, 12,000~14,000자
 

@@ -170,9 +170,9 @@ flowchart LR
 
 ### 코드 참조
 
-- [README.md](/Users/hammac/Projects/spring-lite/README.md)
-- [docs/architecture/overview.md](/Users/hammac/Projects/spring-lite/docs/architecture/overview.md)
-- [settings.gradle.kts](/Users/hammac/Projects/spring-lite/settings.gradle.kts)
+- [README.md](../../README.md)
+- [아키텍처 개요](../architecture/overview.md)
+- [settings.gradle.kts](../../settings.gradle.kts)
 
 ---
 
@@ -420,13 +420,13 @@ flowchart TB
 
 ### 코드 참조
 
-- [spring-lite-context](/Users/hammac/Projects/spring-lite/spring-lite-context)
-- [spring-lite-aop](/Users/hammac/Projects/spring-lite/spring-lite-aop)
-- [spring-lite-web](/Users/hammac/Projects/spring-lite/spring-lite-web)
-- [spring-lite-jdbc](/Users/hammac/Projects/spring-lite/spring-lite-jdbc)
-- [spring-lite-tx](/Users/hammac/Projects/spring-lite/spring-lite-tx)
-- [spring-lite-boot](/Users/hammac/Projects/spring-lite/spring-lite-boot)
-- [example-app](/Users/hammac/Projects/spring-lite/example-app)
+- [spring-lite-context](../../spring-lite-context)
+- [spring-lite-aop](../../spring-lite-aop)
+- [spring-lite-web](../../spring-lite-web)
+- [spring-lite-jdbc](../../spring-lite-jdbc)
+- [spring-lite-tx](../../spring-lite-tx)
+- [spring-lite-boot](../../spring-lite-boot)
+- [example-app](../../example-app)
 
 ---
 
