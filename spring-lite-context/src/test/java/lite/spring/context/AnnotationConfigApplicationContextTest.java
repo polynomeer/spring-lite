@@ -3,6 +3,7 @@ package lite.spring.context;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.lang.reflect.Proxy;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -10,8 +11,11 @@ import lite.spring.context.support.AnnotationConfigApplicationContext;
 import lite.spring.context.event.ApplicationListener;
 import lite.spring.context.event.ContextClosedEvent;
 import lite.spring.context.event.ContextRefreshedEvent;
+import lite.spring.context.factory.BeanPostProcessor;
 import lite.spring.core.annotation.Bean;
 import lite.spring.core.annotation.ComponentScan;
+import lite.spring.core.annotation.ConditionalOnBean;
+import lite.spring.core.annotation.ConditionalOnMissingBean;
 import lite.spring.core.annotation.Configuration;
 import lite.spring.core.annotation.PostConstruct;
 import lite.spring.core.annotation.PreDestroy;
@@ -135,6 +139,21 @@ class AnnotationConfigApplicationContextTest {
     }
 
     @Test
+    void invokesDestroyCallbacksForBeansWrappedByPostProcessors() {
+        ProxyDestroyConfig.target = null;
+
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ProxyDestroyConfig.class)) {
+            ProxiedService service = context.getBean(ProxiedService.class);
+
+            assertThat(service.message()).isEqualTo("proxied");
+            assertThat(ProxyDestroyConfig.target).isNotNull();
+            assertThat(ProxyDestroyConfig.target.destroyed.get()).isFalse();
+        }
+
+        assertThat(ProxyDestroyConfig.target.destroyed.get()).isTrue();
+    }
+
+    @Test
     void detectsCircularDependencies() {
         assertThatThrownBy(() -> new AnnotationConfigApplicationContext(CircularConfig.class))
             .isInstanceOf(BeansException.class)
@@ -194,6 +213,29 @@ class AnnotationConfigApplicationContextTest {
             assertThat(client.mode()).isEqualTo(Mode.ADVANCED);
         } finally {
             restoreProperty("spring.profiles.active", previousProfiles);
+        }
+    }
+
+    @Test
+    void evaluatesConditionalOnBeanAfterAllDefinitionsAreRegistered() {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+            ConditionalOnBeanConsumerConfig.class,
+            ConditionalOnBeanProviderConfig.class
+        )) {
+            assertThat(context.containsBeanDefinition("dependentBean")).isTrue();
+            assertThat(context.getBean(DependentBean.class).message()).isEqualTo("dependency-ready");
+        }
+    }
+
+    @Test
+    void backsOffConditionalOnMissingBeanWhenLaterDefinitionExists() {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+            ConditionalDefaultFormatterConfig.class,
+            UserFormatterConfig.class
+        )) {
+            assertThat(context.containsBeanDefinition("defaultFormatter")).isFalse();
+            assertThat(context.getBeansOfType(Formatter.class)).hasSize(1).containsKey("userFormatter");
+            assertThat(context.getBean(Formatter.class).value()).isEqualTo("user");
         }
     }
 
@@ -376,6 +418,56 @@ class AnnotationConfigApplicationContextTest {
         }
     }
 
+    @Configuration
+    static class ProxyDestroyConfig {
+        private static ProxiedDestroyAwareService target;
+
+        @Bean
+        ProxiedDestroyAwareService proxiedDestroyAwareService() {
+            target = new ProxiedDestroyAwareService();
+            return target;
+        }
+
+        @Bean
+        BeanPostProcessor proxyingBeanPostProcessor() {
+            return new ProxyingBeanPostProcessor();
+        }
+    }
+
+    @Configuration
+    static class ConditionalOnBeanConsumerConfig {
+        @Bean
+        @ConditionalOnBean(DependencyBean.class)
+        DependentBean dependentBean() {
+            return new DependentBean("dependency-ready");
+        }
+    }
+
+    @Configuration
+    static class ConditionalOnBeanProviderConfig {
+        @Bean
+        DependencyBean dependencyBean() {
+            return new DependencyBean();
+        }
+    }
+
+    @Configuration
+    static class ConditionalDefaultFormatterConfig {
+        @Bean
+        @ConditionalOnMissingBean(Formatter.class)
+        Formatter defaultFormatter() {
+            return () -> "default";
+        }
+    }
+
+    @Configuration
+    static class UserFormatterConfig {
+        @Bean
+        Formatter userFormatter() {
+            return () -> "user";
+        }
+    }
+
     static class GreetingService {
         private final GreetingFormatter greetingFormatter;
 
@@ -494,6 +586,38 @@ class AnnotationConfigApplicationContextTest {
         }
     }
 
+    interface ProxiedService {
+        String message();
+    }
+
+    static class ProxiedDestroyAwareService implements ProxiedService {
+        private final AtomicBoolean destroyed = new AtomicBoolean();
+
+        @Override
+        public String message() {
+            return "proxied";
+        }
+
+        @PreDestroy
+        void destroy() {
+            destroyed.set(true);
+        }
+    }
+
+    static class ProxyingBeanPostProcessor implements BeanPostProcessor {
+        @Override
+        public Object postProcessAfterInitialization(String beanName, Object bean) {
+            if (!(bean instanceof ProxiedDestroyAwareService target)) {
+                return bean;
+            }
+            return Proxy.newProxyInstance(
+                target.getClass().getClassLoader(),
+                new Class<?>[]{ProxiedService.class},
+                (proxy, method, args) -> method.invoke(target, args)
+            );
+        }
+    }
+
     static class CircularA {
         CircularA(CircularB circularB) {
         }
@@ -505,6 +629,21 @@ class AnnotationConfigApplicationContextTest {
     }
 
     static class MissingBean {
+    }
+
+    static class DependencyBean {
+    }
+
+    static class DependentBean {
+        private final String message;
+
+        DependentBean(String message) {
+            this.message = message;
+        }
+
+        String message() {
+            return message;
+        }
     }
 
     static class PrototypeBean {

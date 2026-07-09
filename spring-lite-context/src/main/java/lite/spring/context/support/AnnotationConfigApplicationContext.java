@@ -9,10 +9,12 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lite.spring.context.ApplicationContext;
@@ -51,6 +53,7 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
     private final Map<String, BeanDefinition> beanDefinitions = new LinkedHashMap<>();
     private final Map<String, Object> singletons = new LinkedHashMap<>();
     private final Map<String, Runnable> destroyCallbacks = new LinkedHashMap<>();
+    private final Map<String, ConditionMetadata> conditionMetadata = new LinkedHashMap<>();
     private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
     private final Set<String> beansInCreation = new LinkedHashSet<>();
     private final ClassPathScanner classPathScanner = new ClassPathScanner();
@@ -96,11 +99,13 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
     }
 
     public boolean containsBeanDefinition(String beanName) {
-        return beanDefinitions.containsKey(beanName);
+        return beanDefinitions.containsKey(beanName) && isBeanEligible(beanName);
     }
 
     public boolean containsBeanOfType(Class<?> beanType) {
-        return beanDefinitions.values().stream().anyMatch(definition -> beanType.isAssignableFrom(definition.beanType()))
+        return beanDefinitions.entrySet().stream()
+            .filter(entry -> isBeanEligible(entry.getKey()))
+            .anyMatch(entry -> beanType.isAssignableFrom(entry.getValue().beanType()))
             || singletons.values().stream().anyMatch(bean -> beanType.isAssignableFrom(bean.getClass()));
     }
 
@@ -151,7 +156,7 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
             return singletons.get(name);
         }
         BeanDefinition beanDefinition = beanDefinitions.get(name);
-        if (beanDefinition == null) {
+        if (beanDefinition == null || !isBeanEligible(name)) {
             throw new NoSuchBeanException("No bean named " + name);
         }
         return createBean(name, beanDefinition);
@@ -162,7 +167,7 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
         Map<String, T> result = new LinkedHashMap<>();
         for (String beanName : beanDefinitions.keySet()) {
             BeanDefinition beanDefinition = beanDefinitions.get(beanName);
-            if (type.isAssignableFrom(beanDefinition.beanType())) {
+            if (isBeanEligible(beanName) && type.isAssignableFrom(beanDefinition.beanType())) {
                 result.put(beanName, type.cast(getBean(beanName)));
             }
         }
@@ -178,7 +183,7 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
     public Map<String, Object> getBeansWithAnnotation(Class<? extends java.lang.annotation.Annotation> annotationType) {
         Map<String, Object> result = new LinkedHashMap<>();
         for (Map.Entry<String, BeanDefinition> entry : beanDefinitions.entrySet()) {
-            if (!entry.getValue().beanType().isAnnotationPresent(annotationType)) {
+            if (!isBeanEligible(entry.getKey()) || !entry.getValue().beanType().isAnnotationPresent(annotationType)) {
                 continue;
             }
             result.put(entry.getKey(), getBean(entry.getKey()));
@@ -207,16 +212,6 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
         for (int index = callbacks.size() - 1; index >= 0; index--) {
             callbacks.get(index).run();
         }
-        singletons.values().stream()
-            .filter(bean -> bean instanceof AutoCloseable)
-            .map(bean -> (AutoCloseable) bean)
-            .forEach(bean -> {
-                try {
-                    bean.close();
-                } catch (Exception exception) {
-                    throw new IllegalStateException("Failed to close bean " + bean.getClass().getName(), exception);
-                }
-            });
     }
 
     private void registerDiscoveredClass(Class<?> candidate) {
@@ -226,19 +221,18 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
         if (!isManagedType(candidate)) {
             return;
         }
-        if (!matchesConditions(candidate, candidate)) {
-            return;
-        }
         BeanDefinition.Kind kind = AnnotationUtils.hasAnnotation(candidate, Configuration.class)
             ? Kind.CONFIGURATION
             : Kind.COMPONENT;
-        registerBeanDefinition(BeanDefinition.component(
+        BeanDefinition beanDefinition = BeanDefinition.component(
             BeanNameGenerator.generateBeanName(candidate),
             candidate,
             kind,
             isSingleton(candidate),
             extractQualifier(candidate)
-        ));
+        );
+        registerBeanDefinition(beanDefinition);
+        registerConditionMetadata(beanDefinition.name(), candidate, candidate);
         if (kind == Kind.CONFIGURATION) {
             registerBeanMethods(candidate);
         }
@@ -253,6 +247,7 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
         List<String> postProcessorBeanNames = beanDefinitions.values().stream()
             .filter(definition -> BeanPostProcessor.class.isAssignableFrom(definition.beanType()))
             .map(BeanDefinition::name)
+            .filter(this::isBeanEligible)
             .toList();
         for (String beanName : postProcessorBeanNames) {
             BeanPostProcessor beanPostProcessor = (BeanPostProcessor) getBean(beanName);
@@ -267,6 +262,7 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
         beanDefinitions.values().stream()
             .filter(definition -> definition.kind() == Kind.CONFIGURATION)
             .map(BeanDefinition::name)
+            .filter(this::isBeanEligible)
             .collect(Collectors.toList())
             .forEach(this::getBean);
     }
@@ -275,6 +271,7 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
         beanDefinitions.values().stream()
             .filter(BeanDefinition::singleton)
             .map(BeanDefinition::name)
+            .filter(this::isBeanEligible)
             .collect(Collectors.toList())
             .forEach(this::getBean);
     }
@@ -380,21 +377,20 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
             if (bean == null) {
                 continue;
             }
-            if (!matchesConditions(method, method.getReturnType())) {
-                continue;
-            }
             String beanName = bean.value().isBlank() ? BeanNameGenerator.generateBeanName(method.getName()) : bean.value();
             if (beanDefinitions.containsKey(beanName)) {
                 continue;
             }
-            registerBeanDefinition(BeanDefinition.factoryMethod(
+            BeanDefinition beanDefinition = BeanDefinition.factoryMethod(
                 beanName,
                 method.getReturnType(),
                 configurationClass,
                 method,
                 isSingleton(method),
                 extractQualifier(method)
-            ));
+            );
+            registerBeanDefinition(beanDefinition);
+            registerConditionMetadata(beanName, method, method.getReturnType());
         }
     }
 
@@ -496,7 +492,7 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
         for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
             current = beanPostProcessor.postProcessAfterInitialization(beanName, current);
         }
-        registerDestroyCallback(beanName, current);
+        registerDestroyCallback(beanName, bean, current);
         return current;
     }
 
@@ -522,14 +518,31 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
         }
     }
 
-    private void registerDestroyCallback(String beanName, Object bean) {
-        Collection<Method> destroyMethods = Arrays.stream(bean.getClass().getDeclaredMethods())
+    private void registerDestroyCallback(String beanName, Object originalBean, Object exposedBean) {
+        Collection<Method> destroyMethods = Arrays.stream(originalBean.getClass().getDeclaredMethods())
             .filter(method -> method.isAnnotationPresent(PreDestroy.class))
             .toList();
-        if (destroyMethods.isEmpty()) {
+        List<Runnable> callbacks = new ArrayList<>();
+        if (!destroyMethods.isEmpty()) {
+            callbacks.add(() -> destroyMethods.forEach(method -> ReflectionUtils.invoke(method, originalBean, new Object[0])));
+        }
+        if (originalBean instanceof AutoCloseable autoCloseable) {
+            callbacks.add(() -> closeBean(autoCloseable, originalBean.getClass().getName()));
+        } else if (exposedBean instanceof AutoCloseable autoCloseable && !Objects.equals(exposedBean, originalBean)) {
+            callbacks.add(() -> closeBean(autoCloseable, exposedBean.getClass().getName()));
+        }
+        if (callbacks.isEmpty()) {
             return;
         }
-        destroyCallbacks.put(beanName, () -> destroyMethods.forEach(method -> ReflectionUtils.invoke(method, bean, new Object[0])));
+        destroyCallbacks.put(beanName, () -> callbacks.forEach(Runnable::run));
+    }
+
+    private void closeBean(AutoCloseable bean, String beanTypeName) {
+        try {
+            bean.close();
+        } catch (Exception exception) {
+            throw new IllegalStateException("Failed to close bean " + beanTypeName, exception);
+        }
     }
 
     private void sortBeanPostProcessors() {
@@ -565,5 +578,87 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
 
     private Object convertValue(String value, Class<?> targetType) {
         return conversionService.convert(value, targetType);
+    }
+
+    private void registerConditionMetadata(String beanName, AnnotatedElement element, Class<?> defaultBeanType) {
+        conditionMetadata.put(beanName, new ConditionMetadata(element, defaultBeanType));
+    }
+
+    private boolean isBeanEligible(String beanName) {
+        return isBeanEligible(beanName, new HashSet<>());
+    }
+
+    private boolean isBeanEligible(String beanName, Set<String> visiting) {
+        BeanDefinition beanDefinition = beanDefinitions.get(beanName);
+        if (beanDefinition == null) {
+            return false;
+        }
+        if (!visiting.add(beanName)) {
+            return false;
+        }
+        try {
+            if (beanDefinition.kind() == Kind.FACTORY_METHOD) {
+                String configurationBeanName = BeanNameGenerator.generateBeanName(beanDefinition.configurationClass());
+                if (!configurationBeanName.equals(beanName) && !isBeanEligible(configurationBeanName, visiting)) {
+                    return false;
+                }
+            }
+            ConditionMetadata metadata = conditionMetadata.get(beanName);
+            return metadata == null || matchesConditions(beanName, metadata, visiting);
+        } finally {
+            visiting.remove(beanName);
+        }
+    }
+
+    private boolean matchesConditions(String beanName, ConditionMetadata metadata, Set<String> visiting) {
+        AnnotatedElement element = metadata.element();
+        Class<?> defaultBeanType = metadata.defaultBeanType();
+
+        ConditionalOnMissingBean conditionalOnMissingBean = element.getAnnotation(ConditionalOnMissingBean.class);
+        if (conditionalOnMissingBean != null && !matchesMissingBeanCondition(beanName, conditionalOnMissingBean, defaultBeanType, visiting)) {
+            return false;
+        }
+
+        ConditionalOnBean conditionalOnBean = element.getAnnotation(ConditionalOnBean.class);
+        if (conditionalOnBean != null && !matchesOnBeanCondition(beanName, conditionalOnBean, visiting)) {
+            return false;
+        }
+
+        ConditionalOnClass conditionalOnClass = element.getAnnotation(ConditionalOnClass.class);
+        if (conditionalOnClass != null && !matchesOnClassCondition(conditionalOnClass)) {
+            return false;
+        }
+
+        ConditionalOnProperty conditionalOnProperty = element.getAnnotation(ConditionalOnProperty.class);
+        return conditionalOnProperty == null || matchesOnPropertyCondition(conditionalOnProperty);
+    }
+
+    private boolean matchesMissingBeanCondition(
+        String beanName,
+        ConditionalOnMissingBean condition,
+        Class<?> defaultBeanType,
+        Set<String> visiting
+    ) {
+        Class<?>[] beanTypes = condition.value().length == 0 ? new Class<?>[]{defaultBeanType} : condition.value();
+        return Arrays.stream(beanTypes).noneMatch(beanType -> containsEligibleBeanOfType(beanType, beanName, visiting));
+    }
+
+    private boolean matchesOnBeanCondition(String beanName, ConditionalOnBean condition, Set<String> visiting) {
+        return Arrays.stream(condition.value()).allMatch(beanType -> containsEligibleBeanOfType(beanType, beanName, visiting));
+    }
+
+    private boolean containsEligibleBeanOfType(Class<?> beanType, String excludedBeanName, Set<String> visiting) {
+        if (singletons.entrySet().stream()
+            .filter(entry -> !entry.getKey().equals(excludedBeanName))
+            .anyMatch(entry -> beanType.isAssignableFrom(entry.getValue().getClass()))) {
+            return true;
+        }
+        return beanDefinitions.entrySet().stream()
+            .filter(entry -> !entry.getKey().equals(excludedBeanName))
+            .filter(entry -> beanType.isAssignableFrom(entry.getValue().beanType()))
+            .anyMatch(entry -> isBeanEligible(entry.getKey(), visiting));
+    }
+
+    private record ConditionMetadata(AnnotatedElement element, Class<?> defaultBeanType) {
     }
 }
