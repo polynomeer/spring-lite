@@ -8,20 +8,49 @@ import lite.spring.context.support.AnnotationConfigApplicationContext;
 import lite.spring.core.annotation.Autowired;
 import lite.spring.core.reflect.ReflectionUtils;
 import lite.spring.test.web.MockMvc;
+import lite.spring.tx.annotation.Transactional;
+import lite.spring.tx.support.TransactionManager;
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolver;
 import org.junit.jupiter.api.extension.TestInstancePostProcessor;
 
-public class SpringLiteTestExtension implements BeforeAllCallback, TestInstancePostProcessor, ParameterResolver {
+public class SpringLiteTestExtension implements BeforeAllCallback, BeforeEachCallback, AfterEachCallback, TestInstancePostProcessor, ParameterResolver {
     private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(SpringLiteTestExtension.class);
     private static final String CONTEXT_KEY = "applicationContext";
     private static final String MOCK_MVC_KEY = "mockMvc";
+    private static final String TRANSACTION_ACTIVE_KEY = "transactionActive";
 
     @Override
     public void beforeAll(ExtensionContext extensionContext) {
         getOrCreateContext(extensionContext);
+    }
+
+    @Override
+    public void beforeEach(ExtensionContext extensionContext) {
+        if (!isTransactionalTest(extensionContext)) {
+            extensionContext.getStore(NAMESPACE).put(TRANSACTION_ACTIVE_KEY, false);
+            return;
+        }
+        AnnotationConfigApplicationContext context = getOrCreateContext(extensionContext);
+        if (!context.containsBeanOfType(TransactionManager.class)) {
+            throw new IllegalStateException("@Transactional test requires a TransactionManager bean");
+        }
+        context.getBean(TransactionManager.class).begin();
+        extensionContext.getStore(NAMESPACE).put(TRANSACTION_ACTIVE_KEY, true);
+    }
+
+    @Override
+    public void afterEach(ExtensionContext extensionContext) {
+        Boolean transactionActive = extensionContext.getStore(NAMESPACE).remove(TRANSACTION_ACTIVE_KEY, Boolean.class);
+        if (!Boolean.TRUE.equals(transactionActive)) {
+            return;
+        }
+        AnnotationConfigApplicationContext context = getOrCreateContext(extensionContext);
+        context.getBean(TransactionManager.class).rollback();
     }
 
     @Override
@@ -65,6 +94,11 @@ public class SpringLiteTestExtension implements BeforeAllCallback, TestInstanceP
         return extensionContext.getStore(NAMESPACE)
             .getOrComputeIfAbsent(CONTEXT_KEY, key -> createContext(extensionContext), ContextResource.class)
             .context();
+    }
+
+    private boolean isTransactionalTest(ExtensionContext extensionContext) {
+        return extensionContext.getRequiredTestMethod().isAnnotationPresent(Transactional.class)
+            || extensionContext.getRequiredTestClass().isAnnotationPresent(Transactional.class);
     }
 
     private ContextResource createContext(ExtensionContext extensionContext) {
