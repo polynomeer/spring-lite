@@ -99,7 +99,7 @@ Spring은 개발자가 모든 객체를 XML이나 코드로 일일이 등록하�
 
 `spring-lite`에서도 [AnnotationUtils](../../spring-lite-context/src/main/java/lite/spring/context/support/AnnotationUtils.java)가 메타 애노테이션을 따라가며 관리 대상인지 판단한다.
 
-이 때문에 `@MiniSpringBootApplication`처럼 여러 애노테이션을 합성한 경우도 컨테이너가 정상적으로 읽을 수 있다.
+이 때문에 `@SpringLiteBootApplication`처럼 여러 애노테이션을 합성한 경우도 컨테이너가 정상적으로 읽을 수 있다.
 
 ## 4. Bean Lifecycle
 
@@ -333,7 +333,7 @@ Spring Boot의 중요한 가치는 애플리케이션 실행을 간결하게 만
 
 ### 11.2 `spring-lite`의 부트스트랩
 
-`spring-lite`에서는 [MiniSpringApplication](../../spring-lite-boot/src/main/java/lite/spring/boot/MiniSpringApplication.java)이 이 역할을 맡는다.
+`spring-lite`에서는 [SpringLiteApplication](../../spring-lite-boot/src/main/java/lite/spring/boot/SpringLiteApplication.java)이 이 역할을 맡는다.
 
 흐름은 아래와 같다.
 
@@ -344,7 +344,7 @@ Spring Boot의 중요한 가치는 애플리케이션 실행을 간결하게 만
 5. JDK `HttpServer` 시작
 6. 모든 요청을 DispatcherServlet로 연결
 
-`@MiniSpringBootApplication`은 설정과 스캔을 합친 합성 애노테이션이다. 관련 코드는 [MiniSpringBootApplication](../../spring-lite-boot/src/main/java/lite/spring/boot/annotation/MiniSpringBootApplication.java)에 있다.
+`@SpringLiteBootApplication`은 설정과 스캔을 합친 합성 애노테이션이다. 관련 코드는 [SpringLiteBootApplication](../../spring-lite-boot/src/main/java/lite/spring/boot/annotation/SpringLiteBootApplication.java)에 있다.
 
 ### 11.3 설정 로딩
 
@@ -368,7 +368,7 @@ Spring Boot의 중요한 가치는 애플리케이션 실행을 간결하게 만
 
 ```text
 ExampleApplication.main()
--> MiniSpringApplication.run()
+-> SpringLiteApplication.run()
 -> AnnotationConfigApplicationContext refresh
 -> OrderController / DefaultOrderService / Repository 생성
 -> TransactionalBeanPostProcessor가 Service 프록시 적용
@@ -405,7 +405,7 @@ ExampleApplication.main()
 가장 이해가 잘 되는 순서는 아래다.
 
 1. [ExampleApplication](../../example-app/src/main/java/lite/spring/example/ExampleApplication.java)
-2. [MiniSpringApplication](../../spring-lite-boot/src/main/java/lite/spring/boot/MiniSpringApplication.java)
+2. [SpringLiteApplication](../../spring-lite-boot/src/main/java/lite/spring/boot/SpringLiteApplication.java)
 3. [AnnotationConfigApplicationContext](../../spring-lite-context/src/main/java/lite/spring/context/support/AnnotationConfigApplicationContext.java)
 4. [BeanDefinition](../../spring-lite-context/src/main/java/lite/spring/context/bean/BeanDefinition.java)
 5. [TransactionalBeanPostProcessor](../../spring-lite-tx/src/main/java/lite/spring/tx/support/TransactionalBeanPostProcessor.java)

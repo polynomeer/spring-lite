@@ -99,8 +99,8 @@
 
 ### 산출물
 
-- `@MiniSpringBootApplication`
-- `MiniSpringApplication`
+- `@SpringLiteBootApplication`
+- `SpringLiteApplication`
 - 자동 설정 레지스트리
 - 내장 서버 추상화
 

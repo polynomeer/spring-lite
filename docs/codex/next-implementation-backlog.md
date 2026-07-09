@@ -14,7 +14,7 @@
 - `@Transactional`, `JdbcTemplate`, H2 통합 테스트
 - `DispatcherServlet`, 매핑/어댑터/인자 해석/응답 처리 분리
 - `@ExceptionHandler` 기반 웹 예외 처리
-- 기본 인프라 자동 등록을 포함한 `MiniSpringApplication`
+- 기본 인프라 자동 등록을 포함한 `SpringLiteApplication`
 
 이미 완료된 확장 항목도 있다.
 

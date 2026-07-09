@@ -1,7 +1,7 @@
 package lite.spring.test;
 
 import java.lang.reflect.Field;
-import lite.spring.boot.annotation.MiniSpringBootApplication;
+import lite.spring.boot.annotation.SpringLiteBootApplication;
 import lite.spring.boot.support.BootInfrastructureRegistrar;
 import lite.spring.context.ApplicationContext;
 import lite.spring.context.support.AnnotationConfigApplicationContext;
@@ -83,7 +83,7 @@ public class SpringLiteTestExtension implements BeforeAllCallback, TestInstanceP
 
     private boolean usesBootDefaults(Class<?>[] configurationClasses) {
         for (Class<?> configurationClass : configurationClasses) {
-            if (configurationClass.isAnnotationPresent(MiniSpringBootApplication.class)) {
+            if (configurationClass.isAnnotationPresent(SpringLiteBootApplication.class)) {
                 return true;
             }
         }

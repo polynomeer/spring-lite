@@ -14,7 +14,7 @@
 
 ```mermaid
 flowchart TD
-    A["MiniSpringApplication.run()"] --> B["ApplicationContext bootstrap"]
+    A["SpringLiteApplication.run()"] --> B["ApplicationContext bootstrap"]
     B --> C["ClassPathScanner"]
     C --> D["BeanDefinition registry"]
     D --> E["BeanFactory instantiate singletons"]
@@ -51,4 +51,3 @@ flowchart TD
 - AOP와 Transaction은 Bean 후처리 단계에서 프록시를 씌우는 방향으로 통일한다.
 - MVC는 `HandlerMethod` 실행 파이프라인을 명시적으로 드러내는 구조를 유지한다.
 - Boot는 다른 모듈의 얇은 조합 계층이어야 하며 핵심 로직을 직접 소유하지 않는다.
-

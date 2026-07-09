@@ -4,8 +4,8 @@ import lite.spring.boot.support.BootInfrastructureRegistrar;
 import lite.spring.boot.web.WebServer;
 import lite.spring.context.support.AnnotationConfigApplicationContext;
 
-public final class MiniSpringApplication {
-    private MiniSpringApplication() {
+public final class SpringLiteApplication {
+    private SpringLiteApplication() {
     }
 
     public static AnnotationConfigApplicationContext run(Class<?> applicationClass, String... args) {

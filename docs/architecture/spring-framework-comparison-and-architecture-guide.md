@@ -63,7 +63,7 @@ flowchart TD
 | MVC front controller | `DispatcherServlet` | [DispatcherServlet](../../spring-lite-web/src/main/java/lite/spring/web/support/DispatcherServlet.java) |
 | 트랜잭션 AOP | `TransactionInterceptor`, transaction advisor | [TransactionalBeanPostProcessor](../../spring-lite-tx/src/main/java/lite/spring/tx/support/TransactionalBeanPostProcessor.java) |
 | JDBC template | `JdbcTemplate` | [JdbcTemplate](../../spring-lite-jdbc/src/main/java/lite/spring/jdbc/JdbcTemplate.java) |
-| Boot 실행 계층 | Spring Boot auto-configuration, embedded server factories | [MiniSpringApplication](../../spring-lite-boot/src/main/java/lite/spring/boot/MiniSpringApplication.java), [WebServer](../../spring-lite-boot/src/main/java/lite/spring/boot/web/WebServer.java) |
+| Boot 실행 계층 | Spring Boot auto-configuration, embedded server factories | [SpringLiteApplication](../../spring-lite-boot/src/main/java/lite/spring/boot/SpringLiteApplication.java), [WebServer](../../spring-lite-boot/src/main/java/lite/spring/boot/web/WebServer.java) |
 
 ## 3. IoC Container 비교
 
@@ -359,8 +359,8 @@ Spring JDBC 레퍼런스는 JDBC core classes, database connections, parameter h
 
 현재 `spring-lite-boot` 구성:
 
-- 실행 진입점: [MiniSpringApplication](../../spring-lite-boot/src/main/java/lite/spring/boot/MiniSpringApplication.java)
-- 합성 애노테이션: [MiniSpringBootApplication](../../spring-lite-boot/src/main/java/lite/spring/boot/annotation/MiniSpringBootApplication.java)
+- 실행 진입점: [SpringLiteApplication](../../spring-lite-boot/src/main/java/lite/spring/boot/SpringLiteApplication.java)
+- 합성 애노테이션: [SpringLiteBootApplication](../../spring-lite-boot/src/main/java/lite/spring/boot/annotation/SpringLiteBootApplication.java)
 - 자동 설정 등록기: [BootInfrastructureRegistrar](../../spring-lite-boot/src/main/java/lite/spring/boot/support/BootInfrastructureRegistrar.java)
 - 설정 모듈: [JsonAutoConfiguration](../../spring-lite-boot/src/main/java/lite/spring/boot/support/autoconfigure/JsonAutoConfiguration.java), [TransactionAutoConfiguration](../../spring-lite-boot/src/main/java/lite/spring/boot/support/autoconfigure/TransactionAutoConfiguration.java), [JdbcAutoConfiguration](../../spring-lite-boot/src/main/java/lite/spring/boot/support/autoconfigure/JdbcAutoConfiguration.java), [WebAutoConfiguration](../../spring-lite-boot/src/main/java/lite/spring/boot/support/autoconfigure/WebAutoConfiguration.java)
 - 서버 추상화: [WebServer](../../spring-lite-boot/src/main/java/lite/spring/boot/web/WebServer.java), [JdkWebServer](../../spring-lite-boot/src/main/java/lite/spring/boot/web/JdkWebServer.java)

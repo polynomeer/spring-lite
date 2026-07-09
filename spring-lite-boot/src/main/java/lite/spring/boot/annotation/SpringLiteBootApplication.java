@@ -11,6 +11,5 @@ import lite.spring.core.annotation.Configuration;
 @ComponentScan
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface MiniSpringBootApplication {
+public @interface SpringLiteBootApplication {
 }
-

@@ -9,7 +9,7 @@
 3. `@RestController`, `@GetMapping`, `@PostMapping` 기반 MVC
 4. 프록시 기반 AOP
 5. `@Transactional`과 JDBC 템플릿
-6. `MiniSpringApplication.run()` 형태의 부트스트랩
+6. `SpringLiteApplication.run()` 형태의 부트스트랩
 
 ## 구현된 기능
 
@@ -34,7 +34,7 @@
 - `@Valid`, `@NotNull`, `@Min`, `@Size` 기반 입력 검증
 - `@ExceptionHandler`와 MVC 내부 역할 분리
 - `@SpringLiteTest`, `MockMvc` 스타일 테스트 지원
-- 내장 JDK HTTP 서버 기반 `MiniSpringApplication.run()`
+- 내장 JDK HTTP 서버 기반 `SpringLiteApplication.run()`
 - 기본 인프라 자동 등록 기반 부트스트랩
 - JDBC/H2 기반 주문 예제 앱과 통합 테스트
 

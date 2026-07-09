@@ -19,7 +19,7 @@
 - JSON 응답 처리
 - `JdbcTemplate`
 - `@Transactional`
-- `MiniSpringApplication.run()`
+- `SpringLiteApplication.run()`
 
 ## 설계 원칙
 
@@ -38,4 +38,3 @@
 5. `spring-lite-aop`: JDK Dynamic Proxy 기반 Advice 체인
 6. `spring-lite-tx`, `spring-lite-jdbc`: 트랜잭션과 JDBC 템플릿
 7. `spring-lite-boot`: 부트스트랩과 자동 설정
-

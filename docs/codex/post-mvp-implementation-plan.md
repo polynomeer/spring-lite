@@ -214,7 +214,7 @@ MVP 이후 단계의 목표는 아래 세 가지다.
 
 ### 15. 자동 설정 레이어 추가
 
-지금의 `MiniSpringApplication`은 부트스트랩은 하지만 auto configuration이라기보다는 직접 조립에 가깝다.
+지금의 `SpringLiteApplication`은 부트스트랩은 하지만 auto configuration이라기보다는 직접 조립에 가깝다.
 
 후보 자동 설정:
 
@@ -321,4 +321,3 @@ Spring의 `@WebMvcTest`, `@DataJpaTest` 같은 개념을 완전히 구현할 필
 - `feat(context): add qualifier-based bean resolution`
 - `test(context): cover qualifier selection and ambiguity`
 - `docs: update post-mvp plan for qualifier support`
-

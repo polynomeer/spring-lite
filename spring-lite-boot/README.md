@@ -12,7 +12,7 @@
 
 ## 주요 내용
 
-- `MiniSpringApplication`
-- `@MiniSpringBootApplication`
+- `SpringLiteApplication`
+- `@SpringLiteBootApplication`
 - 조건부 자동 설정 등록기
 - `WebServer`, `WebServerFactory`, `JdkWebServer`

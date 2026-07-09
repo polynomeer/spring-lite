@@ -11,7 +11,7 @@ import lite.spring.aop.annotation.Around;
 import lite.spring.aop.annotation.Aspect;
 import lite.spring.aop.annotation.Before;
 import lite.spring.aop.support.AspectBeanPostProcessor;
-import lite.spring.boot.annotation.MiniSpringBootApplication;
+import lite.spring.boot.annotation.SpringLiteBootApplication;
 import lite.spring.context.support.AnnotationConfigApplicationContext;
 import lite.spring.core.annotation.Bean;
 import lite.spring.core.annotation.ConditionalOnClass;
@@ -24,10 +24,10 @@ import lite.spring.web.json.JsonMapper;
 import lite.spring.web.support.DispatcherServlet;
 import org.junit.jupiter.api.Test;
 
-class MiniSpringApplicationTest {
+class SpringLiteApplicationTest {
     @Test
     void autoRegistersTransactionalInfrastructure() {
-        try (AnnotationConfigApplicationContext context = MiniSpringApplication.run(BootTestApplication.class)) {
+        try (AnnotationConfigApplicationContext context = SpringLiteApplication.run(BootTestApplication.class)) {
             BootSampleService service = context.getBean(BootSampleService.class);
 
             assertThat(service.call("ok")).isEqualTo("ok");
@@ -43,7 +43,7 @@ class MiniSpringApplicationTest {
     @Test
     void appliesAspectStyleAdviceViaBootInfrastructure() {
         BootRecordingAspect.events.clear();
-        try (AnnotationConfigApplicationContext context = MiniSpringApplication.run(AspectApplication.class)) {
+        try (AnnotationConfigApplicationContext context = SpringLiteApplication.run(AspectApplication.class)) {
             AspectSampleService service = context.getBean(AspectSampleService.class);
 
             String result = service.call("ok");
@@ -55,7 +55,7 @@ class MiniSpringApplicationTest {
 
     @Test
     void backsOffWhenUserProvidesJsonMapperBean() {
-        try (AnnotationConfigApplicationContext context = MiniSpringApplication.run(CustomJsonMapperApplication.class)) {
+        try (AnnotationConfigApplicationContext context = SpringLiteApplication.run(CustomJsonMapperApplication.class)) {
             assertThat(context.getBeansOfType(JsonMapper.class)).hasSize(1);
             assertThat(context.getBean(JsonMapper.class)).isSameAs(context.getBean("customJsonMapper"));
         }
@@ -63,17 +63,17 @@ class MiniSpringApplicationTest {
 
     @Test
     void registersJdbcTemplateOnlyWhenDataSourceExists() {
-        try (AnnotationConfigApplicationContext withoutDataSource = MiniSpringApplication.run(BootTestApplication.class)) {
+        try (AnnotationConfigApplicationContext withoutDataSource = SpringLiteApplication.run(BootTestApplication.class)) {
             assertThat(withoutDataSource.containsBeanOfType(lite.spring.jdbc.JdbcTemplate.class)).isFalse();
         }
-        try (AnnotationConfigApplicationContext withDataSource = MiniSpringApplication.run(DataSourceApplication.class)) {
+        try (AnnotationConfigApplicationContext withDataSource = SpringLiteApplication.run(DataSourceApplication.class)) {
             assertThat(withDataSource.containsBeanOfType(lite.spring.jdbc.JdbcTemplate.class)).isTrue();
         }
     }
 
     @Test
     void supportsConditionalAnnotationsOnApplicationBeans() {
-        try (AnnotationConfigApplicationContext context = MiniSpringApplication.run(ConditionalBeansApplication.class)) {
+        try (AnnotationConfigApplicationContext context = SpringLiteApplication.run(ConditionalBeansApplication.class)) {
             assertThat(context.containsBeanDefinition("classConditionBean")).isTrue();
             assertThat(context.containsBeanDefinition("propertyConditionBean")).isTrue();
             assertThat(context.containsBeanDefinition("missingClassConditionBean")).isFalse();
@@ -83,13 +83,13 @@ class MiniSpringApplicationTest {
     @Test
     void usesCustomWebServerBeanWhenProvided() {
         RecordingWebServer.started = false;
-        try (AnnotationConfigApplicationContext context = MiniSpringApplication.run(CustomWebServerApplication.class)) {
+        try (AnnotationConfigApplicationContext context = SpringLiteApplication.run(CustomWebServerApplication.class)) {
             assertThat(context.getBean(WebServer.class)).isInstanceOf(RecordingWebServer.class);
             assertThat(RecordingWebServer.started).isTrue();
         }
     }
 
-    @MiniSpringBootApplication
+    @SpringLiteBootApplication
     static class BootTestApplication {
         @Bean
         BootSampleService bootSampleService() {
@@ -109,7 +109,7 @@ class MiniSpringApplicationTest {
         }
     }
 
-    @MiniSpringBootApplication
+    @SpringLiteBootApplication
     static class AspectApplication {
         @Bean
         AspectSampleService aspectSampleService() {
@@ -148,7 +148,7 @@ class MiniSpringApplicationTest {
         }
     }
 
-    @MiniSpringBootApplication
+    @SpringLiteBootApplication
     static class CustomJsonMapperApplication {
         @Bean("customJsonMapper")
         JsonMapper customJsonMapper() {
@@ -156,7 +156,7 @@ class MiniSpringApplicationTest {
         }
     }
 
-    @MiniSpringBootApplication
+    @SpringLiteBootApplication
     static class DataSourceApplication {
         @Bean
         DataSource dataSource() {
@@ -164,7 +164,7 @@ class MiniSpringApplicationTest {
         }
     }
 
-    @MiniSpringBootApplication
+    @SpringLiteBootApplication
     static class ConditionalBeansApplication {
         @Bean
         @ConditionalOnClass(name = "java.lang.String")
@@ -185,7 +185,7 @@ class MiniSpringApplicationTest {
         }
     }
 
-    @MiniSpringBootApplication
+    @SpringLiteBootApplication
     static class CustomWebServerApplication {
         @Bean
         WebServer webServer() {
