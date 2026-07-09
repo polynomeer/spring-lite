@@ -38,6 +38,8 @@ import lite.spring.core.annotation.PreDestroy;
 import lite.spring.core.annotation.Qualifier;
 import lite.spring.core.annotation.Scope;
 import lite.spring.core.annotation.Value;
+import lite.spring.core.convert.ConversionService;
+import lite.spring.core.convert.DefaultConversionService;
 import lite.spring.core.exception.BeansException;
 import lite.spring.core.exception.NoSuchBeanException;
 import lite.spring.core.exception.NoUniqueBeanException;
@@ -52,7 +54,8 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
     private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
     private final Set<String> beansInCreation = new LinkedHashSet<>();
     private final ClassPathScanner classPathScanner = new ClassPathScanner();
-    private final PropertyResolver propertyResolver = PropertyResolver.loadFromClasspath("application.yml");
+    private final PropertyResolver propertyResolver = PropertyResolver.loadApplicationProperties();
+    private final ConversionService conversionService = new DefaultConversionService();
     private boolean refreshed;
     private boolean closed;
 
@@ -561,21 +564,6 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
     }
 
     private Object convertValue(String value, Class<?> targetType) {
-        if (targetType.equals(String.class)) {
-            return value;
-        }
-        if (targetType.equals(Integer.class) || targetType.equals(int.class)) {
-            return Integer.parseInt(value);
-        }
-        if (targetType.equals(Long.class) || targetType.equals(long.class)) {
-            return Long.parseLong(value);
-        }
-        if (targetType.equals(Boolean.class) || targetType.equals(boolean.class)) {
-            return Boolean.parseBoolean(value);
-        }
-        if (targetType.equals(Double.class) || targetType.equals(double.class)) {
-            return Double.parseDouble(value);
-        }
-        throw new IllegalStateException("Unsupported @Value target type " + targetType.getName());
+        return conversionService.convert(value, targetType);
     }
 }

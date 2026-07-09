@@ -1,0 +1,5 @@
+app:
+  name: spring-lite
+  feature:
+    enabled: true
+  timeout: 30

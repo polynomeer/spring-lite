@@ -1,0 +1,4 @@
+test:
+  feature:
+    enabled: false
+    name: local-profile

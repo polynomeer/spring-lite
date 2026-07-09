@@ -1,0 +1,4 @@
+app:
+  name: spring-lite-local
+  feature:
+    enabled: false

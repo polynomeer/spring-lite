@@ -1,0 +1,4 @@
+app:
+  greeting:
+    message: hello-from-local-profile
+  mode: ADVANCED

@@ -19,6 +19,32 @@ public final class PropertyResolver {
     }
 
     public static PropertyResolver loadFromClasspath(String resourceName) {
+        return loadSingleResource(resourceName);
+    }
+
+    public static PropertyResolver loadApplicationProperties() {
+        PropertyResolver baseResolver = loadSingleResource("application.yml");
+        Map<String, String> merged = new LinkedHashMap<>(baseResolver.values);
+        String activeProfiles = resolveActiveProfiles(baseResolver);
+        if (activeProfiles == null || activeProfiles.isBlank()) {
+            return new PropertyResolver(merged);
+        }
+        for (String profile : activeProfiles.split(",")) {
+            String trimmed = profile.trim();
+            if (trimmed.isEmpty()) {
+                continue;
+            }
+            PropertyResolver profileResolver = loadSingleResource("application-" + trimmed + ".yml");
+            merged.putAll(profileResolver.values);
+        }
+        return new PropertyResolver(merged);
+    }
+
+    public Map<String, String> asMap() {
+        return Map.copyOf(values);
+    }
+
+    private static PropertyResolver loadSingleResource(String resourceName) {
         try (InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourceName)) {
             if (inputStream == null) {
                 return empty();
@@ -28,6 +54,18 @@ public final class PropertyResolver {
         } catch (Exception exception) {
             throw new IllegalStateException("Failed to read " + resourceName, exception);
         }
+    }
+
+    private static String resolveActiveProfiles(PropertyResolver baseResolver) {
+        String systemProperty = System.getProperty("spring.profiles.active");
+        if (systemProperty != null && !systemProperty.isBlank()) {
+            return systemProperty;
+        }
+        String environmentVariable = System.getenv("SPRING_PROFILES_ACTIVE");
+        if (environmentVariable != null && !environmentVariable.isBlank()) {
+            return environmentVariable;
+        }
+        return baseResolver.get("spring.profiles.active");
     }
 
     public String get(String key) {

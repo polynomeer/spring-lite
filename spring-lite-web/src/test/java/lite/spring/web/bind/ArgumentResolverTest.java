@@ -24,6 +24,7 @@ class ArgumentResolverTest {
         assertThat(typeConverter.convert("12", int.class)).isEqualTo(12);
         assertThat(typeConverter.convert("3.8", long.class)).isEqualTo(3L);
         assertThat(typeConverter.convert("true", boolean.class)).isEqualTo(true);
+        assertThat(typeConverter.convert("ADVANCED", Mode.class)).isEqualTo(Mode.ADVANCED);
         assertThat(typeConverter.convert("text", String.class)).isEqualTo("text");
         assertThat(typeConverter.convert("raw", Object.class)).isEqualTo("raw");
         assertThat(typeConverter.convert(null, Integer.class)).isNull();
@@ -110,5 +111,10 @@ class ArgumentResolverTest {
     }
 
     record Request(String name, int quantity) {
+    }
+
+    enum Mode {
+        BASIC,
+        ADVANCED
     }
 }

@@ -39,4 +39,27 @@ class PropertyResolverTest {
         assertThat(resolver.get("missing.key", "default")).isEqualTo("default");
         assertThat(resolver.contains("missing.key")).isFalse();
     }
+
+    @Test
+    void mergesProfileSpecificApplicationProperties() {
+        String previousProfiles = System.getProperty("spring.profiles.active");
+        System.setProperty("spring.profiles.active", "local");
+        try {
+            PropertyResolver resolver = PropertyResolver.loadApplicationProperties();
+
+            assertThat(resolver.get("app.name")).isEqualTo("spring-lite-local");
+            assertThat(resolver.get("app.feature.enabled")).isEqualTo("false");
+            assertThat(resolver.get("app.timeout")).isEqualTo("30");
+        } finally {
+            restoreProperty("spring.profiles.active", previousProfiles);
+        }
+    }
+
+    private void restoreProperty(String key, String value) {
+        if (value == null) {
+            System.clearProperty(key);
+            return;
+        }
+        System.setProperty(key, value);
+    }
 }

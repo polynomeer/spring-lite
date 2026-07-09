@@ -183,6 +183,20 @@ class AnnotationConfigApplicationContextTest {
         assertThat(listener.events()).containsExactly("refreshed", "closed");
     }
 
+    @Test
+    void appliesActiveProfileOverridesAndEnumValueConversion() {
+        String previousProfiles = System.getProperty("spring.profiles.active");
+        System.setProperty("spring.profiles.active", "local");
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ProfileValueConfig.class)) {
+            ProfileValueClient client = context.getBean(ProfileValueClient.class);
+
+            assertThat(client.message()).isEqualTo("hello-from-local-profile");
+            assertThat(client.mode()).isEqualTo(Mode.ADVANCED);
+        } finally {
+            restoreProperty("spring.profiles.active", previousProfiles);
+        }
+    }
+
     @Configuration
     static class TestConfig {
         @Bean
@@ -351,6 +365,17 @@ class AnnotationConfigApplicationContextTest {
         }
     }
 
+    @Configuration
+    static class ProfileValueConfig {
+        @Bean
+        ProfileValueClient profileValueClient(
+            @Value("${app.greeting.message}") String message,
+            @Value("${app.mode}") Mode mode
+        ) {
+            return new ProfileValueClient(message, mode);
+        }
+    }
+
     static class GreetingService {
         private final GreetingFormatter greetingFormatter;
 
@@ -504,5 +529,36 @@ class AnnotationConfigApplicationContextTest {
         java.util.List<String> events() {
             return events;
         }
+    }
+
+    static class ProfileValueClient {
+        private final String message;
+        private final Mode mode;
+
+        ProfileValueClient(String message, Mode mode) {
+            this.message = message;
+            this.mode = mode;
+        }
+
+        String message() {
+            return message;
+        }
+
+        Mode mode() {
+            return mode;
+        }
+    }
+
+    enum Mode {
+        BASIC,
+        ADVANCED
+    }
+
+    private void restoreProperty(String key, String value) {
+        if (value == null) {
+            System.clearProperty(key);
+            return;
+        }
+        System.setProperty(key, value);
     }
 }
