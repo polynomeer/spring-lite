@@ -8,6 +8,7 @@ import java.util.Map;
 import lite.spring.context.ApplicationContext;
 import lite.spring.core.validation.ConstraintViolation;
 import lite.spring.core.validation.ValidationException;
+import lite.spring.web.annotation.ControllerAdvice;
 import lite.spring.web.annotation.ExceptionHandler;
 import lite.spring.web.handler.HandlerMethodMatch;
 
@@ -23,13 +24,13 @@ public class DefaultExceptionResolver implements ExceptionResolver {
         if (handlerMethodMatch != null) {
             Method handler = findExceptionHandlerMethod(handlerMethodMatch.handlerMethod().bean().getClass(), exception);
             if (handler != null) {
-                try {
-                    handler.setAccessible(true);
-                    Object body = handler.invoke(handlerMethodMatch.handlerMethod().bean(), exception);
-                    return new ExceptionHandlingResult(400, body);
-                } catch (IllegalAccessException | InvocationTargetException invocationException) {
-                    throw new IllegalStateException("Failed to invoke exception handler", invocationException);
-                }
+                return invokeHandler(handlerMethodMatch.handlerMethod().bean(), handler, exception);
+            }
+        }
+        for (Object adviceBean : applicationContext.getBeansWithAnnotation(ControllerAdvice.class).values()) {
+            Method handler = findExceptionHandlerMethod(adviceBean.getClass(), exception);
+            if (handler != null) {
+                return invokeHandler(adviceBean, handler, exception);
             }
         }
         if (exception instanceof ValidationException validationException) {
@@ -42,6 +43,16 @@ public class DefaultExceptionResolver implements ExceptionResolver {
             return new ExceptionHandlingResult(400, Map.of("error", exception.getMessage()));
         }
         return new ExceptionHandlingResult(500, Map.of("error", exception.getMessage()));
+    }
+
+    private ExceptionHandlingResult invokeHandler(Object target, Method handler, Exception exception) {
+        try {
+            handler.setAccessible(true);
+            Object body = handler.invoke(target, exception);
+            return new ExceptionHandlingResult(400, body);
+        } catch (IllegalAccessException | InvocationTargetException invocationException) {
+            throw new IllegalStateException("Failed to invoke exception handler", invocationException);
+        }
     }
 
     private List<Map<String, Object>> toViolationPayload(List<ConstraintViolation> violations) {

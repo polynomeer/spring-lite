@@ -22,6 +22,7 @@ import lite.spring.core.validation.Min;
 import lite.spring.core.validation.NotNull;
 import lite.spring.core.validation.Size;
 import lite.spring.core.validation.Valid;
+import lite.spring.web.annotation.ControllerAdvice;
 import lite.spring.web.annotation.GetMapping;
 import lite.spring.web.annotation.ExceptionHandler;
 import lite.spring.web.annotation.PathVariable;
@@ -246,6 +247,11 @@ class DispatcherServletTest {
         GreetingController greetingController() {
             return new GreetingController();
         }
+
+        @Bean
+        GlobalGreetingAdvice globalGreetingAdvice() {
+            return new GlobalGreetingAdvice();
+        }
     }
 
     @RestController
@@ -269,6 +275,11 @@ class DispatcherServletTest {
         @GetMapping("/handled")
         public Response handled() {
             throw new CustomWebException("boom");
+        }
+
+        @GetMapping("/global")
+        public Response global() {
+            throw new IllegalStateException("global failure");
         }
 
         @GetMapping("/response-entity")
@@ -316,6 +327,48 @@ class DispatcherServletTest {
         @ExceptionHandler(CustomWebException.class)
         public Response handleCustom(CustomWebException exception) {
             return new Response("handled by controller");
+        }
+    }
+
+    @ControllerAdvice
+    public static class GlobalGreetingAdvice {
+        @ExceptionHandler(IllegalStateException.class)
+        public ResponseEntity<Response> handleIllegalState(IllegalStateException exception) {
+            return ResponseEntity.status(422)
+                .header("X-Advice", "global")
+                .body(new Response("handled globally: " + exception.getMessage()));
+        }
+
+        @ExceptionHandler(CustomWebException.class)
+        public Response handleCustom(CustomWebException exception) {
+            return new Response("handled by advice");
+        }
+    }
+
+    @Test
+    void usesGlobalControllerAdviceWhenControllerDoesNotHandleException() throws Exception {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
+            DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
+            StubHttpExchange exchange = new StubHttpExchange("GET", URI.create("/greetings/global"), "");
+
+            dispatcherServlet.handle(exchange);
+
+            assertThat(exchange.statusCode()).isEqualTo(422);
+            assertThat(exchange.getResponseHeaders().getFirst("X-Advice")).isEqualTo("global");
+            assertThat(exchange.responseBodyAsString()).isEqualTo("{\"message\":\"handled globally: global failure\"}");
+        }
+    }
+
+    @Test
+    void prefersControllerLocalExceptionHandlerOverGlobalAdvice() throws Exception {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
+            DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
+            StubHttpExchange exchange = new StubHttpExchange("GET", URI.create("/greetings/handled"), "");
+
+            dispatcherServlet.handle(exchange);
+
+            assertThat(exchange.statusCode()).isEqualTo(400);
+            assertThat(exchange.responseBodyAsString()).isEqualTo("{\"message\":\"handled by controller\"}");
         }
     }
 
