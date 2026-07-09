@@ -58,6 +58,18 @@ Spring은 단순한 애너테이션 모음이 아니다. 객체 생성, 의존�
 
 여기서 중요한 것은 우리는 기능 목록을 따로따로 배우지 않는다는 점이다. 컨테이너, 라이프사이클, 프록시, MVC, JDBC, 트랜잭션, 부트스트랩을 한 요청 흐름과 한 실행 흐름 안에서 끝까지 연결한다. 이것이야말로 Spring을 "설정 묶음"이 아니라 "런타임 구조"로 이해하는 길이다.
 
+```mermaid
+flowchart LR
+    A["User Code"] --> B["IoC Container"]
+    B --> C["Bean Lifecycle"]
+    C --> D["Proxy / AOP"]
+    D --> E["Web MVC"]
+    D --> F["Transaction"]
+    F --> G["JDBC"]
+    B --> H["Bootstrapping"]
+    H --> E
+```
+
 ### Chapter 2. Spring의 큰 그림: IoC, Lifecycle, AOP, MVC, Transaction
 
 큰 그림 없이 세부 기능부터 배우면 지식은 금방 조각난다. `@Component`를 따로 배우고, `@Bean`을 따로 배우고, `@Transactional`을 따로 배우면 각각의 사용법은 기억에 남을 수 있다. 하지만 장애가 생기면 결국 기능이 아니라 흐름을 봐야 한다. 트랜잭션이 안 걸렸다면 데이터베이스가 아니라 프록시 경로를 봐야 하고, 컨트롤러 주입이 실패했다면 웹이 아니라 컨테이너 등록/생성 단계를 봐야 한다.
@@ -124,6 +136,15 @@ Part 2부터는 이 큰 그림의 바닥인 IoC 컨테이너부터 직접 구현
 
 실제 Spring의 `DefaultListableBeanFactory`와 `BeanDefinitionRegistry` 분리도 결국 같은 문제를 푼다. 학습용 구현에서는 이 개념을 더 작게 축소했지만, 메타데이터와 인스턴스를 분리하는 발상 자체는 그대로다.
 
+```mermaid
+flowchart TB
+    A["Classpath Scan / @Configuration"] --> B["BeanDefinition Registry"]
+    B --> C["Constructor / Factory Method Selection"]
+    C --> D["Dependency Resolution"]
+    D --> E["Bean Instance"]
+    E --> F["Singleton Cache"]
+```
+
 ### Chapter 4. 생성자 주입과 의존성 해석
 
 DI를 "외부에서 주입한다"는 문장으로만 이해하면 핵심을 놓친다. 컨테이너 입장에서 DI는 해석 알고리즘이다. 어떤 생성자를 선택할지, 각 파라미터에 대해 어떤 빈 후보를 찾을지, 후보가 없거나 여러 개면 어떤 예외를 낼지, `@Qualifier`가 있으면 어떤 규칙으로 선택을 좁힐지를 모두 결정해야 한다.
@@ -164,6 +185,23 @@ DI를 "외부에서 주입한다"는 문장으로만 이해하면 핵심을 놓�
 
 Part 2를 마치면 독자는 이제 컨테이너의 기본 골격을 설명할 수 있어야 한다. 메타데이터를 등록하고, 의존성을 해석하고, 설정과 스캔을 통해 후보를 모으고, 스코프와 이벤트로 런타임 성격을 부여하는 시스템. 이것이 Spring의 바닥이다.
 
+```mermaid
+sequenceDiagram
+    participant App as Application
+    participant Ctx as ApplicationContext
+    participant Def as BeanDefinitions
+    participant Bean as Bean Instance
+    participant Listener as ApplicationListener
+
+    App->>Ctx: register / scan
+    Ctx->>Def: collect metadata
+    Ctx->>Bean: instantiate singletons
+    Ctx->>Bean: inject and initialize
+    Ctx->>Listener: ContextRefreshedEvent
+    App->>Ctx: close()
+    Ctx->>Listener: ContextClosedEvent
+```
+
 ---
 
 ## Part 3. Bean Lifecycle과 확장 포인트를 이해한다
@@ -173,6 +211,16 @@ Part 2를 마치면 독자는 이제 컨테이너의 기본 골격을 설명할 
 객체가 생성되었다고 해서 곧바로 "준비 완료" 상태가 되는 것은 아니다. 프레임워크가 관리하는 빈은 인스턴스 생성 뒤에도 의존성 주입, 초기화 전 후처리, 초기화 콜백, 초기화 후 후처리, 종료 콜백 등록 같은 단계를 거친다. 이 순서를 이해하면 왜 어떤 기능은 생성 직후 작동하고, 어떤 기능은 후처리기 이후에만 적용되며, 어떤 문제는 "생성은 되었지만 아직 완전히 초기화되지 않은 상태"에서 발생하는지 설명할 수 있다.
 
 `@PostConstruct`, `@PreDestroy`, `AutoCloseable` 지원은 이 흐름을 독자 눈앞에 드러낸다. 초기화와 파괴를 생성자 하나에 모두 넣지 않고, 컨테이너가 관리하는 생명주기 단계로 분리하는 이유가 명확해진다. 실제 Spring에서도 라이프사이클은 독립 주제로 다뤄질 만큼 중요하다. 프레임워크는 객체를 만드는 것뿐 아니라 "어떤 순서로 준비하고 정리할 것인가"를 관리하는 시스템이기 때문이다.
+
+```mermaid
+flowchart LR
+    A["Instantiate"] --> B["Resolve Dependencies"]
+    B --> C["postProcessBeforeInitialization"]
+    C --> D["@PostConstruct"]
+    D --> E["postProcessAfterInitialization"]
+    E --> F["Register Destroy Callbacks"]
+    F --> G["@PreDestroy / AutoCloseable"]
+```
 
 ### Chapter 10. `BeanPostProcessor`
 
@@ -202,6 +250,15 @@ AOP를 추상 문구로만 이해하면 실무에서 거의 도움이 되지 않
 
 이 책의 현재 구현은 `Advisor`라는 이름의 완전한 추상화 대신, ordered interceptor chain과 프록시 합성으로 같은 문제를 더 얇게 풀었다. 이미 프록시된 빈에 다른 인터셉터를 다시 합성할 수 있고, `@Order`를 통해 실행 순서를 예측 가능하게 만들었다. 즉, 트랜잭션 인터셉터와 AOP advice가 한 체인 안에서 함께 정렬된다. 이것이 바로 실제 Spring AOP가 더 많은 추상화와 규칙으로 확장되는 출발점이다.
 
+```mermaid
+flowchart LR
+    A["Client Call"] --> B["Proxy"]
+    B --> C["Interceptor (@Order=-10)"]
+    C --> D["Interceptor (@Order=10)"]
+    D --> E["Transaction Interceptor"]
+    E --> F["Target Method"]
+```
+
 ### Chapter 14. `@Aspect` 스타일 AOP
 
 프록시와 인터셉터만 있으면 기능은 동작할 수 있지만, 사용성은 좋지 않다. 개발자는 매번 인터셉터 객체를 직접 등록하고 싶어하지 않는다. 대신 "이 클래스는 aspect이고, 이 메서드는 before advice이며, 저 메서드는 around advice다"처럼 선언하고 싶어한다. `@Aspect`, `@Before`, `@Around`, `@AfterReturning`은 그 선언 모델이다.
@@ -213,6 +270,21 @@ AOP를 추상 문구로만 이해하면 실무에서 거의 도움이 되지 않
 `@Transactional`은 Spring에서 가장 널리 쓰이는 애너테이션이지만, 가장 자주 오해되는 기능이기도 하다. 메서드 본문이 자동으로 바뀌는 것이 아니라, 프록시가 메서드 호출 경로를 감싸 트랜잭션 경계를 여는 방식으로 동작하기 때문이다. 후처리기는 트랜잭션 대상 빈을 찾아 프록시를 만들고, 인터셉터는 메서드 진입 시 `begin()`, 정상 종료 시 `commit()`, 예외 발생 시 rollback 정책에 따라 `rollback()` 또는 `commit()`을 수행한다.
 
 이 구조를 이해하면 self-invocation 문제가 왜 생기는지도 선명해진다. 같은 클래스 안에서 `this.someTransactionalMethod()`를 호출하면 프록시를 거치지 않는다. 트랜잭션이 기대대로 동작하지 않는 이유는 데이터베이스나 선언식 자체가 아니라, 호출 경로가 프록시를 우회했기 때문이다.
+
+```mermaid
+sequenceDiagram
+    participant Caller as Caller
+    participant Proxy as Transaction Proxy
+    participant Target as Service Target
+    participant TM as TransactionManager
+
+    Caller->>Proxy: invoke()
+    Proxy->>TM: begin()
+    Proxy->>Target: proceed()
+    Target-->>Proxy: result / exception
+    Proxy->>TM: commit() / rollback()
+    Proxy-->>Caller: return / throw
+```
 
 ### Chapter 16. 전파와 rollback 정책
 
@@ -229,6 +301,19 @@ AOP를 추상 문구로만 이해하면 실무에서 거의 도움이 되지 않
 웹 프레임워크에서 하나의 중심 진입점을 두는 이유는 공통 문제를 일관된 파이프라인으로 다루기 위해서다. 인증, 예외 처리, 핸들러 선택, 인자 바인딩, 응답 생성은 요청마다 반복되는 문제다. 이를 각 컨트롤러가 직접 처리하게 하면 구조가 곧바로 흩어진다. 그래서 Spring MVC는 `DispatcherServlet`을 front controller로 둔다.
 
 `spring-lite`도 같은 구조를 따른다. 모든 요청은 먼저 디스패처로 들어오고, 디스패처는 핸들러 매핑으로 컨트롤러 메서드를 찾고, 핸들러 어댑터로 메서드를 실행하고, 리턴값 핸들러로 응답을 작성한다. 예외는 별도 resolver가 처리한다. 이 구조 덕분에 컨트롤러 메서드는 전체 요청 흐름의 한 가운데 있는 도메인 처리 지점으로만 남을 수 있다.
+
+```mermaid
+flowchart LR
+    A["HTTP Request"] --> B["DispatcherServlet"]
+    B --> C["HandlerMapping"]
+    C --> D["HandlerAdapter"]
+    D --> E["ArgumentResolvers"]
+    E --> F["Controller Method"]
+    F --> G["ReturnValueHandler"]
+    B --> H["ExceptionResolver"]
+    G --> I["HTTP Response"]
+    H --> I
+```
 
 ### Chapter 18. 요청을 메서드 인자로 바꾸기
 
@@ -247,6 +332,13 @@ HTTP 요청을 자바 메서드 호출로 바꾸는 과정은 생각보다 많�
 실제 웹 프레임워크는 URL 경로만 보고 핸들러를 선택하지 않는다. `consumes`, `produces`, `headers`, `params` 같은 요청 조건을 함께 본다. 같은 경로라도 콘텐츠 타입이나 파라미터 값이 다르면 다른 의미가 될 수 있기 때문이다. 따라서 매핑은 단순 path lookup이 아니라 정책 평가에 가깝다.
 
 검증도 같은 흐름 안에 있다. `@Valid`, `@NotNull`, `@Min`, `@Size`는 컨트롤러 본문 안에서 if문으로 검사하는 것이 아니라, 메서드 진입 직전에 수행되는 별도 계층이다. 검증 실패를 400 응답으로 바꾸는 것도 예외 처리와 매끄럽게 연결되어야 한다. 이 장에서 독자는 MVC가 단순 라우팅이 아니라 "입력 해석, 정책 평가, 오류 모델링"을 함께 다루는 구조라는 사실을 이해하게 된다.
+
+| 단계 | 입력 | 책임 | 실패 시 결과 |
+| --- | --- | --- | --- |
+| 매핑 선택 | path, method, headers, params | 어떤 핸들러를 호출할지 결정 | 404 |
+| 인자 바인딩 | query, path variable, body | 메서드 인자 구성 | 400 |
+| 검증 | 바인딩된 인자 | 제약 조건 검사 | 400 |
+| 예외 처리 | 실행 중 예외 | 로컬/전역 정책 적용 | 4xx/5xx |
 
 ---
 
@@ -274,6 +366,17 @@ HTTP 요청을 자바 메서드 호출로 바꾸는 과정은 생각보다 많�
 
 물론 실제 Spring Boot는 이보다 훨씬 더 크다. starter, 조건부 자동 설정, 방대한 환경 추상화, 내장 서버 생태계, 관측성, 운영 지원이 있다. 하지만 축소판이기 때문에 오히려 본질이 잘 보인다. 사용자가 한 줄로 애플리케이션을 시작한다는 사실 뒤에, 얼마나 많은 조립 논리가 숨어 있는지를 드러내는 것이 이 장의 목적이다.
 
+```mermaid
+flowchart TB
+    A["SpringLiteApplication.run()"] --> B["Load application.yml / profiles"]
+    B --> C["Register configuration classes"]
+    C --> D["Apply auto-configurations"]
+    D --> E["Refresh ApplicationContext"]
+    E --> F["Create DispatcherServlet"]
+    F --> G["Start JDK Web Server"]
+    G --> H["Serve Requests"]
+```
+
 ### Chapter 24. 테스트 지원과 검증 전략
 
 프레임워크는 테스트 없이는 설명되기 어렵다. 애플리케이션 테스트가 기능을 검증한다면, 프레임워크 테스트는 계약과 경계를 검증한다. 컨테이너가 언제 실패해야 하는지, 프록시가 어떤 순서로 동작해야 하는지, MVC가 어떤 요청을 어떤 응답으로 바꿔야 하는지, 트랜잭션이 언제 rollback해야 하는지를 테스트가 문서처럼 보여준다.
@@ -289,6 +392,14 @@ HTTP 요청을 자바 메서드 호출로 바꾸는 과정은 생각보다 많�
 이제 `spring-lite`를 실제 Spring과 정확히 대응시킬 차례다. 비교는 기능 목록 나열이 아니라 구조 대응이어야 한다. `AnnotationConfigApplicationContext`는 `ApplicationContext`/`BeanFactory` 계층의 축소판이고, `BeanDefinition`은 더 풍부한 Spring bean metadata의 축소판이다. `DispatcherServlet`, `TransactionalBeanPostProcessor`, `TransactionManager`, `JdbcTemplate`, `SpringLiteApplication`도 각각 실제 Spring MVC, Spring Transaction, Spring JDBC, Spring Boot의 핵심 개념과 맞닿아 있다.
 
 중요한 것은 실제 Spring이 같은 문제를 더 큰 규모와 더 긴 역사 속에서 푼 결과물이라는 점이다. 그래서 추상화 계층이 많고, 설정 조합이 풍부하며, 하위 호환을 위한 장치도 많다. 학습용 구현이 없었다면 이 복잡성은 종종 과하게만 느껴졌을 것이다. 하지만 직접 축소판을 만들어본 뒤에는 "왜 이런 클래스가 존재하는가"를 더 쉽게 추론할 수 있다.
+
+| 축 | Spring Framework / Boot | spring-lite |
+| --- | --- | --- |
+| 컨테이너 | `ApplicationContext` + `BeanFactory` + 다층 post-processor | `AnnotationConfigApplicationContext` 중심 |
+| AOP | advisor, pointcut, auto-proxy creator, `@AspectJ` | ordered interceptor chain + 최소 `@Aspect` |
+| MVC | `DispatcherServlet` + 다수 전략 + message converter | `DispatcherServlet` + mapping/adapter/resolver 최소 세트 |
+| 트랜잭션 | `PlatformTransactionManager` + 풍부한 semantics | `TransactionManager` + `REQUIRED`/rollback rules |
+| Boot | 대규모 auto-config와 environment abstraction | 경량 auto-config + profile-aware property loading |
 
 ### Chapter 26. 실무에서 원리를 쓰는 법
 
