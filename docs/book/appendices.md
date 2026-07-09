@@ -1,4 +1,4 @@
-# Appendices
+# 부록
 
 ## Appendix A. 장별 소스 코드 맵
 
@@ -15,11 +15,11 @@
 | 9장 | `spring-lite-context` | lifecycle initialization, `@PostConstruct`, `@PreDestroy` |
 | 10장 | `spring-lite-context` | `BeanPostProcessor` |
 | 12장 | `spring-lite-aop` | `ProxyFactory`, `MethodInvocation`, class proxy support |
-| 13장 | `spring-lite-aop`, `spring-lite-tx` | interceptor chain, ordered composition |
-| 14장 | `spring-lite-aop` | `AspectBeanPostProcessor`, aspect annotations |
+| 13장 | `spring-lite-aop`, `spring-lite-tx` | 인터셉터 체인, `@Order` 기반 합성 |
+| 14장 | `spring-lite-aop` | `AspectBeanPostProcessor`, aspect 애너테이션 |
 | 15장 | `spring-lite-tx` | `TransactionalBeanPostProcessor`, `TransactionManager` |
 | 17장 | `spring-lite-web` | `DispatcherServlet`, `HandlerMapping`, `HandlerAdapter` |
-| 18장 | `spring-lite-web` | argument resolvers, request mapping handler |
+| 18장 | `spring-lite-web` | 인자 해석기, request mapping handler |
 | 19장 | `spring-lite-web` | `JsonMapper`, `ResponseEntity`, exception resolver |
 | 20장 | `spring-lite-web`, `spring-lite-core` | validation, request conditions |
 | 21장 | `spring-lite-jdbc` | `JdbcTemplate`, `RowMapper`, `SingleConnectionProxy` |
@@ -49,14 +49,14 @@
 - `DefaultListableBeanFactory`
 - `AutowiredAnnotationBeanPostProcessor`
 
-여기서는 refresh 순서, bean definition 처리, post-processor 개입 지점을 보는 것이 핵심이다.
+여기서는 refresh 순서, 빈 정의 처리, post-processor 개입 지점을 보는 것이 핵심이다.
 
 ### 2. Java Config와 스캔
 
 - `ConfigurationClassPostProcessor`
-- classpath scanning 관련 패키지
+- 클래스패스 스캐닝 관련 패키지
 
-여기서는 `@Configuration`, `@Bean`, component scan이 어떻게 더 풍부한 메타데이터 모델로 확장되는지 본다.
+여기서는 `@Configuration`, `@Bean`, component scan이 어떻게 더 풍부한 메타데이터 모델로 확장되는지 살핀다.
 
 ### 3. AOP와 트랜잭션
 
@@ -87,7 +87,7 @@
 
 공통 관심사를 비즈니스 코드 밖에서 메서드 호출 경계에 삽입하려면, 원본 객체 앞에 다른 객체를 둘 수 있어야 한다. 프록시는 이 개입 지점을 제공한다.
 
-### 왜 self-invocation이 문제인가
+### 왜 자기 호출(self-invocation)이 문제인가
 
 프록시 기반 기능은 프록시를 통과하는 호출에서만 동작한다. 같은 클래스 안에서 `this`로 호출하면 프록시를 우회하므로, 트랜잭션이나 AOP가 기대대로 적용되지 않을 수 있다.
 
@@ -106,7 +106,7 @@
 - 목표: JSON 고정 응답/요청 처리를 더 일반적인 메시지 변환 계층으로 끌어올린다.
 - 학습 포인트: MVC가 왜 콘텐츠 협상과 직렬화 전략을 따로 가지는지 이해할 수 있다.
 
-### 과제 2. richer pointcut 모델
+### 과제 2. 더 풍부한 pointcut 모델
 
 - 목표: 메서드 이름과 애너테이션을 넘어 더 일반적인 매칭 규칙을 만든다.
 - 학습 포인트: 실제 Spring AOP가 advisor abstraction을 왜 필요로 하는지 이해할 수 있다.
@@ -116,12 +116,12 @@
 - 목표: `/static/**`를 클래스패스에서 제공하는 단순 리소스 핸들러를 구현한다.
 - 학습 포인트: MVC가 JSON API만이 아니라 리소스 전달 파이프라인도 다뤄야 함을 이해할 수 있다.
 
-### 과제 4. richer auto-configuration
+### 과제 4. 더 풍부한 auto-configuration
 
 - 목표: 조건부 등록 모델을 더 풍부하게 만들고, 설정 조합 전략을 확장한다.
 - 학습 포인트: Spring Boot의 auto-configuration이 왜 강력하면서도 복잡한지 이해할 수 있다.
 
 ### 과제 5. 더 풍부한 테스트 fixture
 
-- 목표: 데이터 초기화, 컨텍스트 캐싱 전략, reusable web fixture를 만든다.
+- 목표: 데이터 초기화, 컨텍스트 캐싱 전략, 재사용 가능한 웹 fixture를 만든다.
 - 학습 포인트: 테스트 지원도 프레임워크의 중요한 일부라는 사실을 더 깊게 체감할 수 있다.

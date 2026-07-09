@@ -6,7 +6,7 @@
 
 Spring은 단순한 애너테이션 모음이 아니다. 객체 생성, 의존성 조립, 런타임 확장, 프록시 기반 공통 관심사, HTTP 요청 처리, 데이터 접근, 트랜잭션 경계, 애플리케이션 부트스트랩을 하나의 일관된 런타임으로 묶는 프레임워크다. 따라서 Spring을 이해한다는 말은 "애너테이션 이름을 안다"가 아니라 "그 애너테이션이 기대는 내부 계약과 호출 순서를 설명할 수 있다"는 뜻에 가깝다.
 
-이 책은 그 구조를 직접 만들어가며 이해한다. 완전한 Spring을 복제하지는 않는다. 대신 `spring-lite`라는 학습용 경량 프레임워크를 통해 Spring의 핵심 원리를 드러낸다. 독자는 컨테이너를 만들고, 빈 라이프사이클을 다루고, 프록시를 조합하고, 트랜잭션과 MVC를 구현하고, 마지막에는 실행 가능한 애플리케이션으로 연결한다. 이 과정을 거치고 나면 실제 Spring의 복잡성도 더 공정하게 보이기 시작한다. 그것은 과잉 설계의 결과라기보다, 더 큰 문제를 풀기 위해 확장된 구조라는 점이 분명해진다.
+이 책은 그 구조를 직접 만들어가며 이해한다. 완전한 Spring을 복제하지는 않는다. 대신 `spring-lite`라는 학습용 경량 프레임워크를 통해 Spring의 핵심 원리를 드러낸다. 독자는 컨테이너를 만들고, 빈 라이프사이클을 다루고, 프록시를 조합하고, 트랜잭션과 MVC를 구현하고, 마지막에는 실행 가능한 애플리케이션으로 연결한다. 이 과정을 거치고 나면 실제 Spring의 복잡성도 한층 공정하게 보이기 시작한다. 그것이 과잉 설계의 결과라기보다, 더 큰 문제를 풀기 위해 확장된 구조라는 점이 자연스럽게 드러난다.
 
 이 책은 두 가지 방식으로 읽을 수 있다.
 
@@ -36,7 +36,7 @@ Spring은 단순한 애너테이션 모음이 아니다. 객체 생성, 의존�
 
 - 왜 어떤 빈은 잘 생성되는데 어떤 빈은 순환 참조로 실패하는가
 - 왜 `@Bean`과 `@Component`는 비슷해 보여도 내부 모델이 다른가
-- 왜 `@Transactional`은 self-invocation에서 기대대로 동작하지 않는가
+- 왜 `@Transactional`은 자기 호출(self-invocation)에서 기대대로 동작하지 않는가
 - 왜 웹 요청은 컨트롤러에 바로 가지 않고 `DispatcherServlet`을 중심으로 움직이는가
 - 왜 설정 파일 한 줄이 애플리케이션 전체 조립 결과를 바꿀 수 있는가
 
@@ -48,10 +48,10 @@ Spring은 단순한 애너테이션 모음이 아니다. 객체 생성, 의존�
 
 - `spring-lite-core`: 애너테이션, 리플렉션 유틸리티, 프로퍼티/검증/변환 공통 기능
 - `spring-lite-context`: IoC 컨테이너, 스캐닝, 라이프사이클, 이벤트
-- `spring-lite-aop`: 프록시, 인터셉터, `@Aspect`, ordered chain
+- `spring-lite-aop`: 프록시, 인터셉터, `@Aspect`, `@Order` 기반 체인
 - `spring-lite-web`: MVC 디스패치, 인자 바인딩, 예외 처리, JSON 응답
 - `spring-lite-jdbc`: `JdbcTemplate`, `RowMapper`, 커넥션 유틸리티
-- `spring-lite-tx`: `@Transactional`, 전파, rollback 정책
+- `spring-lite-tx`: `@Transactional`, 전파, 롤백 정책
 - `spring-lite-boot`: 애플리케이션 시작점, 자동 설정, 내장 서버
 - `spring-lite-test`: `@SpringLiteTest`, `MockMvc`, transactional test support
 - `example-app`: 주문 예제 애플리케이션
@@ -125,7 +125,7 @@ Part 2부터는 이 큰 그림의 바닥인 IoC 컨테이너부터 직접 구현
 
 컨테이너가 실제로 먼저 관리하는 것은 객체가 아니다. 객체를 어떻게 만들 것인가에 대한 설명이다. 어떤 클래스를 대상으로 하는지, 이름은 무엇인지, 생성 전략은 생성자인지 팩토리 메서드인지, 싱글톤인지 프로토타입인지 같은 메타데이터가 먼저 있어야 한다. Spring이 객체보다 `BeanDefinition`을 먼저 다루는 이유가 여기에 있다.
 
-`spring-lite`에서도 같은 철학을 따른다. 클래스패스를 스캔하거나 설정 클래스를 읽으면 곧바로 `new`를 하지 않는다. 먼저 `BeanDefinition`을 등록하고, 나중에 refresh 또는 `getBean()` 단계에서 실제 인스턴스를 만든다. 이 설계 덕분에 컨테이너는 스캔된 컴포넌트와 `@Bean` 메서드 결과물을 같은 생성 파이프라인으로 다룰 수 있다.
+`spring-lite`에서도 같은 철학을 따른다. 클래스패스를 스캔하거나 설정 클래스를 읽더라도 곧바로 `new`를 호출하지는 않는다. 먼저 `BeanDefinition`을 등록하고, 이후 refresh 또는 `getBean()` 단계에서 실제 인스턴스를 만든다. 이 설계 덕분에 컨테이너는 스캔된 컴포넌트와 `@Bean` 메서드 결과물을 같은 생성 파이프라인으로 다룰 수 있다.
 
 이 단계에서 중요한 분리는 두 가지다.
 
@@ -167,15 +167,15 @@ DI를 "외부에서 주입한다"는 문장으로만 이해하면 핵심을 놓�
 
 이 차이는 컨테이너 입장에서 매우 중요하다. 클래스 기반 빈은 생성자를 호출해 만들지만, 팩토리 메서드 빈은 설정 빈을 먼저 만들고 그 위에서 특정 메서드를 호출해야 한다. 따라서 `BeanDefinition`은 타입뿐 아니라 생성 전략도 함께 표현해야 한다. `spring-lite`에서 `FACTORY_METHOD` kind가 따로 존재하는 이유가 바로 여기에 있다.
 
-실제 Spring은 여기서 한 걸음 더 나아가 `@Configuration` 클래스를 CGLIB로 강화해 `@Bean` 메서드 간 호출도 컨테이너 semantics를 따르도록 만든다. 학습용 구현은 그만큼 복잡하지 않지만, 왜 실제 Spring이 더 무거운 모델을 채택하는지는 충분히 설명된다.
+실제 Spring은 여기서 한 걸음 더 나아가 `@Configuration` 클래스를 CGLIB로 강화해 `@Bean` 메서드 간 호출도 컨테이너의 동작 규칙을 따르도록 만든다. 학습용 구현은 그만큼 복잡하지 않지만, 왜 실제 Spring이 더 무거운 모델을 채택하는지는 충분히 설명된다.
 
 ### Chapter 7. `@Qualifier`, `@Value`, 설정 값 주입
 
 같은 인터페이스의 구현이 여러 개 생기면 타입만으로는 어떤 빈을 주입할지 결정할 수 없다. `@Qualifier`는 이 모호성을 줄이는 장치다. 이름 매칭처럼 보일 수 있지만, 실제로는 타입 기반 자동화 위에 개발자의 의도를 추가로 얹는 장치다. 같은 타입 후보가 여러 개일 때, 컨테이너는 `@Qualifier`와 빈 메타데이터를 함께 사용해 선택을 좁힌다.
 
-`@Value`는 또 다른 차원의 확장을 보여준다. 설정 값 주입은 단순 편의 기능처럼 보이지만, 실제로는 프로퍼티 리졸버, placeholder 문법, 기본값, 타입 변환, 환경별 override 우선순위가 모두 필요한 문제다. `spring-lite`는 YAML 기반 `PropertyResolver`, profile-aware `application-{profile}.yml` 병합, 공통 `ConversionService`를 통해 이 문제를 최소 구현한다.
+`@Value`는 또 다른 차원의 확장을 보여준다. 설정 값 주입은 단순 편의 기능처럼 보이지만, 실제로는 프로퍼티 리졸버, 플레이스홀더 문법, 기본값, 타입 변환, 환경별 재정의 우선순위가 모두 필요한 문제다. `spring-lite`는 YAML 기반 `PropertyResolver`, 프로파일 대응 `application-{profile}.yml` 병합, 공통 `ConversionService`를 통해 이 문제를 최소 구현한다.
 
-이 장은 컨테이너가 단순 생성기에서 정책 시스템으로 확장되는 과정을 보여준다. 타입 우선 규칙, qualifier 보조, 프로퍼티 로딩, 변환, 기본값, 프로파일 override가 쌓일수록 컨테이너는 더 많은 조립 결정을 대신하게 된다. 바로 이 지점이 Spring Boot의 강력함과 복잡성이 동시에 시작되는 자리다.
+이 장은 컨테이너가 단순 생성기에서 정책 시스템으로 확장되는 과정을 보여준다. 타입 우선 규칙, qualifier 보조, 프로퍼티 로딩, 변환, 기본값, 프로파일 재정의가 쌓일수록 컨테이너는 더 많은 조립 결정을 대신하게 된다. 바로 이 지점에서 Spring Boot의 강력함과 복잡성이 함께 시작된다.
 
 ### Chapter 8. Scope와 컨테이너 이벤트
 
@@ -224,7 +224,7 @@ flowchart LR
 
 ### Chapter 10. `BeanPostProcessor`
 
-Spring이 강력한 가장 큰 이유를 하나만 꼽으라면, 많은 경우 답은 `BeanPostProcessor`다. 컨테이너가 객체를 만든 뒤 그 결과를 다시 변형할 수 있기 때문이다. 프록시를 감싸거나, 특정 애너테이션을 해석하거나, 인프라 빈과 애플리케이션 빈의 조합을 바꾸는 기능 대부분이 이 지점에 기대고 있다.
+Spring이 강력한 이유를 하나만 꼽으라면, 많은 경우 답은 `BeanPostProcessor`다. 컨테이너가 객체를 만든 뒤 그 결과를 다시 변형할 수 있기 때문이다. 프록시를 감싸거나, 특정 애너테이션을 해석하거나, 인프라 빈과 애플리케이션 빈의 조합을 바꾸는 기능 대부분이 이 지점에 기대고 있다.
 
 `spring-lite`에서도 후처리기는 초기화 전과 후 두 단계로 나뉜다. 초기화 전 훅은 메타데이터 준비나 값 주입 같은 작업에 적합하고, 초기화 후 훅은 프록시 생성처럼 완성된 빈을 다른 객체로 대체해야 하는 작업에 적합하다. 특히 트랜잭션과 AOP는 둘 다 이 단계에서 빈을 감싸는 방식으로 동작한다. 이 사실을 이해하면 Part 4의 프록시/AOP 장은 전혀 새로운 세계가 아니라, 지금 만든 컨테이너 위에 올라가는 자연스러운 확장처럼 보인다.
 
@@ -248,7 +248,7 @@ Spring이 객체 대신 프록시를 반환하는 이유는 단순한 우회가 
 
 AOP를 추상 문구로만 이해하면 실무에서 거의 도움이 되지 않는다. 공통 관심사 분리는 결국 구체적인 계약과 호출 순서로 구현되어야 한다. `MethodInterceptor`는 그 계약의 최소 형태다. 각 인터셉터는 `MethodInvocation`을 받아 전후 처리를 하거나, 호출을 조건부로 우회하거나, 반환값을 바꿀 수 있다.
 
-이 책의 현재 구현은 `Advisor`라는 이름의 완전한 추상화 대신, ordered interceptor chain과 프록시 합성으로 같은 문제를 더 얇게 풀었다. 이미 프록시된 빈에 다른 인터셉터를 다시 합성할 수 있고, `@Order`를 통해 실행 순서를 예측 가능하게 만들었다. 즉, 트랜잭션 인터셉터와 AOP advice가 한 체인 안에서 함께 정렬된다. 이것이 바로 실제 Spring AOP가 더 많은 추상화와 규칙으로 확장되는 출발점이다.
+이 책의 현재 구현은 `Advisor`라는 이름의 완전한 추상화 대신, `@Order` 기반 인터셉터 체인과 프록시 합성으로 같은 문제를 더 얇게 풀었다. 이미 프록시된 빈에 다른 인터셉터를 다시 합성할 수 있고, `@Order`를 통해 실행 순서를 예측 가능하게 만들었다. 즉, 트랜잭션 인터셉터와 AOP advice가 한 체인 안에서 함께 정렬된다. 이것이 바로 실제 Spring AOP가 더 많은 추상화와 규칙으로 확장되는 출발점이다.
 
 ```mermaid
 flowchart LR
@@ -263,13 +263,13 @@ flowchart LR
 
 프록시와 인터셉터만 있으면 기능은 동작할 수 있지만, 사용성은 좋지 않다. 개발자는 매번 인터셉터 객체를 직접 등록하고 싶어하지 않는다. 대신 "이 클래스는 aspect이고, 이 메서드는 before advice이며, 저 메서드는 around advice다"처럼 선언하고 싶어한다. `@Aspect`, `@Before`, `@Around`, `@AfterReturning`은 그 선언 모델이다.
 
-`spring-lite`의 `AspectBeanPostProcessor`는 이 선언을 읽어 내부적으로 ordered interceptor를 만든다. 메서드명과 특정 애너테이션 기준의 최소 포인트컷 모델을 사용하지만, 핵심 구조는 충분히 드러난다. 선언형 AOP는 별도 마법이 아니라 "애너테이션을 읽어 인터셉터로 바꾸는 해석 계층"이다. 실제 Spring이 `@AspectJ`, richer pointcut 표현식, advisor abstraction까지 발전한 이유도 같은 구조 위에서 더 많은 경우를 감당해야 했기 때문이다.
+`spring-lite`의 `AspectBeanPostProcessor`는 이 선언을 읽어 내부적으로 순서가 있는 인터셉터를 만든다. 메서드명과 특정 애너테이션 기준의 최소 포인트컷 모델을 사용하지만, 핵심 구조는 충분히 드러난다. 선언형 AOP는 별도 마법이 아니라 "애너테이션을 읽어 인터셉터로 바꾸는 해석 계층"이다. 실제 Spring이 `@AspectJ`, 더 풍부한 포인트컷 표현식, advisor 추상화까지 발전한 이유도 같은 구조 위에서 더 많은 경우를 감당해야 했기 때문이다.
 
 ### Chapter 15. `@Transactional`
 
-`@Transactional`은 Spring에서 가장 널리 쓰이는 애너테이션이지만, 가장 자주 오해되는 기능이기도 하다. 메서드 본문이 자동으로 바뀌는 것이 아니라, 프록시가 메서드 호출 경로를 감싸 트랜잭션 경계를 여는 방식으로 동작하기 때문이다. 후처리기는 트랜잭션 대상 빈을 찾아 프록시를 만들고, 인터셉터는 메서드 진입 시 `begin()`, 정상 종료 시 `commit()`, 예외 발생 시 rollback 정책에 따라 `rollback()` 또는 `commit()`을 수행한다.
+`@Transactional`은 Spring에서 가장 널리 쓰이는 애너테이션이지만, 가장 자주 오해되는 기능이기도 하다. 메서드 본문이 자동으로 바뀌는 것이 아니라, 프록시가 메서드 호출 경로를 감싸 트랜잭션 경계를 여는 방식으로 동작하기 때문이다. 후처리기는 트랜잭션 대상 빈을 찾아 프록시를 만들고, 인터셉터는 메서드 진입 시 `begin()`, 정상 종료 시 `commit()`, 예외 발생 시 롤백 정책에 따라 `rollback()` 또는 `commit()`을 수행한다.
 
-이 구조를 이해하면 self-invocation 문제가 왜 생기는지도 선명해진다. 같은 클래스 안에서 `this.someTransactionalMethod()`를 호출하면 프록시를 거치지 않는다. 트랜잭션이 기대대로 동작하지 않는 이유는 데이터베이스나 선언식 자체가 아니라, 호출 경로가 프록시를 우회했기 때문이다.
+이 구조를 이해하면 자기 호출(self-invocation) 문제가 왜 생기는지도 선명해진다. 같은 클래스 안에서 `this.someTransactionalMethod()`를 호출하면 프록시를 거치지 않는다. 트랜잭션이 기대대로 동작하지 않는 이유는 데이터베이스나 선언식 자체가 아니라, 호출 경로가 프록시를 우회했기 때문이다.
 
 ```mermaid
 sequenceDiagram
@@ -286,19 +286,19 @@ sequenceDiagram
     Proxy-->>Caller: return / throw
 ```
 
-### Chapter 16. 전파와 rollback 정책
+### Chapter 16. 전파와 롤백 정책
 
-트랜잭션은 단순히 "열고 닫는다" 수준이 아니다. 서비스 메서드가 서로를 호출할 때 기존 트랜잭션에 참여할지, 예외 종류에 따라 rollback할지 commit할지, 중첩 호출에서 rollback-only 상태를 어떻게 전달할지가 모두 정책 문제다. `spring-lite`는 `REQUIRED`, `rollbackFor`, `noRollbackFor`, rollback-only 상태를 구현해 이 복잡성을 최소 모델로 보여준다.
+트랜잭션은 단순히 "열고 닫는다" 수준이 아니다. 서비스 메서드가 서로를 호출할 때 기존 트랜잭션에 참여할지, 예외 종류에 따라 롤백할지 커밋할지, 중첩 호출에서 rollback-only 상태를 어떻게 전달할지가 모두 정책 문제다. `spring-lite`는 `REQUIRED`, `rollbackFor`, `noRollbackFor`, rollback-only 상태를 구현해 이 복잡성을 최소 모델로 보여준다.
 
-이 장의 핵심은 선언형 트랜잭션이 정책 엔진이라는 사실이다. 테스트를 보면 이 사실이 훨씬 명확해진다. 같은 호출 흐름이라도 예외 타입에 따라 DB 상태가 달라지고, 기존 트랜잭션이 있으면 새로 열지 않고 깊이만 증가시킨다. 실제 Spring은 propagation, isolation, read-only, transaction synchronization 등 훨씬 더 많은 semantics를 제공하지만, मूल 구조는 같다.
+이 장의 핵심은 선언형 트랜잭션이 정책 엔진이라는 사실이다. 테스트를 보면 이 사실이 훨씬 명확해진다. 같은 호출 흐름이라도 예외 타입에 따라 DB 상태가 달라지고, 기존 트랜잭션이 있으면 새로 열지 않고 깊이만 증가시킨다. 실제 Spring은 propagation, isolation, read-only, transaction synchronization 등 훨씬 더 많은 동작 규칙을 제공하지만, 기본 구조는 같다.
 
 ---
 
 ## Part 5. Web MVC를 직접 구현한다
 
-### Chapter 17. `DispatcherServlet`과 Front Controller
+### Chapter 17. `DispatcherServlet`과 Front Controller 패턴
 
-웹 프레임워크에서 하나의 중심 진입점을 두는 이유는 공통 문제를 일관된 파이프라인으로 다루기 위해서다. 인증, 예외 처리, 핸들러 선택, 인자 바인딩, 응답 생성은 요청마다 반복되는 문제다. 이를 각 컨트롤러가 직접 처리하게 하면 구조가 곧바로 흩어진다. 그래서 Spring MVC는 `DispatcherServlet`을 front controller로 둔다.
+웹 프레임워크에서 하나의 중심 진입점을 두는 이유는 공통 문제를 일관된 파이프라인으로 다루기 위해서다. 인증, 예외 처리, 핸들러 선택, 인자 바인딩, 응답 생성은 요청마다 반복되는 문제다. 이를 각 컨트롤러가 직접 처리하게 하면 구조가 곧바로 흩어진다. 그래서 Spring MVC는 `DispatcherServlet`을 Front Controller로 둔다.
 
 `spring-lite`도 같은 구조를 따른다. 모든 요청은 먼저 디스패처로 들어오고, 디스패처는 핸들러 매핑으로 컨트롤러 메서드를 찾고, 핸들러 어댑터로 메서드를 실행하고, 리턴값 핸들러로 응답을 작성한다. 예외는 별도 resolver가 처리한다. 이 구조 덕분에 컨트롤러 메서드는 전체 요청 흐름의 한 가운데 있는 도메인 처리 지점으로만 남을 수 있다.
 
@@ -362,7 +362,7 @@ HTTP 요청을 자바 메서드 호출로 바꾸는 과정은 생각보다 많�
 
 사용자는 컨테이너, 웹, JDBC, AOP를 하나씩 직접 조립하고 싶어하지 않는다. 보통은 `run()` 한 줄로 시작하고 싶어한다. 그래서 부트스트랩 계층이 필요하다. `SpringLiteApplication`은 설정 클래스 인식, 스캔 시작점 설정, 인프라 자동 등록, 웹 서버 시작을 하나의 진입점으로 묶는다.
 
-여기서 profile-aware property loading이 등장하면 Boot 계층 설명력이 크게 올라간다. `application.yml`과 `application-{profile}.yml`이 병합되고, `spring.profiles.active`가 실행 환경에 따라 다른 조립 결과를 만든다는 사실은 실제 Spring Boot의 핵심 개념과도 닿아 있다.
+여기서 프로파일 대응 프로퍼티 로딩이 등장하면 Boot 계층의 설명력이 크게 올라간다. `application.yml`과 `application-{profile}.yml`이 병합되고, `spring.profiles.active`가 실행 환경에 따라 다른 조립 결과를 만든다는 사실은 실제 Spring Boot의 핵심 개념과도 닿아 있다.
 
 물론 실제 Spring Boot는 이보다 훨씬 더 크다. starter, 조건부 자동 설정, 방대한 환경 추상화, 내장 서버 생태계, 관측성, 운영 지원이 있다. 하지만 축소판이기 때문에 오히려 본질이 잘 보인다. 사용자가 한 줄로 애플리케이션을 시작한다는 사실 뒤에, 얼마나 많은 조립 논리가 숨어 있는지를 드러내는 것이 이 장의 목적이다.
 
@@ -381,7 +381,7 @@ flowchart TB
 
 프레임워크는 테스트 없이는 설명되기 어렵다. 애플리케이션 테스트가 기능을 검증한다면, 프레임워크 테스트는 계약과 경계를 검증한다. 컨테이너가 언제 실패해야 하는지, 프록시가 어떤 순서로 동작해야 하는지, MVC가 어떤 요청을 어떤 응답으로 바꿔야 하는지, 트랜잭션이 언제 rollback해야 하는지를 테스트가 문서처럼 보여준다.
 
-`@SpringLiteTest`와 `MockMvc`는 이 테스트 문서화를 돕는 최소 도구다. 여기에 transactional test support까지 들어가면, 테스트 메서드가 트랜잭션 안에서 실행되고 종료 후 rollback된다는 Spring Test의 중요한 감각도 전달할 수 있다. 이 장을 통해 독자는 "테스트 지원도 프레임워크의 일부"라는 사실을 받아들이게 된다. 실제 Spring 생태계가 TestContext, MockMvc, transactional test support를 오랫동안 중요한 축으로 유지해 온 이유도 바로 여기에 있다.
+`@SpringLiteTest`와 `MockMvc`는 이 테스트 문서화를 돕는 최소 도구다. 여기에 트랜잭션 테스트 지원까지 들어가면, 테스트 메서드가 트랜잭션 안에서 실행되고 종료 후 롤백된다는 Spring Test의 중요한 감각도 전달할 수 있다. 이 장을 통해 독자는 "테스트 지원도 프레임워크의 일부"라는 사실을 받아들이게 된다. 실제 Spring 생태계가 TestContext, MockMvc, 트랜잭션 테스트 지원을 오랫동안 중요한 축으로 유지해 온 이유도 바로 여기에 있다.
 
 ---
 
@@ -389,21 +389,21 @@ flowchart TB
 
 ### Chapter 25. 실제 Spring과의 구조 대응
 
-이제 `spring-lite`를 실제 Spring과 정확히 대응시킬 차례다. 비교는 기능 목록 나열이 아니라 구조 대응이어야 한다. `AnnotationConfigApplicationContext`는 `ApplicationContext`/`BeanFactory` 계층의 축소판이고, `BeanDefinition`은 더 풍부한 Spring bean metadata의 축소판이다. `DispatcherServlet`, `TransactionalBeanPostProcessor`, `TransactionManager`, `JdbcTemplate`, `SpringLiteApplication`도 각각 실제 Spring MVC, Spring Transaction, Spring JDBC, Spring Boot의 핵심 개념과 맞닿아 있다.
+이제 `spring-lite`를 실제 Spring과 정확히 대응시킬 차례다. 비교는 기능 목록의 나열이 아니라 구조의 대응이어야 한다. `AnnotationConfigApplicationContext`는 `ApplicationContext`/`BeanFactory` 계층의 축소판이고, `BeanDefinition`은 더 풍부한 Spring 빈 메타데이터의 축소판이다. `DispatcherServlet`, `TransactionalBeanPostProcessor`, `TransactionManager`, `JdbcTemplate`, `SpringLiteApplication`도 각각 실제 Spring MVC, Spring Transaction, Spring JDBC, Spring Boot의 핵심 개념과 맞닿아 있다.
 
 중요한 것은 실제 Spring이 같은 문제를 더 큰 규모와 더 긴 역사 속에서 푼 결과물이라는 점이다. 그래서 추상화 계층이 많고, 설정 조합이 풍부하며, 하위 호환을 위한 장치도 많다. 학습용 구현이 없었다면 이 복잡성은 종종 과하게만 느껴졌을 것이다. 하지만 직접 축소판을 만들어본 뒤에는 "왜 이런 클래스가 존재하는가"를 더 쉽게 추론할 수 있다.
 
 | 축 | Spring Framework / Boot | spring-lite |
 | --- | --- | --- |
 | 컨테이너 | `ApplicationContext` + `BeanFactory` + 다층 post-processor | `AnnotationConfigApplicationContext` 중심 |
-| AOP | advisor, pointcut, auto-proxy creator, `@AspectJ` | ordered interceptor chain + 최소 `@Aspect` |
-| MVC | `DispatcherServlet` + 다수 전략 + message converter | `DispatcherServlet` + mapping/adapter/resolver 최소 세트 |
-| 트랜잭션 | `PlatformTransactionManager` + 풍부한 semantics | `TransactionManager` + `REQUIRED`/rollback rules |
-| Boot | 대규모 auto-config와 environment abstraction | 경량 auto-config + profile-aware property loading |
+| AOP | advisor, pointcut, auto-proxy creator, `@AspectJ` | `@Order` 기반 인터셉터 체인 + 최소 `@Aspect` |
+| MVC | `DispatcherServlet` + 다수 전략 + 메시지 컨버터 | `DispatcherServlet` + mapping/adapter/resolver 최소 세트 |
+| 트랜잭션 | `PlatformTransactionManager` + 풍부한 동작 규칙 | `TransactionManager` + `REQUIRED`/rollback rules |
+| Boot | 대규모 auto-config와 환경 추상화 | 경량 auto-config + 프로파일 대응 프로퍼티 로딩 |
 
 ### Chapter 26. 실무에서 원리를 쓰는 법
 
-프레임워크 내부를 이해하면 실무에서 가장 먼저 달라지는 것은 문제를 보는 순서다. 트랜잭션이 안 걸린 것 같으면 DB보다 호출 경로를 먼저 본다. 빈 생성 실패가 나면 애너테이션을 다시 붙이기보다 등록 단계, 생성자 해석, 조건부 등록, 설정 override 경로를 먼저 본다. MVC 매핑이 이상하면 컨트롤러 코드보다 디스패처의 핸들러 선택 조건부터 떠올린다.
+프레임워크 내부를 이해하면 실무에서 가장 먼저 달라지는 것은 문제를 바라보는 순서다. 트랜잭션이 걸리지 않은 것 같으면 DB보다 호출 경로를 먼저 본다. 빈 생성 실패가 나면 애너테이션을 다시 붙이기보다 등록 단계, 생성자 해석, 조건부 등록, 설정 재정의 경로를 먼저 본다. MVC 매핑이 이상하면 컨트롤러 코드보다 디스패처의 핸들러 선택 조건부터 떠올린다.
 
 이 차이는 생산성으로 이어진다. 장애를 더 빨리 좁힐 수 있고, 자동 설정 충돌을 더 덜 두려워하게 되며, 설계 리뷰에서도 더 깊이 있는 판단을 할 수 있다. 예를 들어 순환 참조 위험을 빨리 감지하고, 선언형 트랜잭션이 적합하지 않은 경계를 더 잘 식별하고, 프로파일과 설정 조립 전략을 더 깔끔하게 설계할 수 있다.
 
@@ -413,13 +413,13 @@ Spring을 잘 쓴다는 말은 결국 내부 구조를 바탕으로 더 나은 �
 
 책의 끝은 학습의 끝이 아니라 확장의 시작이어야 한다. 현재 `spring-lite`는 핵심 원리를 충분히 드러내지만, 실제 Spring과의 거리를 더 탐색할 수 있는 주제도 남아 있다.
 
-- richer `Advisor` / pointcut 모델
+- 더 풍부한 `Advisor` / pointcut 모델
 - `HttpMessageConverter` 추상화와 콘텐츠 협상
 - 정적 리소스 서빙
 - 더 풍부한 조건부 auto-configuration
 - 이벤트 관측성, metrics, 운영 지원
 - `FactoryBean` 유사 모델
-- 더 다양한 트랜잭션 semantics
+- 더 다양한 트랜잭션 동작 규칙
 
 이 목록은 단순 TODO가 아니다. 각 항목은 실제 Spring이 복잡해지는 이유를 다시 배우게 만드는 학습 과제다. 독자가 이 책을 덮은 뒤에도 `spring-lite`를 계속 확장하며 배울 수 있도록 남겨둔 의도된 여지다.
 
@@ -427,6 +427,6 @@ Spring을 잘 쓴다는 말은 결국 내부 구조를 바탕으로 더 나은 �
 
 ## 맺음말
 
-우리는 이 책에서 Spring을 흉내 낸 것이 아니라, Spring의 핵심 원리를 드러내는 실행 가능한 축소판을 만들었다. 컨테이너가 어떻게 메타데이터를 등록하고, 의존성을 해석하며, 라이프사이클과 후처리기로 확장을 가능하게 하는지 보았다. 프록시와 인터셉터가 어떻게 공통 관심사를 호출 경계에 끼워 넣는지 보았고, 웹 요청이 어떻게 메서드 호출과 응답 모델로 바뀌는지 보았다. JDBC와 트랜잭션, 부트스트랩과 테스트 지원까지 연결해 하나의 런타임으로 완성했다.
+우리는 이 책에서 Spring을 흉내 낸 것이 아니라, Spring의 핵심 원리를 드러내는 실행 가능한 축소판을 만들었다. 컨테이너가 어떻게 메타데이터를 등록하고, 의존성을 해석하며, 라이프사이클과 후처리기로 확장을 가능하게 하는지 살펴보았다. 프록시와 인터셉터가 어떻게 공통 관심사를 호출 경계에 끼워 넣는지도 확인했고, 웹 요청이 어떻게 메서드 호출과 응답 모델로 바뀌는지도 추적했다. JDBC와 트랜잭션, 부트스트랩과 테스트 지원까지 연결해 하나의 런타임으로 완성한 셈이다.
 
 이제 Spring은 더 이상 마법이 아니다. 복잡하지만 설명 가능한 구조다. 그리고 구조를 이해한 개발자는 설정을 외우는 사람보다 훨씬 더 잘 디버깅하고, 더 잘 설계하고, 더 잘 판단할 수 있다. 그것이 이 책이 독자에게 남기고 싶은 가장 중요한 성과다.
