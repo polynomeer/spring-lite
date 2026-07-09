@@ -10,6 +10,6 @@
 ## 주요 내용
 
 - `@Transactional`
+- `Propagation.REQUIRED`, `rollbackFor`, `noRollbackFor`
 - `TransactionManager`
-- `ConnectionHolder`
 - `TransactionalBeanPostProcessor`

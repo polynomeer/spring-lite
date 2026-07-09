@@ -6,68 +6,89 @@ import javax.sql.DataSource;
 
 public class TransactionManager {
     private final DataSource dataSource;
-    private final ThreadLocal<ConnectionHolder> connectionHolder = new ThreadLocal<>();
+    private final ThreadLocal<TransactionContext> transactionContext = new ThreadLocal<>();
 
     public TransactionManager(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
     public void begin() {
-        if (connectionHolder.get() != null) {
+        TransactionContext context = transactionContext.get();
+        if (context != null) {
+            context.incrementDepth();
             return;
         }
         if (dataSource == null) {
-            connectionHolder.set(new ConnectionHolder(null));
+            transactionContext.set(new TransactionContext(null));
             return;
         }
         try {
             Connection connection = dataSource.getConnection();
             connection.setAutoCommit(false);
-            connectionHolder.set(new ConnectionHolder(connection));
+            transactionContext.set(new TransactionContext(connection));
         } catch (SQLException exception) {
             throw new IllegalStateException("Failed to begin transaction", exception);
         }
     }
 
     public void commit() {
-        ConnectionHolder holder = connectionHolder.get();
-        if (holder == null) {
+        TransactionContext context = transactionContext.get();
+        if (context == null) {
             return;
         }
-        if (holder.connection() == null) {
-            connectionHolder.remove();
+        if (!context.decrementAndIsComplete()) {
+            return;
+        }
+        if (context.connection() == null) {
+            transactionContext.remove();
+            return;
+        }
+        if (context.rollbackOnly()) {
+            rollbackConnection(context.connection());
             return;
         }
         try {
-            holder.connection().commit();
+            context.connection().commit();
         } catch (SQLException exception) {
             throw new IllegalStateException("Failed to commit transaction", exception);
         } finally {
-            cleanup(holder.connection());
+            cleanup(context.connection());
         }
     }
 
     public void rollback() {
-        ConnectionHolder holder = connectionHolder.get();
-        if (holder == null) {
+        TransactionContext context = transactionContext.get();
+        if (context == null) {
             return;
         }
-        if (holder.connection() == null) {
-            connectionHolder.remove();
+        context.markRollbackOnly();
+        if (!context.decrementAndIsComplete()) {
             return;
         }
-        try {
-            holder.connection().rollback();
-        } catch (SQLException exception) {
-            throw new IllegalStateException("Failed to rollback transaction", exception);
-        } finally {
-            cleanup(holder.connection());
+        if (context.connection() == null) {
+            transactionContext.remove();
+            return;
         }
+        rollbackConnection(context.connection());
+    }
+
+    public boolean isTransactionActive() {
+        return transactionContext.get() != null;
     }
 
     public Connection currentConnection() {
-        ConnectionHolder holder = connectionHolder.get();
-        return holder == null ? null : holder.connection();
+        TransactionContext context = transactionContext.get();
+        return context == null ? null : context.connection();
+    }
+
+    private void rollbackConnection(Connection connection) {
+        try {
+            connection.rollback();
+        } catch (SQLException exception) {
+            throw new IllegalStateException("Failed to rollback transaction", exception);
+        } finally {
+            cleanup(connection);
+        }
     }
 
     private void cleanup(Connection connection) {
@@ -77,7 +98,38 @@ public class TransactionManager {
         } catch (SQLException exception) {
             throw new IllegalStateException("Failed to close transaction connection", exception);
         } finally {
-            connectionHolder.remove();
+            transactionContext.remove();
+        }
+    }
+
+    private static final class TransactionContext {
+        private final Connection connection;
+        private int depth = 1;
+        private boolean rollbackOnly;
+
+        private TransactionContext(Connection connection) {
+            this.connection = connection;
+        }
+
+        private Connection connection() {
+            return connection;
+        }
+
+        private void incrementDepth() {
+            depth++;
+        }
+
+        private boolean decrementAndIsComplete() {
+            depth--;
+            return depth == 0;
+        }
+
+        private void markRollbackOnly() {
+            rollbackOnly = true;
+        }
+
+        private boolean rollbackOnly() {
+            return rollbackOnly;
         }
     }
 }

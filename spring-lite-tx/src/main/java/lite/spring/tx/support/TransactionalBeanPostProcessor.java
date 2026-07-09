@@ -37,9 +37,8 @@ public class TransactionalBeanPostProcessor implements BeanPostProcessor {
     private MethodInterceptor transactionInterceptor(Object bean) {
         return invocation -> {
             Method targetMethod = bean.getClass().getMethod(invocation.getMethod().getName(), invocation.getMethod().getParameterTypes());
-            boolean transactional = bean.getClass().isAnnotationPresent(Transactional.class)
-                || targetMethod.isAnnotationPresent(Transactional.class);
-            if (!transactional) {
+            Transactional transactional = resolveTransactionalMetadata(bean.getClass(), targetMethod);
+            if (transactional == null) {
                 return invocation.proceed();
             }
             transactionManager.begin();
@@ -48,10 +47,32 @@ public class TransactionalBeanPostProcessor implements BeanPostProcessor {
                 transactionManager.commit();
                 return result;
             } catch (Throwable throwable) {
-                transactionManager.rollback();
+                if (shouldRollback(throwable, transactional)) {
+                    transactionManager.rollback();
+                } else {
+                    transactionManager.commit();
+                }
                 throw throwable;
             }
         };
     }
-}
 
+    private Transactional resolveTransactionalMetadata(Class<?> beanType, Method targetMethod) {
+        Transactional methodAnnotation = targetMethod.getAnnotation(Transactional.class);
+        return methodAnnotation != null ? methodAnnotation : beanType.getAnnotation(Transactional.class);
+    }
+
+    private boolean shouldRollback(Throwable throwable, Transactional transactional) {
+        for (Class<? extends Throwable> noRollbackType : transactional.noRollbackFor()) {
+            if (noRollbackType.isAssignableFrom(throwable.getClass())) {
+                return false;
+            }
+        }
+        for (Class<? extends Throwable> rollbackType : transactional.rollbackFor()) {
+            if (rollbackType.isAssignableFrom(throwable.getClass())) {
+                return true;
+            }
+        }
+        return true;
+    }
+}

@@ -298,7 +298,7 @@ flowchart LR
 | return value handling | 매우 풍부 | JSON + `ResponseEntity` |
 | request conditions | 풍부 | path + method + `consumes`/`produces`/`headers`/`params` 최소 지원 |
 | message converter | 풍부, Jackson 등 | 자체 `JsonMapper` |
-| validation | Bean Validation 통합 | 미지원 |
+| validation | Bean Validation 통합 | `@Valid`, `@NotNull`, `@Min`, `@Size` 최소 지원 |
 | controller advice | `@ControllerAdvice` 지원 | 미지원 |
 | exception mapping | 풍부 | `@ExceptionHandler` 최소 버전 |
 
@@ -316,14 +316,15 @@ Spring 공식 문서는 트랜잭션을 abstraction, declarative implementation,
 
 - [TransactionalBeanPostProcessor](../../spring-lite-tx/src/main/java/lite/spring/tx/support/TransactionalBeanPostProcessor.java)가 Bean 후처리 시 프록시를 감싼다.
 - [TransactionManager](../../spring-lite-tx/src/main/java/lite/spring/tx/support/TransactionManager.java)가 `ThreadLocal` 기반으로 현재 커넥션을 관리한다.
+- [Transactional](../../spring-lite-tx/src/main/java/lite/spring/tx/annotation/Transactional.java)가 `REQUIRED`, `rollbackFor`, `noRollbackFor`를 노출한다.
 
 ### 비교
 
 | 항목 | Spring | `spring-lite` |
 | --- | --- | --- |
 | transaction abstraction | `PlatformTransactionManager` 계열 | 단일 `TransactionManager` |
-| propagation | 지원 | 미지원 |
-| rollback rules | 지원 | 예외 발생 시 단순 rollback |
+| propagation | 지원 | `REQUIRED` |
+| rollback rules | 지원 | `rollbackFor`, `noRollbackFor` |
 | synchronization | 지원 | 단순 current connection |
 | transaction events | 지원 | 미지원 |
 | AspectJ mode | 지원 | 미지원 |

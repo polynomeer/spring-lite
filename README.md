@@ -25,6 +25,7 @@
 - JDK Dynamic Proxy 및 클래스 기반 프록시 AOP 인프라
 - `@Aspect`, `@Before`, `@Around`, `@AfterReturning` 최소 버전
 - `@Transactional` 기반 메서드 인터셉션
+- `REQUIRED` 전파와 `rollbackFor` / `noRollbackFor`
 - `JdbcTemplate`, `RowMapper`, `DriverManagerDataSource`
 - H2 기반 JDBC/트랜잭션 통합 테스트
 - `@RestController`, `@RequestMapping`, `@GetMapping`, `@PostMapping`
@@ -69,7 +70,7 @@
 - Boot 자동 설정은 조건부 등록과 모듈 분리까지 반영됐지만, 더 다양한 조건과 조립 전략은 남아 있다.
 - 웹 계층은 JSON API 중심이며 검증은 최소 애노테이션 세트 기준으로 제공된다.
 - 컨테이너는 singleton/prototype scope와 기본 컨텍스트 이벤트를 제공하지만, 더 고급 생명주기 훅은 남아 있다.
-- 트랜잭션은 단일 데이터소스와 단순 전파 정책을 기준으로 설계되어 있다.
+- 트랜잭션은 단일 데이터소스 기준이지만 `REQUIRED` 전파와 예외별 rollback 정책까지 반영되어 있다.
 - 테스트 지원 모듈은 아직 실체화 전이며, 향후 별도 DSL과 헬퍼를 추가할 계획이다.
 
 ## 실행 방법

@@ -66,10 +66,44 @@ class TransactionalBeanPostProcessorTest {
         assertThat(transactionManager.rollbackCalls).isZero();
     }
 
+    @Test
+    void commitsWhenExceptionMatchesNoRollbackRule() {
+        RecordingTransactionManager transactionManager = new RecordingTransactionManager();
+        TransactionalBeanPostProcessor processor = new TransactionalBeanPostProcessor(transactionManager);
+        SampleService proxied = (SampleService) processor.postProcessAfterInitialization("sampleService", new SampleServiceImpl());
+
+        assertThatThrownBy(proxied::failWithoutRollback)
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("skip rollback");
+
+        assertThat(transactionManager.beginCalls).isEqualTo(1);
+        assertThat(transactionManager.commitCalls).isEqualTo(1);
+        assertThat(transactionManager.rollbackCalls).isZero();
+    }
+
+    @Test
+    void rollsBackWhenExceptionMatchesRollbackForRule() {
+        RecordingTransactionManager transactionManager = new RecordingTransactionManager();
+        TransactionalBeanPostProcessor processor = new TransactionalBeanPostProcessor(transactionManager);
+        SampleService proxied = (SampleService) processor.postProcessAfterInitialization("sampleService", new SampleServiceImpl());
+
+        assertThatThrownBy(proxied::failChecked)
+            .isInstanceOf(CheckedFailureException.class)
+            .hasMessageContaining("checked");
+
+        assertThat(transactionManager.beginCalls).isEqualTo(1);
+        assertThat(transactionManager.commitCalls).isZero();
+        assertThat(transactionManager.rollbackCalls).isEqualTo(1);
+    }
+
     interface SampleService {
         String succeed(String input);
 
         String fail();
+
+        String failWithoutRollback();
+
+        String failChecked() throws CheckedFailureException;
     }
 
     static class SampleServiceImpl implements SampleService {
@@ -84,6 +118,18 @@ class TransactionalBeanPostProcessorTest {
         public String fail() {
             throw new IllegalStateException("boom");
         }
+
+        @Override
+        @Transactional(noRollbackFor = IllegalArgumentException.class)
+        public String failWithoutRollback() {
+            throw new IllegalArgumentException("skip rollback");
+        }
+
+        @Override
+        @Transactional(rollbackFor = CheckedFailureException.class)
+        public String failChecked() throws CheckedFailureException {
+            throw new CheckedFailureException("checked");
+        }
     }
 
     static class PlainService {
@@ -96,6 +142,12 @@ class TransactionalBeanPostProcessorTest {
         @Transactional
         public String call(String value) {
             return value;
+        }
+    }
+
+    static class CheckedFailureException extends Exception {
+        CheckedFailureException(String message) {
+            super(message);
         }
     }
 

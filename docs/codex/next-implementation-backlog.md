@@ -26,6 +26,7 @@
 - 요청 매핑 조건 확장
 - 최소 검증 계층 추가
 - `@Scope("prototype")`와 기본 컨텍스트 이벤트
+- `REQUIRED` 전파와 예외별 rollback 정책
 
 ## Priority 1. Boot 완성도
 
@@ -124,32 +125,6 @@
 
 ## Priority 5. JDBC / Transaction 고도화
 
-### 12. 트랜잭션 전파 정책 최소 지원
-
-현재는 단순 경계 처리 중심이다. 서비스 간 호출이 늘어나면 전파 정책이 필요하다.
-
-구현 후보:
-
-- `REQUIRED`
-- `REQUIRES_NEW`는 이후 단계로 미루고 설계 지점만 확보
-
-완료 기준:
-
-- 같은 스레드 내 중첩 서비스 호출에서 기존 트랜잭션 재사용이 안정적으로 동작한다.
-
-### 13. 예외 기반 rollback 정책 확장
-
-현재 rollback 기준이 단순하다면 선언적 정책을 지원하는 편이 좋다.
-
-구현 후보:
-
-- `rollbackFor`
-- `noRollbackFor`
-
-완료 기준:
-
-- 예외 타입별 rollback 정책을 `@Transactional`에서 지정할 수 있다.
-
 ### 14. DataSource 추상화 확장
 
 연결 전략이 단순한 만큼 학습 범위를 넓힐 여지가 있다.
@@ -226,14 +201,10 @@
 
 현 시점에서 가장 효율적인 순서는 아래다.
 
-1. 검증 계층 추가
-2. Bean scope 확장
-3. 이벤트 모델
-4. 트랜잭션 전파 정책
-5. `spring-lite-test` 실체화
-6. 예제 앱 JDBC 전환
-7. 설정 프로파일 지원
-8. `@ControllerAdvice`와 전역 예외 처리
+1. `spring-lite-test` 실체화
+2. 예제 앱 JDBC 전환
+3. 설정 프로파일 지원
+4. `@ControllerAdvice`와 전역 예외 처리
 
 ## 추가 확장 후보
 
