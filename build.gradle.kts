@@ -97,6 +97,7 @@ project(":spring-lite-test") {
     description = "Test support for context loading, MVC tests, and integration fixtures."
     dependencies {
         "api"(project(":spring-lite-boot"))
+        "implementation"("org.junit.jupiter:junit-jupiter-api:$junitVersion")
     }
 }
 

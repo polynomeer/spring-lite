@@ -33,6 +33,7 @@
 - `consumes`, `produces`, `headers`, `params` 기반 요청 매핑 조건
 - `@Valid`, `@NotNull`, `@Min`, `@Size` 기반 입력 검증
 - `@ExceptionHandler`와 MVC 내부 역할 분리
+- `@SpringLiteTest`, `MockMvc` 스타일 테스트 지원
 - 내장 JDK HTTP 서버 기반 `MiniSpringApplication.run()`
 - 기본 인프라 자동 등록 기반 부트스트랩
 - 주문 예제 앱과 기본 테스트
@@ -46,7 +47,7 @@
 - `spring-lite-jdbc`: JdbcTemplate, RowMapper, DataSource 유틸리티
 - `spring-lite-tx`: `@Transactional`, `TransactionManager`, `TransactionalBeanPostProcessor`
 - `spring-lite-boot`: 자동 설정, 애플리케이션 실행, 내장 서버 연동 지점
-- `spring-lite-test`: 테스트 지원 모듈
+- `spring-lite-test`: JUnit 확장, 컨텍스트 로딩, mock web 테스트 지원
 - `example-app`: 주문 조회/생성 예제 애플리케이션
 
 ## 문서 읽기 순서
@@ -71,7 +72,7 @@
 - 웹 계층은 JSON API 중심이며 검증은 최소 애노테이션 세트 기준으로 제공된다.
 - 컨테이너는 singleton/prototype scope와 기본 컨텍스트 이벤트를 제공하지만, 더 고급 생명주기 훅은 남아 있다.
 - 트랜잭션은 단일 데이터소스 기준이지만 `REQUIRED` 전파와 예외별 rollback 정책까지 반영되어 있다.
-- 테스트 지원 모듈은 아직 실체화 전이며, 향후 별도 DSL과 헬퍼를 추가할 계획이다.
+- 테스트 지원 모듈은 최소 JUnit 확장과 mock web 호출기를 제공하며, 향후 fixture 확장은 남아 있다.
 
 ## 실행 방법
 

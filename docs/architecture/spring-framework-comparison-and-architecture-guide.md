@@ -378,15 +378,22 @@ Spring JDBC 레퍼런스는 JDBC core classes, database connections, parameter h
 
 Spring 공식 문서는 `TestContext Framework`, `MockMvc`, web mocks, context caching, transactional test support를 폭넓게 제공한다. [Spring testing reference](https://docs.spring.io/spring-framework/reference/testing/index.html)
 
-현재 `spring-lite`는 아직 별도 테스트 DSL이 거의 없고, 각 모듈이 직접 컨텍스트를 띄워 검증한다.
+현재 `spring-lite`는 최소 테스트 지원 모듈까지 확장되었다.
 
-예:
+- [SpringLiteTest](../../spring-lite-test/src/main/java/lite/spring/test/SpringLiteTest.java)
+- [SpringLiteTestExtension](../../spring-lite-test/src/main/java/lite/spring/test/SpringLiteTestExtension.java)
+- [MockMvc](../../spring-lite-test/src/main/java/lite/spring/test/web/MockMvc.java)
+- [ExampleApplicationWebTest](../../example-app/src/test/java/lite/spring/example/ExampleApplicationWebTest.java)
 
-- [AnnotationConfigApplicationContextTest](../../spring-lite-context/src/test/java/lite/spring/context/AnnotationConfigApplicationContextTest.java)
-- [DispatcherServletTest](../../spring-lite-web/src/test/java/lite/spring/web/support/DispatcherServletTest.java)
-- [JdbcIntegrationTest](../../spring-lite-jdbc/src/test/java/lite/spring/jdbc/JdbcIntegrationTest.java)
+비교 관점:
 
-즉 테스트 철학은 비슷하지만, 프레임워크화된 테스트 지원은 아직 초기 단계다.
+| 항목 | Spring Test | `spring-lite` |
+| --- | --- | --- |
+| test context framework | 지원 | `@SpringLiteTest` 최소 지원 |
+| mock mvc | 지원 | `MockMvc` 최소 지원 |
+| web mocks | 지원 | `MockHttpRequest` / `MockHttpResponse` |
+| context caching | 지원 | JUnit extension store 수준 |
+| transactional test support | 지원 | 미지원 |
 
 ## 14. 실제 Spring 소스와 `spring-lite`를 함께 읽는 순서
 
@@ -425,9 +432,9 @@ Spring 공식 문서는 `TestContext Framework`, `MockMvc`, web mocks, context c
 
 - `Advisor`, pointcut, ordered advice
 - `@Primary`, 컬렉션 주입, optional/lazy dependency
-- validation, conversion service, message converter 확장성
-- propagation, rollback rule, transaction synchronization
-- event model, scope model, test context framework
+- conversion service, message converter 확장성
+- transaction synchronization, 다중 리소스 트랜잭션
+- 전역 테스트 fixture와 transactional test support
 
 ## 16. 결론
 
@@ -442,7 +449,6 @@ Spring 공식 문서는 `TestContext Framework`, `MockMvc`, web mocks, context c
 이 프로젝트를 더 Spring답게 만들려면 다음 순서가 자연스럽다.
 
 1. `Advisor` / pointcut / ordered advice 도입
-2. scope / event / validation 확장
-3. transaction propagation 과 rollback rules 추가
-4. `spring-lite-test` 실체화
-5. 예제 앱을 JDBC 중심으로 확장
+2. conversion service / controller advice 확장
+3. transaction synchronization / read-only 같은 정책 확장
+4. 예제 앱을 JDBC 중심으로 확장

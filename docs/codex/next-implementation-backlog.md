@@ -27,6 +27,7 @@
 - 최소 검증 계층 추가
 - `@Scope("prototype")`와 기본 컨텍스트 이벤트
 - `REQUIRED` 전파와 예외별 rollback 정책
+- `@SpringLiteTest`와 mock web 테스트 지원
 
 ## Priority 1. Boot 완성도
 
@@ -140,34 +141,6 @@
 
 ## Priority 6. Test Support
 
-### 15. `spring-lite-test` 실체화
-
-현재 테스트는 각 모듈에서 직접 컨텍스트를 조립한다. 테스트 지원 모듈을 실제로 쓰게 만들어야 한다.
-
-구현 후보:
-
-- `@SpringLiteTest`
-- 컨텍스트 로딩 확장
-- 공통 fixture 유틸리티
-
-완료 기준:
-
-- 통합 테스트가 반복 코드 없이 작성된다.
-
-### 16. 웹 테스트 도구
-
-웹 계층 테스트를 더 빠르고 촘촘하게 만들 필요가 있다.
-
-구현 후보:
-
-- `MockHttpRequest`
-- `MockHttpResponse`
-- `MockMvc`에 가까운 최소 테스트 API
-
-완료 기준:
-
-- 실제 서버 기동 없이 컨트롤러 경로와 응답을 검증할 수 있다.
-
 ## Priority 7. Example App 강화
 
 ### 17. 예제 앱을 JDBC 중심으로 전환
@@ -201,10 +174,9 @@
 
 현 시점에서 가장 효율적인 순서는 아래다.
 
-1. `spring-lite-test` 실체화
-2. 예제 앱 JDBC 전환
-3. 설정 프로파일 지원
-4. `@ControllerAdvice`와 전역 예외 처리
+1. 예제 앱 JDBC 전환
+2. 설정 프로파일 지원
+3. `@ControllerAdvice`와 전역 예외 처리
 
 ## 추가 확장 후보
 
