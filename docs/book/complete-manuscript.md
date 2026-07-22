@@ -641,6 +641,24 @@ flowchart LR
     F --> G["@PreDestroy / AutoCloseable"]
 ```
 
+직접 구현하기 관점에서는 이 장도 라이프사이클 순서를 테스트로 먼저 고정하는 편이 좋다.
+
+```java
+@Test
+void invokesLifecycleCallbacksInOrder() {
+    AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(DestroyConfig.class);
+    LifecycleBean bean = context.getBean(LifecycleBean.class);
+
+    assertThat(bean.events()).containsExactly("postConstruct");
+
+    context.close();
+
+    assertThat(bean.events()).containsExactly("postConstruct", "preDestroy");
+}
+```
+
+그리고 `initializeBean()` 하나만으로 끝내지 말고, 종료 콜백 등록까지 이어지는 구조를 함께 따라가게 하는 편이 좋다. 이 장에서 독자가 잡아야 할 핵심은 "생성 완료"와 "사용 가능"이 같지 않다는 사실이기 때문이다.
+
 ### Chapter 10. `BeanPostProcessor`
 
 Spring이 강력한 이유를 하나만 꼽으라면, 많은 경우 답은 `BeanPostProcessor`다. 컨테이너가 객체를 만든 뒤 그 결과를 다시 변형할 수 있기 때문이다. 프록시를 감싸거나, 특정 애너테이션을 해석하거나, 인프라 빈과 애플리케이션 빈의 조합을 바꾸는 기능 대부분이 이 지점에 기대고 있다.
@@ -659,6 +677,38 @@ public interface BeanPostProcessor {
 }
 ```
 
+build-along 방식에서는 이 장에서 아주 작은 후처리기 하나를 테스트로 먼저 만드는 편이 자연스럽다.
+
+```java
+@Test
+void replacesBeanAfterInitialization() {
+    AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ProxyDestroyConfig.class);
+
+    ProxiedService service = context.getBean(ProxiedService.class);
+
+    assertThat(service.message()).isEqualTo("proxied");
+}
+```
+
+그 다음 `refresh()` 내부에서 후처리기 빈을 먼저 수집하는 단계를 본문에 보여줘야 한다. 그래야 후처리기가 단순 콜백이 아니라 컨테이너 조립 순서의 일부라는 사실이 분명해진다.
+
+```java
+private void instantiateBeanPostProcessors() {
+    List<String> postProcessorBeanNames = beanDefinitions.values().stream()
+        .filter(definition -> BeanPostProcessor.class.isAssignableFrom(definition.beanType()))
+        .map(BeanDefinition::name)
+        .filter(this::isBeanEligible)
+        .toList();
+    for (String beanName : postProcessorBeanNames) {
+        BeanPostProcessor beanPostProcessor = (BeanPostProcessor) getBean(beanName);
+        if (!beanPostProcessors.contains(beanPostProcessor)) {
+            beanPostProcessors.add(beanPostProcessor);
+            sortBeanPostProcessors();
+        }
+    }
+}
+```
+
 ### Chapter 11. 순환 참조, 실패 전략, 설계 판단
 
 프레임워크는 모든 문제를 해결해주는 시스템이 아니라, 어떤 문제를 어느 시점에 드러낼지까지 포함해 설계된 시스템이다. 생성자 순환 참조는 대표적인 예다. `spring-lite`는 이를 즉시 실패시킨다. 메시지가 좋을수록 학습용 프레임워크의 가치는 올라간다. 실패 원인과 의존성 경로가 빨리 드러날수록 독자는 구조 문제를 더 빨리 이해할 수 있기 때문이다.
@@ -670,6 +720,30 @@ public interface BeanPostProcessor {
 `spring-lite`의 선택은 그래서 의도적으로 보수적이다. 생성자 기반 순환 참조를 우회하지 않고 즉시 실패시킴으로써, 컨테이너의 책임과 애플리케이션 설계 책임을 명확히 나눈다. 이런 실패 전략은 실무에서도 유용하다. 빈 생성을 어떻게든 통과시키는 것보다 설계 경계를 재검토하게 만들기 때문이다. 주문 서비스와 결제 서비스가 서로를 직접 참조한다면, 그 사이에 도메인 서비스나 조정자(orchestrator)를 도입하는 편이 대개 더 낫다.
 
 독자는 이 장에서 프레임워크의 친절함과 구조적 건전성이 항상 같은 방향으로 가지 않는다는 사실도 배워야 한다. 사용성만 강조하면 프레임워크는 점점 더 많은 예외를 흡수하게 되고, 그 결과 내부 규칙은 더 복잡해진다. 반대로 학습용 구현은 엄격한 실패를 통해 핵심 원리를 더 선명하게 보여줄 수 있다. 실제 Spring 소스를 읽을 때도 이 관점을 갖고 보면, "왜 이렇게까지 했을까"라는 질문에 더 공정하게 답할 수 있다.
+
+직접 구현하는 독자에게는 이 장 역시 실패를 테스트로 고정하게 하는 편이 좋다.
+
+```java
+@Test
+void failsFastOnCircularConstructorDependency() {
+    AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
+    context.register(CircularConfig.class);
+
+    assertThatThrownBy(context::refresh)
+        .isInstanceOf(BeansException.class)
+        .hasMessageContaining("Circular dependency");
+}
+```
+
+그리고 핵심 구현은 가능한 한 짧고 단호해야 한다.
+
+```java
+if (!beansInCreation.add(beanName)) {
+    throw new BeansException("Circular dependency detected while creating " + beanName);
+}
+```
+
+이렇게 해야 다음 장들에서 프록시와 후처리기가 추가되더라도 독자는 "지금 이 실패는 컨테이너가 구조 문제를 조기에 드러낸 것"이라고 해석할 수 있다.
 
 ---
 
@@ -1060,6 +1134,30 @@ private Map<String, String> parseQuery(String rawQuery) {
 }
 ```
 
+직접 구현하는 독자라면 이 장에서도 작은 테스트 세트를 먼저 통과시키는 편이 좋다. 예를 들어 `@RequestParam`, `@PathVariable`, `@RequestBody`를 각각 하나씩 검증하면 인자 해석기가 독립된 전략 객체라는 사실을 자연스럽게 이해하게 된다.
+
+```java
+@Test
+void resolvesRequestParamIntoTypedArgument() {
+    RequestParamArgumentResolver resolver = new RequestParamArgumentResolver(new TypeConverter());
+    HttpExchange exchange = TestHttpExchange.get("/orders?quantity=3");
+    Parameter parameter = SampleController.class.getDeclaredMethod("find", int.class).getParameters()[0];
+
+    Object resolved = resolver.resolveArgument(parameter, null, exchange);
+
+    assertThat(resolved).isEqualTo(3);
+}
+```
+
+그리고 책 본문에서는 전략 인터페이스 자체도 함께 보여주는 편이 좋다. 그래야 독자가 "왜 resolver 구현이 여러 개로 나뉘는가"를 더 쉽게 납득한다.
+
+```java
+public interface HandlerMethodArgumentResolver {
+    boolean supportsParameter(Parameter parameter);
+    Object resolveArgument(Parameter parameter, HandlerMethodMatch handlerMethodMatch, HttpExchange exchange);
+}
+```
+
 ### Chapter 19. JSON, 응답 모델, 예외 처리
 
 컨트롤러 메서드가 값을 반환해도 요청 처리는 끝나지 않는다. 값을 JSON으로 직렬화해야 할 수도 있고, 상태 코드와 헤더를 함께 제어해야 할 수도 있으며, 예외가 발생했다면 이를 HTTP 응답으로 바꿔야 할 수도 있다. `JsonMapper`, `ResponseEntity`, `JsonReturnValueHandler`, `DefaultExceptionResolver`는 이 후반부 파이프라인을 담당한다.
@@ -1121,6 +1219,29 @@ build-along 형식에서는 이 장에서 `JsonMapper`와 `DefaultExceptionResol
 | 예외 처리 | 실행 중 예외 | 로컬/전역 정책 적용 | 4xx/5xx |
 
 직접 구현하는 독자에게는 여기서 `RequestMappingHandlerMapping.matchesConditions(...)`와 `RequestMappingHandlerAdapter`의 검증 호출 지점을 함께 보여주는 편이 좋다. 그래야 조건 매핑과 검증이 각각 어디서 일어나는지를 코드 경계로 정확히 기억할 수 있다.
+
+```java
+private boolean matchesConditions(HandlerMethod handler, HttpExchange exchange) {
+    return matchesConsumes(handler.consumes(), exchange)
+        && matchesProduces(handler.produces(), exchange)
+        && matchesHeaders(handler.headers(), exchange)
+        && matchesParams(handler.params(), exchange);
+}
+```
+
+```java
+private void validateIfNecessary(Parameter parameter, Object argument) {
+    if (!parameter.isAnnotationPresent(Valid.class) || argument == null) {
+        return;
+    }
+    List<ConstraintViolation> violations = validator.validate(argument);
+    if (!violations.isEmpty()) {
+        throw new ValidationException(violations);
+    }
+}
+```
+
+이 두 코드를 함께 보면, 독자는 "핸들러를 고르는 규칙"과 "핸들러에 들어가기 전 입력을 정리하는 규칙"이 서로 다른 계층이라는 사실을 분명하게 기억하게 된다.
 
 ---
 
