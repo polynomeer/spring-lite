@@ -605,6 +605,37 @@ void publishesRefreshAndCloseEvents() {
 
 이 시점에 독자는 컨테이너의 최소 골격을 갖추게 된다. 따라서 Part 2 마지막에서는 구현을 잠시 멈추고, 이제부터는 "생성 이후 개입"이 가능한 구조로 확장해 나간다는 점을 명시해 주는 편이 좋다.
 
+### Part 2 정리
+
+이번 Part에서 독자는 다음을 직접 만들었다.
+
+- `BeanDefinition` 기반 메타데이터 모델
+- 생성자 주입과 타입 기반 의존성 해석
+- 컴포넌트 스캔과 메타 애너테이션 판별
+- `@Configuration` / `@Bean` 기반 팩토리 메서드 생성
+- `@Qualifier`, `@Value`, 프로퍼티 해석
+- 기본 스코프와 컨텍스트 이벤트
+
+디버깅 체크 질문:
+
+- 이 빈은 애초에 등록되었는가
+- 등록되었다면 어떤 `BeanDefinition`으로 표현되었는가
+- 생성자 후보 선택은 왜 그렇게 되었는가
+- 다중 후보는 `@Qualifier`로 좁혀졌는가
+- 값 주입은 어떤 프로퍼티 소스에서 왔는가
+
+실제 Spring에서 이어서 읽기 좋은 클래스:
+
+- `org.springframework.context.annotation.AnnotationConfigApplicationContext`
+- `org.springframework.beans.factory.support.DefaultListableBeanFactory`
+- `org.springframework.context.annotation.ClassPathBeanDefinitionScanner`
+
+독자 연습 과제:
+
+1. `@Primary`에 해당하는 최소 기능을 직접 추가해보라.
+2. `List<T>` 타입 주입을 지원하도록 의존성 해석을 확장해보라.
+3. `application-test.yml` 병합 테스트를 추가해보라.
+
 ---
 
 ## Part 3. Bean Lifecycle과 확장 포인트를 이해한다
@@ -744,6 +775,34 @@ if (!beansInCreation.add(beanName)) {
 ```
 
 이렇게 해야 다음 장들에서 프록시와 후처리기가 추가되더라도 독자는 "지금 이 실패는 컨테이너가 구조 문제를 조기에 드러낸 것"이라고 해석할 수 있다.
+
+### Part 3 정리
+
+이번 Part에서 독자는 다음 구조를 구현하거나 설명할 수 있어야 한다.
+
+- 빈 초기화 전후 단계
+- `@PostConstruct`, `@PreDestroy`, `AutoCloseable` 처리
+- `BeanPostProcessor` 기반 확장 포인트
+- 순환 참조 감지와 빠른 실패 전략
+
+디버깅 체크 질문:
+
+- 이 빈은 생성은 되었지만 아직 초기화 전 상태인가
+- 후처리기는 before/after 어느 단계에서 개입하는가
+- 종료 콜백은 실제로 등록되었는가
+- 지금 문제는 컨테이너 기능 부족인가, 설계 경계 문제인가
+
+실제 Spring에서 이어서 읽기 좋은 클래스:
+
+- `org.springframework.beans.factory.config.BeanPostProcessor`
+- `org.springframework.context.support.AbstractApplicationContext`
+- `org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory`
+
+독자 연습 과제:
+
+1. 특정 애너테이션이 붙은 빈의 초기화 시간을 측정하는 후처리기를 만들어보라.
+2. 종료 순서를 추적하는 테스트를 추가해보라.
+3. 순환 참조 예외 메시지에 의존성 경로를 더 자세히 넣어보라.
 
 ---
 
@@ -1011,6 +1070,36 @@ public class TransactionManager {
 
 `spring-lite` 테스트를 책과 함께 읽으면 이 정책 엔진 성격이 잘 드러난다. 정상 흐름, 체크 예외, 런타임 예외, 중첩 호출, rollback-only 전파를 각각 별도 시나리오로 분리해 보면, 트랜잭션은 더 이상 추상 개념이 아니라 상태 전이 모델로 보인다. 이 감각을 익혀 두면 실제 Spring의 복잡한 전파 옵션 문서도 훨씬 읽기 쉬워진다.
 
+### Part 4 정리
+
+이번 Part에서 독자는 다음 구조를 손으로 재현했다.
+
+- 프록시 생성 전략 JDK / 클래스 기반 분기
+- `MethodInvocation` 기반 호출 체인
+- `@Order` 기반 인터셉터 정렬
+- `@Aspect` 선언을 인터셉터로 해석하는 계층
+- `@Transactional` 후처리기와 트랜잭션 인터셉터
+- 스레드 로컬 기반 트랜잭션 문맥
+
+디버깅 체크 질문:
+
+- 이 객체는 실제 타깃인가 프록시인가
+- 어떤 인터셉터가 어떤 순서로 체인에 들어갔는가
+- self-invocation 때문에 프록시를 우회하지 않았는가
+- rollback-only 상태가 어디서 마킹되었는가
+
+실제 Spring에서 이어서 읽기 좋은 클래스:
+
+- `org.springframework.aop.framework.ProxyFactory`
+- `org.springframework.aop.framework.ReflectiveMethodInvocation`
+- `org.springframework.transaction.interceptor.TransactionInterceptor`
+
+독자 연습 과제:
+
+1. 성능 측정 인터셉터를 추가하고 `@Order` 순서를 바꿔 결과를 비교해보라.
+2. 체크 예외와 런타임 예외의 롤백 차이를 테스트로 추가해보라.
+3. self-invocation 문제를 재현하는 예제를 직접 만들어보라.
+
 ---
 
 ## Part 5. Web MVC를 직접 구현한다
@@ -1243,6 +1332,36 @@ private void validateIfNecessary(Parameter parameter, Object argument) {
 
 이 두 코드를 함께 보면, 독자는 "핸들러를 고르는 규칙"과 "핸들러에 들어가기 전 입력을 정리하는 규칙"이 서로 다른 계층이라는 사실을 분명하게 기억하게 된다.
 
+### Part 5 정리
+
+이번 Part에서 독자는 다음 웹 파이프라인을 직접 만들었다.
+
+- `DispatcherServlet` 기반 Front Controller
+- `HandlerMapping` / `HandlerAdapter` 분리
+- `HandlerMethodArgumentResolver` 기반 인자 바인딩
+- JSON 직렬화와 응답 모델
+- 로컬 `@ExceptionHandler`와 전역 `@ControllerAdvice`
+- 조건 매핑과 입력 검증
+
+디버깅 체크 질문:
+
+- 404는 매핑 문제인가, 조건 매핑 문제인가
+- 400은 바인딩 실패인가, 검증 실패인가
+- 500은 컨트롤러 본문 예외인가, 예외 처리기 구성 문제인가
+- 요청 본문과 응답 직렬화는 어디서 변환되는가
+
+실제 Spring에서 이어서 읽기 좋은 클래스:
+
+- `org.springframework.web.servlet.DispatcherServlet`
+- `org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter`
+- `org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver`
+
+독자 연습 과제:
+
+1. `PUT` 또는 `DELETE` 매핑을 추가해보라.
+2. 공통 응답 헤더를 넣는 반환값 처리기를 직접 추가해보라.
+3. `Content-Type`과 `Accept` 조건 충돌 테스트를 더 작성해보라.
+
 ---
 
 ## Part 6. JDBC, 예제 앱, Boot 계층으로 완성한다
@@ -1449,6 +1568,34 @@ public void afterEach(ExtensionContext extensionContext) {
 ```
 
 직접 구현하는 책이라면 테스트 지원도 마지막에 실제로 만들어 보게 해야 한다. 그래서 이 장에서는 `SpringLiteTestExtension`의 `beforeAll`, `postProcessTestInstance`, `beforeEach`, `afterEach`, `resolveParameter`를 거의 빠짐없이 따라가게 하는 편이 좋다. 프레임워크를 만든다는 것은 실행 코드만이 아니라, 그 코드를 검증하는 진입점까지 함께 설계하는 일이라는 사실을 이 장에서 마무리할 수 있다.
+
+### Part 6 정리
+
+이번 Part에서 독자는 다음 조립 계층을 완성했다.
+
+- `JdbcTemplate` 기반 JDBC 추상화
+- 예제 애플리케이션을 통한 전체 통합
+- `SpringLiteApplication`과 기본 auto-configuration
+- `SpringLiteTestExtension`, `MockMvc`, 테스트 트랜잭션 지원
+
+디버깅 체크 질문:
+
+- 현재 SQL은 새 커넥션으로 실행되는가, 기존 트랜잭션 커넥션에 참여하는가
+- Boot 시작점에서 어떤 기본 인프라가 자동 등록되었는가
+- 테스트 컨텍스트는 재사용되는가, 매번 새로 만들어지는가
+- 테스트 롤백은 어디서 시작되고 어디서 끝나는가
+
+실제 Spring에서 이어서 읽기 좋은 클래스:
+
+- `org.springframework.jdbc.core.JdbcTemplate`
+- `org.springframework.boot.SpringApplication`
+- `org.springframework.test.context.TestContextManager`
+
+독자 연습 과제:
+
+1. `JdbcTemplate.queryForObject(...)` 실패 케이스를 더 자세히 테스트해보라.
+2. Boot 자동 설정 하나를 직접 더 추가해보라.
+3. 테스트 확장에서 사용자 정의 fixture 빈을 주입하는 기능을 넣어보라.
 
 ---
 
