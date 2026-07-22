@@ -1617,6 +1617,80 @@ public void afterEach(ExtensionContext extensionContext) {
 
 이 비교 표를 읽을 때는 기능의 많고 적음보다 "책임의 대응"을 보는 편이 중요하다. 예를 들어 실제 Spring의 `BeanFactoryPostProcessor`, `BeanPostProcessor`, `ImportSelector`, `DeferredImportSelector`, `Condition` 같은 풍부한 확장 포인트는, 결국 컨테이너 메타데이터를 등록하거나 수정하거나 해석하는 여러 시점을 세분화한 결과다. `spring-lite`에서는 그중 가장 핵심적인 흐름만 남겨 두었다. 축소는 생략이 아니라 강조다. 무엇을 남기고 무엇을 덜어냈는지가 곧 학습 설계다.
 
+여기서 한 걸음 더 나아가면, 독자는 "클래스 이름 대응"이 아니라 "호출 순서 대응"까지 볼 수 있어야 한다. 같은 요청이나 같은 빈 생성 흐름을 두 프레임워크에 나란히 놓고 보면, 복잡성의 차이는 크지만 책임의 축은 상당히 유사하다.
+
+```mermaid
+flowchart TD
+    A["spring-lite AnnotationConfigApplicationContext.refresh()"] --> B["instantiateBeanPostProcessors()"]
+    B --> C["instantiateConfigurationBeans()"]
+    C --> D["instantiateRemainingSingletons()"]
+    D --> E["publish ContextRefreshedEvent"]
+
+    F["Spring AbstractApplicationContext.refresh()"] --> G["invokeBeanFactoryPostProcessors()"]
+    G --> H["registerBeanPostProcessors()"]
+    H --> I["finishBeanFactoryInitialization()"]
+    I --> J["finishRefresh()"]
+```
+
+이 그림은 실제 Spring이 더 많은 중간 단계를 갖고 있음에도, 큰 축에서는 `spring-lite`와 같은 질문을 푼다는 점을 보여 준다. 어떤 메타데이터를 먼저 준비할 것인가, 후처리기는 언제 등록할 것인가, 남은 싱글톤은 어느 시점에 일괄 생성할 것인가, 컨텍스트 완료 신호는 언제 발행할 것인가. 학습용 구현이 작다는 이유로 구조가 다른 것이 아니라, 같은 문제를 더 적은 단계로 압축해 둔 것이다.
+
+### 클래스 대응 심화
+
+#### `AnnotationConfigApplicationContext`와 Spring 컨테이너 축
+
+`spring-lite`의 `AnnotationConfigApplicationContext`는 실제 Spring의 `ApplicationContext`, `DefaultListableBeanFactory`, `AbstractAutowireCapableBeanFactory`에 걸쳐 흩어진 책임을 하나로 모아 둔 형태다. 학습용 구현에서는 이것이 장점이다. 독자는 빈 정의 저장, 생성자 선택, 의존성 해석, 후처리기 적용, 이벤트 발행을 한 클래스 안에서 연속된 알고리즘으로 볼 수 있다.
+
+실제 Spring은 이 책임을 훨씬 더 세분화한다. `DefaultListableBeanFactory`는 등록과 조회 축에 집중하고, `AbstractAutowireCapableBeanFactory`는 실제 생성과 자동 주입 축을 더 강하게 담당한다. `AbstractApplicationContext`는 `refresh()` 순서를 총괄한다. 이 분리는 코드 양을 늘리지만, 더 많은 확장 포인트와 더 정교한 테스트 가능성을 제공한다. 반대로 `spring-lite`는 구조를 압축해 독자가 "빈 생성 파이프라인"을 한 번에 이해하게 돕는다.
+
+핵심 메서드 대응도 살펴볼 만하다.
+
+| spring-lite | 실제 Spring에서 대응되는 축 | 읽을 때 볼 포인트 |
+| --- | --- | --- |
+| `registerDiscoveredClass(...)` | 스캐닝 후 빈 정의 등록 단계 | 어떤 메타데이터가 정의로 바뀌는가 |
+| `registerBeanMethods(...)` | `@Bean` 메서드 해석, configuration processing | 메서드 정의가 왜 별도 빈 정의가 되는가 |
+| `createBean(...)` | `doCreateBean(...)` 계열 | 생성, 초기화, 후처리, 캐시 저장의 경계 |
+| `resolveDependency(...)` | `resolveDependency(...)` 계열 | 타입 후보, qualifier, 컬렉션/지연 조회 확장 |
+| `initializeBean(...)` | init / post-process 단계 | 전후 훅과 프록시 치환 가능 지점 |
+
+이 표를 기준으로 실제 Spring 소스를 보면 "메서드가 왜 이렇게 잘게 나뉘었는가"가 훨씬 덜 낯설다. `spring-lite`에서 하나의 메서드로 본 단계가 실제 Spring에서는 여러 전략과 보호 메서드로 갈라져 있을 뿐이다.
+
+#### `ConfigurationClassPostProcessor`를 왜 알아야 하는가
+
+`spring-lite`에서는 설정 클래스를 등록할 때 `registerBeanMethods(...)`가 곧바로 `@Bean` 메서드를 읽는다. 하지만 실제 Spring은 `ConfigurationClassPostProcessor`를 통해 더 큰 메타데이터 파이프라인을 돌린다. `@Configuration`, `@ComponentScan`, `@Import`, 조건부 등록, auto-configuration 진입점이 모두 이 계층과 맞물린다. 즉, `spring-lite`의 단순한 `@Bean` 메서드 등록은 실제 Spring에서 매우 큰 "메타데이터 확장 허브"로 자라난 결과의 최소판이다.
+
+독자는 이 차이를 단순한 기능 수 차이로만 보아서는 안 된다. 설정 클래스가 다른 빈 정의를 추가로 생성할 수 있다는 사실 하나가, 프레임워크 전체를 메타프로그래밍 가능한 구조로 바꾼다. 그래서 실제 Spring은 이 구간에 별도 후처리기, 선택기, 조건 평가기를 두고, Boot는 그 위에 auto-configuration 체계를 쌓는다.
+
+#### `DispatcherServlet`과 MVC 전략 계층
+
+`spring-lite`의 `DispatcherServlet`은 생성자에서 전략 객체를 조립하고, `handle()`에서 매핑, 실행, 반환값 처리, 예외 변환을 직선적으로 수행한다. 실제 Spring MVC는 같은 축을 유지하되, 각 지점에 훨씬 더 많은 전략 인터페이스를 끼워 넣는다. `HandlerMapping`, `HandlerAdapter`, `HandlerMethodArgumentResolver`, `HandlerExceptionResolver`, `HttpMessageConverter`, `ViewResolver`가 그 예다.
+
+```mermaid
+flowchart LR
+    A["HTTP Request"] --> B["DispatcherServlet"]
+    B --> C["HandlerMapping"]
+    C --> D["HandlerAdapter"]
+    D --> E["Argument Resolvers"]
+    E --> F["Controller Method"]
+    F --> G["Return Value Handler"]
+    G --> H["HTTP Response"]
+    D --> X["ExceptionResolver"]
+    X --> H
+```
+
+학습 포인트는 단순하다. `spring-lite`에서 `handle()` 메서드 하나에 보이는 분기들이 실제 Spring에서는 별도 전략과 합성 규칙으로 일반화되어 있다. 404, 400, 500의 성격이 서로 다른 이유도 이 파이프라인이 서로 다른 계층에서 실패하기 때문이다.
+
+#### `TransactionManager`와 `TransactionInterceptor`
+
+실제 Spring의 선언형 트랜잭션을 이해할 때 가장 헷갈리는 지점은 "무엇이 정책이고 무엇이 실행인가"다. `spring-lite`에서는 이 구분이 비교적 선명하다. `TransactionalBeanPostProcessor`가 메서드 메타데이터를 읽고, 내부 인터셉터가 begin/commit/rollback 경계를 제어하며, `TransactionManager`가 현재 스레드의 연결과 깊이를 관리한다. 실제 Spring은 여기에 `TransactionAttributeSource`, `TransactionAspectSupport`, `PlatformTransactionManager`, `TransactionSynchronizationManager` 같은 더 세밀한 추상화를 둔다.
+
+하지만 본질은 바뀌지 않는다. 메타데이터를 읽는 계층, 호출을 감싸는 계층, 상태를 저장하는 계층이 분리되어야 선언형 트랜잭션이 설명 가능해진다. `spring-lite`를 먼저 이해한 독자라면 실제 Spring의 풍부한 전파 옵션과 동기화 콜백도 "이미 아는 구조의 확장판"으로 읽을 수 있다.
+
+#### `RequestMappingHandlerAdapter`를 읽는 방법
+
+실제 Spring MVC 소스에서 많은 독자가 가장 빨리 길을 잃는 클래스 중 하나가 `RequestMappingHandlerAdapter`다. 인자 해석, 바인딩, 검증, 반환값 처리, 모델 조립이 한데 모여 있기 때문이다. 그런데 `spring-lite`에서 이미 같은 책임을 더 작은 크기로 경험했다. 각 파라미터를 순회하며 resolver를 찾고, 값을 만들고, 필요하면 검증하고, 마지막에 메서드를 호출하는 흐름이다.
+
+이 경험을 갖고 실제 Spring 코드를 보면 거대한 클래스도 더 이상 무정형으로 보이지 않는다. "이 줄은 인자 해석기 선택이다", "이 메서드는 검증 개입 지점이다", "이 부분은 컨트롤러 메서드 호출 후 반환값 처리다" 같은 식으로 책임을 분해해 읽을 수 있다. 큰 소스를 읽을 때 가장 중요한 능력은 모든 줄을 아는 것이 아니라, 책임 경계를 빠르게 식별하는 것이다.
+
 또한 구조 대응은 소스 코드 읽기의 지도를 제공한다. 실제 Spring을 공부할 때 독자는 더 이상 거대한 패키지 트리를 무작정 헤매지 않아도 된다. 먼저 "이 기능은 컨테이너 등록 단계인가, 후처리기 단계인가, 프록시 생성 단계인가, 웹 디스패치 단계인가"를 물을 수 있다. 그런 다음 대응되는 Spring 모듈과 클래스를 찾아가면 된다. 작은 구현을 발판으로 큰 구현을 읽는 방식이다.
 
 이 장은 결국 자신감을 회복시키는 장이기도 하다. 실제 Spring 소스는 분량과 역사 때문에 압도적으로 보일 수 있다. 하지만 핵심 책임을 축으로 분해하면, 복잡성은 더 이상 무정형의 덩어리가 아니다. 많은 계층과 클래스가 있어도, 그 상당수는 이 책에서 이미 본 구조를 더 일반화하고 더 안전하게 만든 결과라는 사실을 깨닫게 된다.
@@ -1638,6 +1712,17 @@ Spring을 잘 쓴다는 말은 결국 내부 구조를 바탕으로 더 나은 �
 또한 프레임워크 원리를 이해한 사람은 "편한 기본값"과 "위험한 숨김"을 구분할 수 있다. 자동 설정은 강력하지만, 언제 꺼내서 명시적으로 제어해야 하는지도 알아야 한다. 선언형 트랜잭션은 편리하지만, 긴 배치 작업이나 외부 API 호출이 섞인 흐름에서는 더 세심한 경계 설계가 필요하다. MVC 자동 바인딩은 생산적이지만, 입력 경계에서 검증과 변환 규칙을 분명히 해야 한다. 즉, 원리 이해는 단순 지식이 아니라 절제된 사용법으로 이어진다.
 
 팀 차원에서도 효과가 있다. 설계 리뷰에서 "그냥 Spring이 해준다"는 말 대신, 어떤 후처리기와 어떤 프록시 규칙에 기대는지 설명할 수 있다면 의사결정 품질이 달라진다. 장애 회고에서도 증상 중심이 아니라 구조 중심의 재발 방지책을 세울 수 있다. 결국 프레임워크를 깊이 이해하는 일은 개인 생산성뿐 아니라 팀의 기술적 대화 수준을 끌어올린다.
+
+실무 활용 관점에서는 "어디까지 자동화에 기대고, 어디서부터 명시적으로 통제할 것인가"라는 질문도 중요하다. 내부 원리를 모르면 자동 설정이 실패했을 때 모든 것을 우회해 수동 설정으로 돌아가고 싶어진다. 반대로 원리를 이해하고 있으면 자동 설정을 완전히 버리지 않고도, 어떤 빈 정의가 왜 우선했는지, 어떤 조건이 등록을 막았는지, 어떤 후처리기가 프록시를 붙였는지 정확히 짚어낼 수 있다. 구조 이해는 과도한 수동화와 과도한 맹신을 모두 피하게 해 준다.
+
+다음과 같은 체크리스트는 실무에서 특히 유용하다.
+
+- 빈이 기대와 다르게 조립되면: 스캔, 조건부 등록, `@Bean` 팩토리 메서드, 후처리기 개입 순서를 본다.
+- 트랜잭션이 기대와 다르게 동작하면: 프록시 통과 여부, self-invocation, 예외 타입, rollback-only 상태를 본다.
+- 웹 응답이 이상하면: 매핑, 인자 바인딩, 검증, 반환값 직렬화, 예외 변환 순서를 분리해서 본다.
+- Boot 기본값이 충돌하면: 어떤 auto-configuration이 활성화되었고, 어떤 사용자 정의 빈이 이를 대체했는지 본다.
+
+이 체크리스트의 의도는 문제를 단순화하는 것이 아니라, 문제를 구조에 맞는 순서로 좁히는 것이다. Spring을 잘 쓰는 사람은 기능 이름을 많이 아는 사람이 아니라, 문제가 생겼을 때 어떤 계층부터 의심해야 하는지 아는 사람이다.
 
 ### Chapter 27. 다음 확장 과제
 

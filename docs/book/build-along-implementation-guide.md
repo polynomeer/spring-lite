@@ -138,6 +138,25 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
   - 아직 없는 책임: 의존성 해석, 라이프사이클, 후처리기.
   - 설계 이유: 가장 작은 컨테이너 축부터 세우기 위해서다.
 
+#### 메서드별 구현 워크스루
+
+이제부터는 `AnnotationConfigApplicationContext`를 단순 API가 아니라 "작은 런타임"으로 읽는 습관이 중요하다.
+
+- `register(...)`
+  - 설정 클래스를 입력으로 받는다.
+  - 각 클래스를 `registerDiscoveredClass(...)`로 넘긴다.
+  - `@ComponentScan`이 있으면 추가 스캔까지 연결한다.
+- `scan(...)`
+  - 패키지 단위 후보 수집만 담당한다.
+  - 실제 빈 정의 생성은 하지 않고, 수집한 클래스를 다시 `registerDiscoveredClass(...)`로 넘긴다.
+- `registerDiscoveredClass(...)`
+  - 관리 대상 타입인지 판별한다.
+  - `BeanDefinition.Kind`를 계산한다.
+  - 빈 이름, 스코프, qualifier를 추출해 정의를 등록한다.
+  - 설정 클래스라면 `registerBeanMethods(...)`까지 이어진다.
+
+독자가 이 흐름을 이해해야 하는 이유는 명확하다. 실제 Spring에서도 "후보 수집", "정의 생성", "추가 메타데이터 처리"는 같은 단계가 아니기 때문이다. build-along 책에서는 이 차이를 일찍부터 분명히 보여주는 편이 좋다.
+
 ### Chapter 4. 생성자 선택과 의존성 해석
 
 이 장부터 컨테이너가 실제로 객체를 만들기 시작한다. 먼저 테스트를 작성한다.
@@ -248,6 +267,19 @@ private Object createBean(String beanName, BeanDefinition beanDefinition) {
     - 생성 전략 분기
     - 초기화 실행
     - 싱글톤 캐시 저장
+
+#### `createBean(...)` 전체 읽기
+
+이 메서드는 Part 2 전체를 관통하는 첫 번째 핵심 알고리즘이다. build-along 문서에서는 가급적 이 메서드를 앞뒤 생략 없이 읽게 하는 편이 좋다.
+
+1. 싱글톤 캐시를 먼저 본다.
+2. `beansInCreation`으로 순환 참조를 감지한다.
+3. `BeanDefinition.Kind`에 따라 생성 전략을 고른다.
+4. 생성 직후 `initializeBean(...)`로 제어를 넘긴다.
+5. 싱글톤이면 캐시에 저장한다.
+6. `finally`에서 생성 중 마커를 제거한다.
+
+이 순서가 중요한 이유는, 이후 라이프사이클과 프록시 장이 모두 4번 단계에 개입하기 때문이다. 즉, 지금은 단순 생성 메서드처럼 보여도 사실상 이후 모든 확장의 허브다.
 
 ### Chapter 5. 컴포넌트 스캔
 
@@ -899,6 +931,22 @@ public void rollback() {
 
 이 두 장을 함께 읽으면 선언형 트랜잭션이 "후처리기 + 프록시 + 스레드 로컬 문맥"의 합이라는 점이 명확해진다.
 
+#### `TransactionManager` 메서드 해설
+
+- `begin()`
+  - 이미 트랜잭션이 있으면 depth만 증가시킨다.
+  - 없으면 새 커넥션을 열고 auto-commit을 끈다.
+  - 데이터소스가 없는 테스트 상황도 허용한다.
+- `commit()`
+  - 중첩 depth가 남아 있으면 실제 커밋하지 않는다.
+  - rollback-only가 표시되었으면 커밋 대신 롤백으로 전환한다.
+  - 마지막 단계에서 커넥션 정리와 `ThreadLocal` 제거를 수행한다.
+- `rollback()`
+  - 단순 즉시 롤백이 아니라 먼저 rollback-only를 표시한다.
+  - 중첩 호출이라면 최외곽에서 실제 롤백이 일어난다.
+
+이 설명을 반드시 넣어야 하는 이유는, 많은 독자가 트랜잭션을 "begin/commit/rollback 세 메서드"로만 보다가 중첩 호출과 rollback-only 전파에서 길을 잃기 때문이다. build-along 책은 여기서 상태 전이 모델을 명확히 보여줘야 한다.
+
 ---
 
 ## Part 5. Web MVC
@@ -967,6 +1015,24 @@ public void handle(HttpExchange exchange) throws IOException {
     }
 }
 ```
+
+#### `DispatcherServlet.handle(...)` 줄 단위 읽기
+
+이 메서드는 웹 파이프라인 전체를 가장 압축적으로 보여준다.
+
+1. `handlerMapping.getHandler(exchange)`
+   - 요청을 어떤 컨트롤러 메서드에 보낼지 결정한다.
+2. 핸들러가 없으면 404 JSON을 직접 쓴다.
+3. `handlerAdapter.handle(...)`
+   - 인자 해석, 검증, 실제 메서드 호출을 수행한다.
+4. `returnValueHandler.handleReturnValue(...)`
+   - 메서드 반환값을 HTTP 응답으로 변환한다.
+5. 예외가 나면 `exceptionResolver.resolve(...)`
+   - 예외를 상태 코드와 응답 바디로 바꾼다.
+6. 마지막에 `exchange.close()`
+   - 정상/실패와 무관하게 자원을 정리한다.
+
+웹 프레임워크를 처음 구현하는 독자에게는 이 "직선형 흐름"이 매우 중요하다. 실제 Spring MVC의 많은 전략 객체도 결국 이 여섯 단계 중 하나에 속한다.
 
 ### Chapter 18. `HandlerMethodArgumentResolver`
 
@@ -1248,6 +1314,37 @@ public class SpringLiteTestExtension implements BeforeAllCallback, BeforeEachCal
 ```
 
 이제 독자는 컨테이너부터 테스트 도구까지 하나의 미니 생태계를 직접 구축하게 된다.
+
+#### `SpringLiteTestExtension` 생명주기 워크스루
+
+이 클래스는 테스트 지원도 하나의 런타임이라는 사실을 보여준다.
+
+- `beforeAll(...)`
+  - 테스트 클래스 단위 컨텍스트를 한 번 준비한다.
+- `postProcessTestInstance(...)`
+  - `@Autowired` 필드 주입을 수행한다.
+- `beforeEach(...)`
+  - 테스트가 `@Transactional`이면 트랜잭션을 시작한다.
+- `resolveParameter(...)`
+  - `ApplicationContext`, `MockMvc`, 일반 빈을 파라미터로 주입한다.
+- `afterEach(...)`
+  - 테스트 트랜잭션이 활성 상태였다면 롤백한다.
+
+여기서 특히 독자가 놓치기 쉬운 부분은 "테스트 메서드 파라미터 주입"과 "필드 주입"이 서로 다른 진입점이라는 사실이다. 실제 Spring Test도 여러 콜백과 resolver가 결합된 구조이며, `spring-lite`는 그 최소 구조를 잘 보여준다.
+
+#### 독자가 직접 따라 쳐 볼 클래스 우선순위
+
+build-along 관점에서 아래 클래스들은 거의 전체를 직접 타이핑해 보는 편이 좋다.
+
+1. `AnnotationConfigApplicationContext`
+2. `TransactionalBeanPostProcessor`
+3. `TransactionManager`
+4. `DispatcherServlet`
+5. `RequestMappingHandlerAdapter`
+6. `SpringLiteApplication`
+7. `SpringLiteTestExtension`
+
+이 우선순위는 단순 구현 난이도가 아니라 학습 수익을 기준으로 정한 것이다. 이 클래스들을 직접 구현해 보면 컨테이너, 프록시, 웹, 부트스트랩, 테스트 지원이 한 개의 런타임으로 연결되는 감각이 빠르게 생긴다.
 
 ---
 

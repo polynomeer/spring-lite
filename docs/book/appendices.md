@@ -125,3 +125,127 @@
 
 - 목표: 데이터 초기화, 컨텍스트 캐싱 전략, 재사용 가능한 웹 fixture를 만든다.
 - 학습 포인트: 테스트 지원도 프레임워크의 중요한 일부라는 사실을 더 깊게 체감할 수 있다.
+
+## Appendix E. 증상별 디버깅 가이드
+
+이 부록은 "어디를 먼저 볼 것인가"를 빠르게 정리하기 위한 실무용 표다. 핵심은 예외 메시지를 외우는 것이 아니라, 증상을 실행 단계로 번역하는 것이다.
+
+### 1. `NoSuchBeanException`
+
+- 먼저 볼 것:
+  - 스캔 대상 패키지가 맞는가
+  - `@Component`, `@Configuration`, `@Bean` 중 어떤 등록 경로를 기대했는가
+  - 조건부 등록이 빈을 탈락시킨 것은 아닌가
+- `spring-lite`에서 추적할 메서드:
+  - `registerDiscoveredClass(...)`
+  - `registerBeanMethods(...)`
+  - `containsBeanDefinition(...)`
+  - `getBean(...)`
+- 실제 Spring에서 이어서 볼 클래스:
+  - `ConfigurationClassPostProcessor`
+  - `DefaultListableBeanFactory`
+
+### 2. `NoUniqueBeanException`
+
+- 먼저 볼 것:
+  - 같은 타입의 구현이 둘 이상 등록되었는가
+  - `@Qualifier`가 필요한데 빠진 것은 아닌가
+  - 의도치 않은 `@Bean` 중복 등록은 없는가
+- `spring-lite`에서 추적할 메서드:
+  - `resolveDependency(...)`
+  - `resolveQualifiedDependency(...)`
+  - `getBeansOfType(...)`
+- 실제 Spring에서 이어서 볼 클래스:
+  - `DefaultListableBeanFactory`
+  - `AutowiredAnnotationBeanPostProcessor`
+
+### 3. 프록시가 붙지 않음
+
+- 먼저 볼 것:
+  - 대상 빈이 `BeanPostProcessor` 적용 이후 반환되었는가
+  - 대상 메서드나 타입에 트랜잭션/어드바이스 메타데이터가 실제로 있는가
+  - 같은 클래스 내부 호출로 프록시를 우회하지 않았는가
+- `spring-lite`에서 추적할 메서드:
+  - `initializeBean(...)`
+  - `AspectBeanPostProcessor.postProcessAfterInitialization(...)`
+  - `TransactionalBeanPostProcessor.postProcessAfterInitialization(...)`
+- 실제 Spring에서 이어서 볼 클래스:
+  - `AbstractAutoProxyCreator`
+  - `TransactionInterceptor`
+
+### 4. `@Transactional`이 기대대로 동작하지 않음
+
+- 먼저 볼 것:
+  - 프록시를 통과한 외부 호출인가
+  - 예외 타입이 rollback 규칙과 맞는가
+  - 이미 열린 트랜잭션에 참여한 것인가
+  - rollback-only 상태가 중첩 호출에서 전파되었는가
+- `spring-lite`에서 추적할 메서드:
+  - `TransactionManager.begin()`
+  - `TransactionManager.commit()`
+  - `TransactionManager.rollback()`
+  - `TransactionInterceptor.invoke(...)`
+- 실제 Spring에서 이어서 볼 클래스:
+  - `TransactionAspectSupport`
+  - `TransactionSynchronizationManager`
+
+### 5. MVC 404
+
+- 먼저 볼 것:
+  - URL과 HTTP 메서드가 등록된 매핑과 일치하는가
+  - path variable 패턴은 맞는가
+  - 조건 매핑이 요청을 탈락시킨 것은 아닌가
+- `spring-lite`에서 추적할 메서드:
+  - `DispatcherServlet.handle(...)`
+  - `RequestMappingHandlerMapping.getHandler(...)`
+- 실제 Spring에서 이어서 볼 클래스:
+  - `DispatcherServlet`
+  - `RequestMappingHandlerMapping`
+
+### 6. MVC 400
+
+- 먼저 볼 것:
+  - `@RequestParam`, `@PathVariable`, `@RequestBody` 바인딩 중 어디서 실패했는가
+  - 타입 변환 실패인가, 검증 실패인가
+  - 요청 본문이 기대 JSON 구조와 맞는가
+- `spring-lite`에서 추적할 메서드:
+  - `RequestMappingHandlerAdapter.handle(...)`
+  - 각 `HandlerMethodArgumentResolver.resolveArgument(...)`
+  - `validateIfNecessary(...)`
+- 실제 Spring에서 이어서 볼 클래스:
+  - `RequestMappingHandlerAdapter`
+  - `ExceptionHandlerExceptionResolver`
+
+### 7. MVC 500
+
+- 먼저 볼 것:
+  - 컨트롤러 본문 예외인가
+  - 로컬 `@ExceptionHandler` 또는 전역 `@ControllerAdvice`가 매핑되었는가
+  - 예외가 응답 바디로 변환되는 마지막 지점이 어디인가
+- `spring-lite`에서 추적할 메서드:
+  - `DispatcherServlet.handle(...)`
+  - `DefaultExceptionResolver.resolve(...)`
+- 실제 Spring에서 이어서 볼 클래스:
+  - `ExceptionHandlerExceptionResolver`
+  - `ResponseEntityExceptionHandler`
+
+### 8. Boot 자동 설정이 기대와 다름
+
+- 먼저 볼 것:
+  - 어떤 기본 설정 클래스가 등록되었는가
+  - `@ConditionalOnBean`, `@ConditionalOnMissingBean`, `@ConditionalOnProperty`, `@ConditionalOnClass` 중 무엇이 결과를 바꿨는가
+  - 사용자 정의 빈이 기본 등록을 대체했는가
+- `spring-lite`에서 추적할 메서드:
+  - `BootInfrastructureRegistrar.registerDefaults(...)`
+  - `isBeanEligible(...)`
+  - 조건 메타데이터 해석 메서드
+- 실제 Spring에서 이어서 볼 클래스:
+  - `AutoConfigurationImportSelector`
+  - 조건 평가 관련 인프라
+
+### 디버깅 공통 원칙
+
+- 예외를 기능 이름이 아니라 실행 단계로 바꿔서 본다.
+- 로그를 읽기 전에 "이 증상은 등록, 생성, 후처리, 프록시, 디스패치 중 어디 문제인가"를 먼저 정한다.
+- 테스트 한 개를 추가해 실패를 고정한 뒤 코드를 따라간다.
+- 실제 Spring으로 넘어갈 때는 같은 책임을 가진 클래스부터 읽는다.
