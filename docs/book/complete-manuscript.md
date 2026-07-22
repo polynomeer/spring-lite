@@ -192,6 +192,39 @@ flowchart TB
     E --> F["Singleton Cache"]
 ```
 
+이 장을 build-along 방식으로 따라간다면, 먼저 "정의가 인스턴스보다 먼저 등록된다"는 사실을 테스트로 고정하는 편이 좋다.
+
+```java
+@Test
+void registersBeanDefinitionBeforeInstantiation() {
+    AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
+    context.register(TestConfig.class);
+
+    assertThat(context.containsBeanDefinition("testConfig")).isTrue();
+}
+```
+
+그 다음에는 최소 컨테이너 저장소를 만든다. 이 시점에는 아직 복잡한 생성 로직보다 `beanDefinitions`와 `singletons`를 분리해 두는 것이 더 중요하다.
+
+```java
+public class AnnotationConfigApplicationContext implements ConfigurableApplicationContext {
+    private final Map<String, BeanDefinition> beanDefinitions = new LinkedHashMap<>();
+    private final Map<String, Object> singletons = new LinkedHashMap<>();
+
+    @Override
+    public void registerBeanDefinition(BeanDefinition beanDefinition) {
+        beanDefinitions.put(beanDefinition.name(), beanDefinition);
+    }
+
+    @Override
+    public void registerSingleton(String beanName, Object singleton) {
+        singletons.put(beanName, singleton);
+    }
+}
+```
+
+직접 구현하는 독자라면 여기서 멈추지 말고, 같은 장 안에서 `BeanDefinition.component(...)`, `BeanDefinition.factoryMethod(...)` 팩토리 메서드까지 함께 완성해 두는 편이 좋다. 그래야 다음 장에서 생성자 기반 빈과 설정 메서드 기반 빈을 같은 파이프라인 안에서 다룰 수 있다.
+
 ### Chapter 4. 생성자 주입과 의존성 해석
 
 DI를 "외부에서 주입한다"는 문장으로만 이해하면 핵심을 놓친다. 컨테이너 입장에서 DI는 해석 알고리즘이다. 어떤 생성자를 선택할지, 각 파라미터에 대해 어떤 빈 후보를 찾을지, 후보가 없거나 여러 개면 어떤 예외를 낼지, `@Qualifier`가 있으면 어떤 규칙으로 선택을 좁힐지를 모두 결정해야 한다.
@@ -244,6 +277,47 @@ private Object resolveDependency(Parameter parameter) {
 }
 ```
 
+이 장은 반드시 테스트 먼저 가는 편이 좋다. 가장 먼저 통과시킬 테스트는 보통 아래와 같이 작성할 수 있다.
+
+```java
+@Test
+void resolvesConstructorDependencies() {
+    AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(TestConfig.class);
+
+    GreetingService greetingService = context.getBean(GreetingService.class);
+
+    assertThat(greetingService.format()).isEqualTo("hello");
+}
+```
+
+그 다음 실제 생성 루프를 연결한다. 책을 따라 손으로 구현할 때는 이 메서드를 거의 그대로 옮겨 적는 것이 좋다. 생성자 선택, 순환 참조 탐지, 팩토리 메서드 분기, 초기화, 싱글톤 캐시 저장이 한곳에 모여 있기 때문이다.
+
+```java
+private Object createBean(String beanName, BeanDefinition beanDefinition) {
+    if (beanDefinition.singleton() && singletons.containsKey(beanName)) {
+        return singletons.get(beanName);
+    }
+    if (!beansInCreation.add(beanName)) {
+        throw new BeansException("Circular dependency detected while creating " + beanName);
+    }
+    try {
+        Object created = switch (beanDefinition.kind()) {
+            case FACTORY_METHOD -> invokeFactoryMethod(beanDefinition);
+            default -> instantiateWithConstructor(beanDefinition.beanType());
+        };
+        Object initialized = initializeBean(beanName, created);
+        if (beanDefinition.singleton()) {
+            singletons.put(beanName, initialized);
+        }
+        return initialized;
+    } finally {
+        beansInCreation.remove(beanName);
+    }
+}
+```
+
+이 메서드가 동작하기 시작하면 비로소 컨테이너는 "정의 저장소"에서 "객체 조립 런타임"으로 넘어간다. 따라서 이 장의 끝에서는 성공 경로만이 아니라 `NoSuchBeanException`, `NoUniqueBeanException`, 순환 참조 실패도 함께 테스트로 잠가 두는 편이 좋다.
+
 ### Chapter 5. 컴포넌트 스캔과 메타 애너테이션
 
 수동 등록만으로는 프로젝트가 커질수록 유지 비용이 급격히 올라간다. 그래서 Spring은 어떤 클래스를 관리 대상으로 볼 것인지를 애너테이션 메타데이터로 선언하게 하고, 클래스패스를 스캔해 이를 자동 등록한다. `@Component`, `@Service`, `@Repository`는 모두 이 전략의 일부다.
@@ -275,6 +349,48 @@ public List<Class<?>> scan(String basePackage) {
     return new ArrayList<>(classes.values());
 }
 ```
+
+직접 구현하기 관점에서 이 장의 첫 테스트는 최대한 단순해야 한다.
+
+```java
+@Test
+void scansComponentsFromBasePackage() {
+    AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
+    context.scan("lite.spring.context.fixture");
+    context.refresh();
+
+    assertThat(context.getBean("scannedGreetingService")).isNotNull();
+}
+```
+
+그 다음 스캔 결과를 컨테이너 정의로 바꾸는 연결부를 붙인다.
+
+```java
+private void registerDiscoveredClass(Class<?> candidate) {
+    if (candidate.isInterface() || candidate.isAnnotation() || candidate.isEnum()) {
+        return;
+    }
+    if (!isManagedType(candidate)) {
+        return;
+    }
+    BeanDefinition.Kind kind = AnnotationUtils.hasAnnotation(candidate, Configuration.class)
+        ? Kind.CONFIGURATION
+        : Kind.COMPONENT;
+    BeanDefinition beanDefinition = BeanDefinition.component(
+        BeanNameGenerator.generateBeanName(candidate),
+        candidate,
+        kind,
+        isSingleton(candidate),
+        extractQualifier(candidate)
+    );
+    registerBeanDefinition(beanDefinition);
+    if (kind == Kind.CONFIGURATION) {
+        registerBeanMethods(candidate);
+    }
+}
+```
+
+이 장에서 독자가 실제로 손으로 구현해 보면, `@Service`나 `@Repository` 같은 애너테이션이 별도 마법이 아니라 결국 "스캔 대상 후보"를 판별하는 메타데이터라는 사실을 가장 빨리 체감하게 된다.
 
 ### Chapter 6. `@Configuration`과 `@Bean`
 
@@ -319,6 +435,21 @@ private Object invokeFactoryMethod(BeanDefinition beanDefinition) {
     return ReflectionUtils.invoke(factoryMethod, configurationBean, arguments);
 }
 ```
+
+build-along 형식으로는 이 장의 첫 검증을 팩토리 메서드 빈 생성 테스트로 두는 편이 자연스럽다.
+
+```java
+@Test
+void createsFactoryMethodBeansFromConfigurationClass() {
+    AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(TestConfig.class);
+
+    Formatter formatter = context.getBean(Formatter.class);
+
+    assertThat(formatter.format("spring")).isEqualTo("[spring]");
+}
+```
+
+이 테스트를 통과시키는 과정에서 독자는 두 가지를 분명히 배우게 된다. 첫째, 설정 클래스 자체도 빈이라는 점. 둘째, `@Bean` 메서드 결과도 결국 `BeanDefinition`을 거쳐야 한다는 점이다. 이 두 감각이 생기면 이후 Boot 자동 설정도 훨씬 더 쉽게 읽힌다.
 
 ### Chapter 7. `@Qualifier`, `@Value`, 설정 값 주입
 
@@ -367,6 +498,56 @@ public String resolveRequiredPlaceholder(String expression) {
 }
 ```
 
+직접 구현하는 독자라면 이 장에서 두 종류의 테스트를 먼저 적는 편이 좋다. 하나는 `@Qualifier`, 다른 하나는 `@Value`다.
+
+```java
+@Test
+void resolvesQualifiedDependencies() {
+    AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(QualifierConfig.class);
+
+    QualifiedFormatterClient client = context.getBean(QualifiedFormatterClient.class);
+
+    assertThat(client.format()).isEqualTo("json");
+}
+
+@Test
+void injectsValueFromPropertyResolver() {
+    AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ValueConfig.class);
+
+    ValueClient client = context.getBean(ValueClient.class);
+
+    assertThat(client.port()).isEqualTo(8080);
+}
+```
+
+그리고 `@Value`의 파라미터 처리와 필드 처리 모두를 본문에 함께 싣는 편이 좋다. 그래야 독자가 "설정 주입도 결국 의존성 해석의 또 다른 분기"라는 사실을 코드로 이해할 수 있다.
+
+```java
+private Object resolveValue(Parameter parameter) {
+    Value value = parameter.getAnnotation(Value.class);
+    if (value == null) {
+        return resolveDependency(parameter);
+    }
+    String resolved = propertyResolver.resolveRequiredPlaceholder(value.value());
+    return conversionService.convert(resolved, parameter.getType());
+}
+```
+
+```java
+private void injectFieldValues(Object bean) {
+    for (Field field : bean.getClass().getDeclaredFields()) {
+        Value value = field.getAnnotation(Value.class);
+        if (value == null) {
+            continue;
+        }
+        String resolved = propertyResolver.resolveRequiredPlaceholder(value.value());
+        Object converted = conversionService.convert(resolved, field.getType());
+        ReflectionUtils.makeAccessible(field);
+        ReflectionUtils.setField(field, bean, converted);
+    }
+}
+```
+
 ### Chapter 8. Scope와 컨테이너 이벤트
 
 컨테이너는 객체를 한 번 만들어주는 유틸리티가 아니다. 시작과 종료, 재사용과 파괴, 이벤트 발행을 가진 런타임이다. `singleton`은 한 번 만든 인스턴스를 재사용하고, `prototype`은 매번 새 인스턴스를 만든다. 차이는 단순 성능이 아니라 수명과 책임의 차이다. 싱글톤은 생성부터 종료까지 컨테이너가 관리하지만, 프로토타입은 생성 이후 관리 범위가 줄어든다.
@@ -397,6 +578,32 @@ sequenceDiagram
     App->>Ctx: close()
     Ctx->>Listener: ContextClosedEvent
 ```
+
+직접 구현하기 관점에서 이 장의 완료 기준은 두 테스트가 통과하는 것이다. 하나는 프로토타입 빈이 매번 새 인스턴스를 반환하는지, 다른 하나는 refresh/close 이벤트가 순서대로 발행되는지다.
+
+```java
+@Test
+void createsPrototypeBeansOnEveryLookup() {
+    AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(PrototypeConfig.class);
+
+    PrototypeBean first = context.getBean(PrototypeBean.class);
+    PrototypeBean second = context.getBean(PrototypeBean.class);
+
+    assertThat(first).isNotSameAs(second);
+}
+
+@Test
+void publishesRefreshAndCloseEvents() {
+    AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(EventConfig.class);
+    EventCollectorListener listener = context.getBean(EventCollectorListener.class);
+
+    context.close();
+
+    assertThat(listener.events()).containsExactly("refreshed", "closed");
+}
+```
+
+이 시점에 독자는 컨테이너의 최소 골격을 갖추게 된다. 따라서 Part 2 마지막에서는 구현을 잠시 멈추고, 이제부터는 "생성 이후 개입"이 가능한 구조로 확장해 나간다는 점을 명시해 주는 편이 좋다.
 
 ---
 
@@ -492,6 +699,43 @@ public static Object createProxy(Object target, List<MethodInterceptor> intercep
 }
 ```
 
+직접 구현하기 관점에서 이 장의 첫 테스트는 인터페이스 기반 프록시가 호출을 실제로 가로채는지를 검증하는 것이다.
+
+```java
+@Test
+void wrapsInterfaceBasedTargetWithJdkProxy() {
+    GreetingContract target = new GreetingService();
+    Object proxy = ProxyFactory.createProxy(target, List.of(invocation -> "[" + invocation.proceed() + "]"));
+
+    assertThat(((GreetingContract) proxy).greet()).isEqualTo("[hello]");
+}
+```
+
+그리고 본문에는 호출 체인의 핵심인 `proceed()` 구현도 함께 실어야 한다. 독자가 이 메서드를 손으로 구현해 보면 프록시 기반 AOP의 본질이 "메서드 호출을 객체로 다룬다"는 데 있다는 사실을 가장 빨리 이해하게 된다.
+
+```java
+private static final class SimpleMethodInvocation implements MethodInvocation {
+    private final Object target;
+    private final Method method;
+    private final Object[] arguments;
+    private final List<MethodInterceptor> interceptors;
+    private int index;
+
+    @Override
+    public Object proceed() throws Throwable {
+        if (index < interceptors.size()) {
+            return interceptors.get(index++).invoke(this);
+        }
+        try {
+            method.setAccessible(true);
+            return method.invoke(target, arguments);
+        } catch (InvocationTargetException exception) {
+            throw exception.getTargetException();
+        }
+    }
+}
+```
+
 ### Chapter 13. 최소 AOP 인프라
 
 AOP를 추상 문구로만 이해하면 실무에서 거의 도움이 되지 않는다. 공통 관심사 분리는 결국 구체적인 계약과 호출 순서로 구현되어야 한다. `MethodInterceptor`는 그 계약의 최소 형태다. 각 인터셉터는 `MethodInvocation`을 받아 전후 처리를 하거나, 호출을 조건부로 우회하거나, 반환값을 바꿀 수 있다.
@@ -515,6 +759,29 @@ flowchart LR
     E --> F["Target Method"]
 ```
 
+build-along 방식으로는 이 장에서 먼저 수동 인터셉터 하나를 만드는 편이 좋다. 그래야 체인이 무엇을 감싸는지 감각이 생긴다.
+
+```java
+MethodInterceptor logging = invocation -> {
+    events.add("before");
+    Object result = invocation.proceed();
+    events.add("after");
+    return result;
+};
+```
+
+그 다음 정렬 가능한 체인을 위해 인터셉터 병합 코드를 붙인다.
+
+```java
+private static List<MethodInterceptor> mergeInterceptors(List<MethodInterceptor> existing, List<MethodInterceptor> additional) {
+    List<MethodInterceptor> merged = new ArrayList<>(existing.size() + additional.size());
+    merged.addAll(existing);
+    merged.addAll(additional);
+    merged.sort(OrderUtils.comparator());
+    return merged;
+}
+```
+
 ### Chapter 14. `@Aspect` 스타일 AOP
 
 프록시와 인터셉터만 있으면 기능은 동작할 수 있지만, 사용성은 좋지 않다. 개발자는 매번 인터셉터 객체를 직접 등록하고 싶어하지 않는다. 대신 "이 클래스는 aspect이고, 이 메서드는 before advice이며, 저 메서드는 around advice다"처럼 선언하고 싶어한다. `@Aspect`, `@Before`, `@Around`, `@AfterReturning`은 그 선언 모델이다.
@@ -526,6 +793,33 @@ flowchart LR
 실제 Spring과 비교하면 `spring-lite`의 포인트컷 모델은 훨씬 제한적이다. 하지만 바로 그 단순함 덕분에 포인트컷의 본질이 잘 보인다. 포인트컷은 결국 "어떤 메서드 호출에 개입할 것인가"를 선택하는 규칙이다. 표현식이 복잡해질수록 강력해지지만, 동시에 추론 비용도 높아진다. 실무에서 포인트컷이 지나치게 넓거나 애매하면, 어느 호출이 advice 대상인지 추적하기가 매우 어려워진다. 축소판 구현으로 먼저 본질을 이해하면 실제 Spring의 풍부한 문법도 훨씬 덜 위협적으로 느껴진다.
 
 책을 따라가며 이 장을 읽는 독자에게 권하고 싶은 연습은, 선언형 aspect 하나를 머릿속에서 명시적 인터셉터 클래스로 다시 풀어보는 일이다. 그 연습을 반복하면 AOP가 더 이상 별도 마법 체계가 아니라는 사실이 분명해진다. 결국은 컨테이너가 메타데이터를 읽고, 인터셉터를 만들고, 프록시 체인에 꽂아 넣는 구조일 뿐이다.
+
+이 장을 실제로 구현한다면 다음 테스트부터 시작하는 편이 좋다.
+
+```java
+@Test
+void appliesBeforeAroundAndAfterReturningAdvice() {
+    AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(AspectTestConfig.class);
+    GreetingService service = context.getBean(GreetingService.class);
+
+    assertThat(service.greet("spring")).isEqualTo("HELLO SPRING");
+}
+```
+
+그리고 후처리기의 진입점은 가능한 한 빨리 본문에 보여주는 편이 좋다.
+
+```java
+public class AspectBeanPostProcessor implements BeanPostProcessor {
+    @Override
+    public Object postProcessAfterInitialization(String beanName, Object bean) {
+        List<MethodInterceptor> interceptors = resolveInterceptors(bean);
+        if (interceptors.isEmpty()) {
+            return bean;
+        }
+        return ProxyFactory.createProxy(bean, interceptors);
+    }
+}
+```
 
 ### Chapter 15. `@Transactional`
 
@@ -575,6 +869,19 @@ public Object invoke(MethodInvocation invocation) throws Throwable {
 }
 ```
 
+build-along 책에서는 이 장의 첫 검증을 "트랜잭션 대상 빈이 실제로 프록시로 감싸지는가"로 두는 편이 좋다.
+
+```java
+@Test
+void wrapsTransactionalBeanWithProxy() {
+    AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(SampleConfig.class);
+
+    SampleService sampleService = context.getBean(SampleService.class);
+
+    assertThat(Proxy.isProxyClass(sampleService.getClass()) || sampleService.getClass().getName().contains("ByteBuddy")).isTrue();
+}
+```
+
 ```mermaid
 sequenceDiagram
     participant Caller as Caller
@@ -588,6 +895,34 @@ sequenceDiagram
     Target-->>Proxy: result / exception
     Proxy->>TM: commit() / rollback()
     Proxy-->>Caller: return / throw
+```
+
+여기서 더 나아가 `TransactionManager` 자체도 별도 구현 대상으로 끌어올리는 편이 좋다. 직접 구현하는 독자에게는 스레드 로컬 문맥이 핵심이라는 점을 코드로 보여줘야 하기 때문이다.
+
+```java
+public class TransactionManager {
+    private final DataSource dataSource;
+    private final ThreadLocal<TransactionContext> transactionContext = new ThreadLocal<>();
+
+    public void begin() {
+        TransactionContext context = transactionContext.get();
+        if (context != null) {
+            context.incrementDepth();
+            return;
+        }
+        if (dataSource == null) {
+            transactionContext.set(new TransactionContext(null));
+            return;
+        }
+        try {
+            Connection connection = dataSource.getConnection();
+            connection.setAutoCommit(false);
+            transactionContext.set(new TransactionContext(connection));
+        } catch (SQLException exception) {
+            throw new IllegalStateException("Failed to begin transaction", exception);
+        }
+    }
+}
 ```
 
 ### Chapter 16. 전파와 롤백 정책
@@ -652,6 +987,43 @@ flowchart LR
     B --> H["ExceptionResolver"]
     G --> I["HTTP Response"]
     H --> I
+```
+
+직접 구현하기 관점에서는 이 장 역시 테스트부터 여는 편이 좋다. 가장 먼저 고정할 테스트는 "요청이 실제 컨트롤러 메서드까지 디스패치되는가"다.
+
+```java
+@Test
+void dispatchesRequestToControllerMethod() throws Exception {
+    DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
+    StubHttpExchange exchange = StubHttpExchange.get("/greetings/world");
+
+    dispatcherServlet.handle(exchange);
+
+    assertThat(exchange.responseBody()).contains("world");
+}
+```
+
+그리고 `DispatcherServlet`의 `handle()` 전체는 본문 안에 직접 실어 두는 편이 좋다. 이 메서드 하나가 핸들러 선택, 실행, 응답 렌더링, 예외 변환이라는 웹 모듈의 전체 알고리즘을 가장 압축해서 보여주기 때문이다.
+
+```java
+@Override
+public void handle(HttpExchange exchange) throws IOException {
+    HandlerMethodMatch handlerMethodMatch = null;
+    try {
+        handlerMethodMatch = handlerMapping.getHandler(exchange);
+        if (handlerMethodMatch == null) {
+            returnValueHandler.handleReturnValue(Map.of("error", "Not Found"), exchange, 404);
+            return;
+        }
+        Object result = handlerAdapter.handle(handlerMethodMatch, exchange);
+        returnValueHandler.handleReturnValue(result, exchange, 200);
+    } catch (Exception exception) {
+        ExceptionHandlingResult resolved = exceptionResolver.resolve(exception, handlerMethodMatch);
+        returnValueHandler.handleReturnValue(resolved.body(), exchange, resolved.statusCode());
+    } finally {
+        exchange.close();
+    }
+}
 ```
 
 ### Chapter 18. 요청을 메서드 인자로 바꾸기
@@ -727,6 +1099,8 @@ public ExceptionHandlingResult resolve(Exception exception, HandlerMethodMatch h
 }
 ```
 
+build-along 형식에서는 이 장에서 `JsonMapper`와 `DefaultExceptionResolver`를 함께 구현하는 편이 자연스럽다. 하나는 성공 결과를 직렬화하고, 다른 하나는 실패를 응답 모델로 바꾸기 때문이다. 독자는 이 두 클래스를 함께 구현하면서 "성공 경로와 실패 경로도 결국 같은 출력 파이프라인 위에서 정리된다"는 사실을 코드 수준에서 이해하게 된다.
+
 ### Chapter 20. 조건 매핑과 검증
 
 실제 웹 프레임워크는 URL 경로만 보고 핸들러를 선택하지 않는다. `consumes`, `produces`, `headers`, `params` 같은 요청 조건을 함께 본다. 같은 경로라도 콘텐츠 타입이나 파라미터 값이 다르면 다른 의미가 될 수 있기 때문이다. 따라서 매핑은 단순 path lookup이 아니라 정책 평가에 가깝다.
@@ -745,6 +1119,8 @@ public ExceptionHandlingResult resolve(Exception exception, HandlerMethodMatch h
 | 인자 바인딩 | query, path variable, body | 메서드 인자 구성 | 400 |
 | 검증 | 바인딩된 인자 | 제약 조건 검사 | 400 |
 | 예외 처리 | 실행 중 예외 | 로컬/전역 정책 적용 | 4xx/5xx |
+
+직접 구현하는 독자에게는 여기서 `RequestMappingHandlerMapping.matchesConditions(...)`와 `RequestMappingHandlerAdapter`의 검증 호출 지점을 함께 보여주는 편이 좋다. 그래야 조건 매핑과 검증이 각각 어디서 일어나는지를 코드 경계로 정확히 기억할 수 있다.
 
 ---
 
@@ -792,6 +1168,22 @@ private Connection obtainConnectionIfNeeded() throws SQLException {
 }
 ```
 
+build-along 방식에서는 이 장도 테스트부터 잠그는 편이 좋다. 특히 "현재 트랜잭션 커넥션을 재사용하는가"를 먼저 고정하면 `JdbcTemplate`이 단지 편의 API가 아니라 트랜잭션 문맥의 소비자라는 사실이 훨씬 선명해진다.
+
+```java
+@Test
+void reusesCurrentTransactionConnection() {
+    TestTransactionManager transactionManager = new TestTransactionManager(dataSource);
+    JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource, transactionManager);
+
+    transactionManager.begin();
+    jdbcTemplate.update("insert into accounts(name) values (?)", "spring");
+    transactionManager.rollback();
+
+    assertThat(transactionManager.wasRollbackCalled()).isTrue();
+}
+```
+
 ### Chapter 22. 예제 앱으로 연결하기
 
 예제 앱은 책에서 매우 중요한 역할을 한다. 앞 장들의 구조가 각각 따로 이해되더라도, 하나의 비즈니스 시나리오 안에서 모두 연결되어 보이지 않으면 프레임워크가 완성된 느낌이 들지 않기 때문이다. 주문 생성 요청은 컨트롤러에서 시작해, 서비스로 전달되고, 트랜잭션 프록시를 거쳐, JDBC 저장소를 호출하고, 결과가 다시 JSON 응답으로 돌아온다.
@@ -831,6 +1223,8 @@ public class DefaultOrderService implements OrderService {
 }
 ```
 
+직접 구현하는 책에서는 이 장을 단순 사용 예제로 취급하면 안 된다. 컨트롤러, 서비스, 저장소를 모두 함께 싣고 "앞 장들의 결과가 여기서 한 번에 결합된다"는 점을 분명히 보여줘야 한다. 독자는 이 장에서 처음으로 컨테이너, 프록시, MVC, 트랜잭션, JDBC가 하나의 요청 흐름 안에서 모두 연결되는 것을 본다.
+
 ### Chapter 23. `SpringLiteApplication`
 
 사용자는 컨테이너, 웹, JDBC, AOP를 하나씩 직접 조립하고 싶어하지 않는다. 보통은 `run()` 한 줄로 시작하고 싶어한다. 그래서 부트스트랩 계층이 필요하다. `SpringLiteApplication`은 설정 클래스 인식, 스캔 시작점 설정, 인프라 자동 등록, 웹 서버 시작을 하나의 진입점으로 묶는다.
@@ -864,6 +1258,22 @@ public static AnnotationConfigApplicationContext run(Class<?> applicationClass, 
     });
     context.getBean(WebServer.class).start();
     return context;
+}
+```
+
+그리고 바로 이어서 기본 자동 설정 등록 코드도 함께 보여주는 편이 좋다. 이 두 코드가 나란히 있어야 독자가 Boot를 거대한 별도 세계가 아니라 "기존 모듈을 한 줄 시작점으로 묶는 조립 계층"으로 이해하기 쉽다.
+
+```java
+public final class BootInfrastructureRegistrar {
+    public static void registerDefaults(AnnotationConfigApplicationContext context) {
+        context.register(
+            JsonAutoConfiguration.class,
+            AopAutoConfiguration.class,
+            TransactionAutoConfiguration.class,
+            JdbcAutoConfiguration.class,
+            WebAutoConfiguration.class
+        );
+    }
 }
 ```
 
@@ -916,6 +1326,8 @@ public void afterEach(ExtensionContext extensionContext) {
     context.getBean(TransactionManager.class).rollback();
 }
 ```
+
+직접 구현하는 책이라면 테스트 지원도 마지막에 실제로 만들어 보게 해야 한다. 그래서 이 장에서는 `SpringLiteTestExtension`의 `beforeAll`, `postProcessTestInstance`, `beforeEach`, `afterEach`, `resolveParameter`를 거의 빠짐없이 따라가게 하는 편이 좋다. 프레임워크를 만든다는 것은 실행 코드만이 아니라, 그 코드를 검증하는 진입점까지 함께 설계하는 일이라는 사실을 이 장에서 마무리할 수 있다.
 
 ---
 
