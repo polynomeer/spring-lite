@@ -122,6 +122,22 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
 
 여기서 중요한 것은 아직 `new`를 거의 하지 않는다는 점이다. 지금 단계의 목적은 "정의가 먼저다"라는 축을 세우는 것이다.
 
+#### 클래스 구조 해설
+
+- `BeanDefinition`
+  - 책임: 객체 생성 계획을 보관한다.
+  - 핵심 필드:
+    - `name`: 조회 키
+    - `beanType`: 타입 기반 주입 기준
+    - `kind`: 생성 전략 분기
+    - `singleton`: 캐시 저장 정책
+  - 설계 이유: 생성 전에 이미 빈을 설명할 수 있어야 컨테이너가 메타데이터 중심으로 동작할 수 있다.
+
+- `AnnotationConfigApplicationContext`
+  - 현재 단계 책임: 정의 저장소와 싱글톤 저장소를 분리한다.
+  - 아직 없는 책임: 의존성 해석, 라이프사이클, 후처리기.
+  - 설계 이유: 가장 작은 컨테이너 축부터 세우기 위해서다.
+
 ### Chapter 4. 생성자 선택과 의존성 해석
 
 이 장부터 컨테이너가 실제로 객체를 만들기 시작한다. 먼저 테스트를 작성한다.
@@ -209,6 +225,30 @@ private Object createBean(String beanName, BeanDefinition beanDefinition) {
 
 이 장이 끝나면 컨테이너는 최소 생성자 주입을 수행할 수 있어야 한다.
 
+#### 메서드 구조 해설
+
+- `selectConstructor(...)`
+  - 책임: 컨테이너가 사용할 생성자를 결정한다.
+  - 규칙:
+    - `@Autowired` 생성자 우선
+    - 생성자가 하나면 자동 선택
+    - 아니면 기본 생성자 시도
+
+- `resolveDependency(...)`
+  - 책임: 생성자 파라미터 하나를 실제 빈으로 변환한다.
+  - 분기:
+    - 후보 없음
+    - 후보 여러 개
+    - `@Qualifier` 존재
+
+- `createBean(...)`
+  - 책임: 실제 생성 알고리즘을 총괄한다.
+  - 단계:
+    - 순환 참조 감지
+    - 생성 전략 분기
+    - 초기화 실행
+    - 싱글톤 캐시 저장
+
 ### Chapter 5. 컴포넌트 스캔
 
 이제 수동 등록을 줄인다. 테스트는 아래처럼 시작한다.
@@ -282,6 +322,20 @@ private void registerDiscoveredClass(Class<?> candidate) {
 }
 ```
 
+#### 클래스 구조 해설
+
+- `ClassPathScanner`
+  - 책임: 클래스패스에서 관리 대상 클래스를 수집한다.
+  - 핵심 메서드:
+    - `scan(...)`
+    - `scanDirectory(...)`
+    - `scanJar(...)`
+  - 설계 이유: 개발 환경과 배포 환경의 클래스 위치가 다르기 때문이다.
+
+- `AnnotationUtils`
+  - 책임: 메타 애너테이션까지 따라가며 관리 대상 여부를 판단한다.
+  - 설계 이유: `@Service`와 `@Repository`도 결국 컴포넌트 후보이기 때문이다.
+
 ### Chapter 6. `@Configuration`과 `@Bean`
 
 이 장의 테스트는 팩토리 메서드 빈을 직접 검증해야 한다.
@@ -334,6 +388,16 @@ private Object invokeFactoryMethod(BeanDefinition beanDefinition) {
 ```
 
 이제 컨테이너는 컴포넌트 스캔과 명시적 설정 메서드를 같은 파이프라인 안에서 처리할 수 있다.
+
+#### 메서드 구조 해설
+
+- `registerBeanMethods(...)`
+  - 책임: 설정 클래스의 `@Bean` 메서드를 별도 정의로 등록한다.
+  - 설계 이유: 클래스 기반 빈과 팩토리 메서드 기반 빈을 같은 모델로 다루기 위해서다.
+
+- `invokeFactoryMethod(...)`
+  - 책임: 설정 빈 인스턴스를 구한 뒤 실제 팩토리 메서드를 실행한다.
+  - 설계 이유: 컨테이너가 단순 `new` 외의 생성 전략도 다룬다는 사실을 보여 준다.
 
 ### Chapter 7. `@Qualifier`, `@Value`, 프로퍼티
 
@@ -412,6 +476,25 @@ public static PropertyResolver loadApplicationProperties() {
 }
 ```
 
+#### 클래스/메서드 구조 해설
+
+- `PropertyResolver`
+  - 책임: 외부 설정을 하나의 조회 모델로 통일한다.
+  - 핵심 메서드:
+    - `loadApplicationProperties()`
+    - `resolveRequiredPlaceholder(...)`
+
+- `resolveValue(...)`
+  - 책임: 파라미터 수준 `@Value`를 실제 타입 값으로 바꾼다.
+  - 단계:
+    - placeholder 해석
+    - 문자열 값 확보
+    - 타입 변환
+
+- `injectFieldValues(...)`
+  - 책임: 필드 수준 `@Value`를 초기화 전에 주입한다.
+  - 설계 이유: 생성자 주입과 별도로 "생성 후 값 보강"이 필요하기 때문이다.
+
 ### Chapter 8. Scope와 이벤트
 
 이 장에서 먼저 잠가야 할 테스트는 두 가지다.
@@ -456,6 +539,16 @@ public void publishEvent(Object event) {
 }
 ```
 
+#### 메서드 구조 해설
+
+- `isSingleton(...)`
+  - 책임: 정의 단계에서 캐시 저장 정책을 판단한다.
+  - 설계 이유: 생성 전략과 수명 정책을 함께 결정하기 위해서다.
+
+- `publishEvent(...)`
+  - 책임: 현재 리스너 빈에 이벤트를 전달한다.
+  - 설계 이유: 컨테이너 내부 결합을 느슨하게 유지하기 위해서다.
+
 ---
 
 ## Part 3. 라이프사이클과 확장 포인트
@@ -498,6 +591,18 @@ private Object initializeBean(String beanName, Object bean) {
 
 종료 훅은 `@PreDestroy`와 `AutoCloseable`을 함께 지원한다.
 
+#### 메서드 구조 해설
+
+- `initializeBean(...)`
+  - 책임: 생성 직후 객체를 완성된 빈으로 바꾼다.
+  - 단계:
+    - 필드 값 주입
+    - before 후처리기
+    - `@PostConstruct`
+    - after 후처리기
+    - destroy callback 등록
+  - 설계 이유: 생성 완료와 사용 가능 상태가 다르기 때문이다.
+
 ### Chapter 10. `BeanPostProcessor`
 
 이 장에서는 먼저 아주 작은 후처리기를 테스트로 만든다.
@@ -526,6 +631,15 @@ public interface BeanPostProcessor {
     }
 }
 ```
+
+#### 클래스 구조 해설
+
+- `BeanPostProcessor`
+  - 책임: 컨테이너가 만든 객체를 추가 가공한다.
+  - 두 훅:
+    - `postProcessBeforeInitialization(...)`
+    - `postProcessAfterInitialization(...)`
+  - 설계 이유: 값 보강과 프록시 치환의 개입 시점이 다르기 때문이다.
 
 중요한 것은 컨테이너가 후처리기 자신도 빈으로 관리한다는 점이다. 그래서 `refresh()`에서 후처리기 빈을 먼저 수집하는 단계가 따로 필요하다.
 
