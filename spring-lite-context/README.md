@@ -1,22 +1,77 @@
 # spring-lite-context
 
-IoC 컨테이너의 중심 모듈이다. Bean 등록, 조회, 생성, 생명주기, 스캐닝을 담당한다.
+`spring-lite-context`는 Spring Lite의 IoC 컨테이너 본체다. 빈 정의 등록, 컴포넌트 스캔, 생성자 주입, 설정 클래스 처리, 스코프, 이벤트, 라이프사이클, Bean 후처리를 조율한다.
 
-## 현재 패키지
+## 역할
+
+- `BeanDefinition` 중심 메타데이터 모델 유지
+- `@Component`, `@Configuration`, `@Bean` 기반 빈 정의 등록
+- 생성자 주입, `@Qualifier`, `@Value` 기반 의존성 해석
+- singleton / prototype 스코프와 destroy callback 관리
+- `BeanPostProcessor`, `@PostConstruct`, `@PreDestroy` 지원
+- `ContextRefreshedEvent`, `ContextClosedEvent` 발행
+
+## 핵심 패키지
 
 - `lite.spring.context`
 - `lite.spring.context.bean`
 - `lite.spring.context.event`
 - `lite.spring.context.factory`
-- `lite.spring.context.support`
 - `lite.spring.context.scan`
+- `lite.spring.context.support`
 
-## 주요 내용
+## 공개 API와 진입점
 
-- `ApplicationContext`, `ConfigurableApplicationContext`
-- `BeanDefinition`
+- `ApplicationContext`
+- `ConfigurableApplicationContext`
 - `AnnotationConfigApplicationContext`
+- `BeanPostProcessor`
+- `ApplicationListener`
+
+가장 중요한 진입점은 `AnnotationConfigApplicationContext`다. 대부분의 컨테이너 동작은 이 클래스에서 시작해 등록, 생성, 초기화, 이벤트 발행으로 이어진다.
+
+## 내부 핵심 클래스
+
+- `BeanDefinition`
+  - 빈 이름, 타입, 생성 전략, 스코프, qualifier를 보관한다.
+- `AnnotationConfigApplicationContext`
+  - 등록, refresh, bean 생성, 의존성 해석, 후처리 적용의 중심 알고리즘을 가진다.
 - `ClassPathScanner`
-- singleton / prototype scope
-- `ApplicationListener`, `ContextRefreshedEvent`, `ContextClosedEvent`
-- Bean lifecycle, `BeanPostProcessor`, JAR 스캔
+  - 파일 시스템과 JAR 양쪽에서 후보 클래스를 수집한다.
+- `AnnotationUtils`
+  - 메타 애너테이션까지 따라가며 관리 대상 타입을 판정한다.
+- `BeanNameGenerator`
+  - 타입 기반 기본 빈 이름을 만든다.
+
+## 호출 흐름
+
+1. `register(...)` 또는 `scan(...)`이 후보 타입을 수집한다.
+2. `registerDiscoveredClass(...)`가 후보를 `BeanDefinition`으로 바꾼다.
+3. `refresh()`가 후처리기와 설정 클래스를 먼저 초기화한다.
+4. `createBean(...)`이 생성자 선택, 의존성 해석, 초기화, 후처리를 수행한다.
+5. 싱글톤은 캐시에 저장되고, close 시 destroy callback이 역순 실행된다.
+
+## 테스트 포인트
+
+- `AnnotationConfigApplicationContextTest`
+  - 등록, 생성자 주입, `@Qualifier`, `@Value`, 스코프, 이벤트, 라이프사이클
+- `ClassPathScannerTest`
+  - 파일 시스템 / JAR 스캔
+- `AnnotationSupportTest`
+  - 메타 애너테이션 판별
+
+## 실제 Spring 대응
+
+- `AnnotationConfigApplicationContext`
+- `DefaultListableBeanFactory`
+- `AbstractAutowireCapableBeanFactory`
+- `ConfigurationClassPostProcessor`
+
+Spring Lite에서는 이 책임들이 더 적은 클래스에 압축되어 있다. 실제 Spring은 같은 문제를 더 세분화된 계층과 확장 포인트로 푼다.
+
+## 현재 한계
+
+- 고급 스코프 request/session 미지원
+- `BeanFactoryPostProcessor`, `ImportSelector` 계열 미지원
+- 순환 참조는 fail-fast 위주로 처리
+- 컬렉션/지연 주입 같은 고급 의존성 해석은 제한적
