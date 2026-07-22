@@ -6,9 +6,10 @@
 
 1. [책 전체 완성 원고](./complete-manuscript.md)
 2. [부록](./appendices.md)
-3. [코드 블록 삽입 계획](./code-block-placement-plan.md)
-4. [책 전체 목차 설계](./book-outline.md)
-5. [장별 시놉시스와 집필 분량 계획](./chapter-synopsis-and-writing-plan.md)
+3. [참고문헌과 집필 참고 자료](./reference-bibliography.md)
+4. [코드 블록 삽입 계획](./code-block-placement-plan.md)
+5. [책 전체 목차 설계](./book-outline.md)
+6. [장별 시놉시스와 집필 분량 계획](./chapter-synopsis-and-writing-plan.md)
 
 ## 작업용 문서
 
