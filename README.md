@@ -89,6 +89,8 @@
 - [02. MVC 비교](./sample-scenarios/02-mvc/README.md)
 - [03. 트랜잭션 비교](./sample-scenarios/03-transaction/README.md)
 - [04. 테스트 비교](./sample-scenarios/04-testing/README.md)
+- [실행 가능한 spring-lite 비교 앱](./comparison-spring-lite-app/README.md)
+- [실행 가능한 Spring Boot 비교 앱](./comparison-spring-boot-app/README.md)
 
 ## 책 초안 문서
 

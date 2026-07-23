@@ -9,6 +9,7 @@ val assertjVersion = "3.26.3"
 val h2Version = "2.2.224"
 val byteBuddyVersion = "1.14.18"
 val objenesisVersion = "3.4"
+val springBootVersion = "4.0.6"
 
 allprojects {
     group = "lite.spring"
@@ -34,10 +35,12 @@ subprojects {
         useJUnitPlatform()
     }
 
-    dependencies {
-        "testImplementation"("org.junit.jupiter:junit-jupiter-api:$junitVersion")
-        "testRuntimeOnly"("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
-        "testImplementation"("org.assertj:assertj-core:$assertjVersion")
+    if (path != ":comparison-spring-boot-app") {
+        dependencies {
+            "testImplementation"("org.junit.jupiter:junit-jupiter-api:$junitVersion")
+            "testRuntimeOnly"("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+            "testImplementation"("org.assertj:assertj-core:$assertjVersion")
+        }
     }
 }
 
@@ -112,5 +115,45 @@ project(":example-app") {
 
     extensions.configure<org.gradle.api.plugins.JavaApplication> {
         mainClass.set("lite.spring.example.ExampleApplication")
+    }
+}
+
+project(":comparison-spring-lite-app") {
+    apply(plugin = "application")
+
+    dependencies {
+        "implementation"(project(":spring-lite-boot"))
+        "testImplementation"(project(":spring-lite-test"))
+        "runtimeOnly"("com.h2database:h2:$h2Version")
+    }
+
+    extensions.configure<org.gradle.api.plugins.JavaApplication> {
+        mainClass.set("samples.comparison.lite.ComparisonSpringLiteApplication")
+    }
+}
+
+project(":comparison-spring-boot-app") {
+    apply(plugin = "application")
+
+    dependencies {
+        "implementation"(platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion"))
+        "implementation"("org.springframework.boot:spring-boot-starter-web")
+        "implementation"("org.springframework.boot:spring-boot-starter-jdbc")
+        "implementation"("org.springframework.boot:spring-boot-starter-validation")
+        "implementation"("org.springframework:spring-tx")
+        "runtimeOnly"("com.h2database:h2")
+
+        "testImplementation"(platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion"))
+        "testImplementation"("org.springframework.boot:spring-boot-starter-test")
+        "testImplementation"("org.springframework.boot:spring-boot-test-autoconfigure")
+        "testRuntimeOnly"("org.junit.platform:junit-platform-launcher")
+    }
+
+    tasks.withType<Test>().configureEach {
+        useJUnitPlatform()
+    }
+
+    extensions.configure<org.gradle.api.plugins.JavaApplication> {
+        mainClass.set("samples.comparison.spring.ComparisonSpringBootApplication")
     }
 }

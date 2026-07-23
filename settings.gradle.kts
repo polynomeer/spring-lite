@@ -10,5 +10,6 @@ include(
     "spring-lite-boot",
     "spring-lite-test",
     "example-app",
+    "comparison-spring-lite-app",
+    "comparison-spring-boot-app",
 )
-

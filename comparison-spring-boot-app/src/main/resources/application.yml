@@ -1,0 +1,15 @@
+comparison:
+  datasource:
+    url: jdbc:h2:mem:comparison-spring;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+  greeting:
+    template: Hello, %s
+  order:
+    default-status: PENDING
+    seed-product: starter-kit
+spring:
+  datasource:
+    url: jdbc:h2:mem:comparison-spring;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
