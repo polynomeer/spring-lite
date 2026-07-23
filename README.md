@@ -82,6 +82,14 @@
 25. [개발 규칙](./docs/guides/development-conventions.md)
 26. [커밋 규칙](./docs/guides/commit-conventions.md)
 
+## 비교 샘플
+
+- [샘플 시나리오 모음](./sample-scenarios/README.md)
+- [01. DI 비교](./sample-scenarios/01-di/README.md)
+- [02. MVC 비교](./sample-scenarios/02-mvc/README.md)
+- [03. 트랜잭션 비교](./sample-scenarios/03-transaction/README.md)
+- [04. 테스트 비교](./sample-scenarios/04-testing/README.md)
+
 ## 책 초안 문서
 
 - [Part 1 원고 초안](./docs/book/part-1-draft.md)
