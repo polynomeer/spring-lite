@@ -74,13 +74,14 @@
 17. [의도적 단순화와 구현 한계](./docs/architecture/intentional-simplifications-and-limitations.md)
 18. [예제 앱 요청 흐름 추적](./docs/architecture/example-app-request-flow.md)
 19. [테스트 카탈로그](./docs/testing/test-catalog.md)
-20. [Post-MVP 구현 계획](./docs/codex/post-mvp-implementation-plan.md)
-21. [추가 구현 백로그](./docs/codex/next-implementation-backlog.md)
-22. [구현 로드맵](./docs/codex/implementation-roadmap.md)
-23. [작업 백로그](./docs/codex/task-backlog.md)
-24. [모듈 맵](./docs/codex/module-map.md)
-25. [개발 규칙](./docs/guides/development-conventions.md)
-26. [커밋 규칙](./docs/guides/commit-conventions.md)
+20. [상세 테스트 해설](./docs/testing/detailed-test-guide.md)
+21. [Post-MVP 구현 계획](./docs/codex/post-mvp-implementation-plan.md)
+22. [추가 구현 백로그](./docs/codex/next-implementation-backlog.md)
+23. [구현 로드맵](./docs/codex/implementation-roadmap.md)
+24. [작업 백로그](./docs/codex/task-backlog.md)
+25. [모듈 맵](./docs/codex/module-map.md)
+26. [개발 규칙](./docs/guides/development-conventions.md)
+27. [커밋 규칙](./docs/guides/commit-conventions.md)
 
 ## 비교 샘플
 
