@@ -7,6 +7,9 @@
 - `spring-lite-playground.html`
   - `AOP + Transaction` 호출 체인 시뮬레이터
   - `MVC Request` 처리 파이프라인 실험실
+- `spring-lite-container-lab.html`
+  - `ApplicationContext` 부트스트랩 실험실
+  - 개별 빈 생성/초기화/프록시/종료 생명주기 실험실
 
 ## 왜 필요한가
 
@@ -24,6 +27,7 @@
 브라우저에서 아래 파일을 직접 열면 된다.
 
 - `visual-lab/spring-lite-playground.html`
+- `visual-lab/spring-lite-container-lab.html`
 
 또는 간단히 로컬 서버를 띄워도 된다.
 

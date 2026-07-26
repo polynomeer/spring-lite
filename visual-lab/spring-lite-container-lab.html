@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spring Lite Container Lab</title>
+  <style>
+    :root {
+      --bg: #f6f0e7;
+      --surface: #fffaf4;
+      --surface-soft: #f1e4d3;
+      --text: #1f2833;
+      --muted: #626d7d;
+      --line: #ddd1c0;
+      --primary: #8b3f1e;
+      --primary-soft: #f4d2bf;
+      --secondary: #1d5d5b;
+      --secondary-soft: #cde5e0;
+      --accent: #315f93;
+      --accent-soft: #d8e4f5;
+      --danger: #a33131;
+      --danger-soft: #f6d6d6;
+      --shadow: 0 18px 42px rgba(48, 35, 18, 0.12);
+      --radius: 22px;
+      --mono: "SFMono-Regular", Consolas, Menlo, monospace;
+      --sans: "Avenir Next", "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(139, 63, 30, 0.18), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(49, 95, 147, 0.14), transparent 24%),
+        linear-gradient(180deg, #fcf8f2 0%, var(--bg) 100%);
+    }
+
+    .page {
+      width: min(1220px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 28px 0 48px;
+    }
+
+    .hero {
+      padding: 28px;
+      border-radius: 30px;
+      background: linear-gradient(130deg, rgba(29, 93, 91, 0.95), rgba(49, 95, 147, 0.95));
+      color: #f7f8fb;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -24px;
+      top: -18px;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(30px, 5vw, 52px);
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 760px;
+      line-height: 1.55;
+      color: rgba(247, 248, 251, 0.9);
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .badge-row span {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(247, 248, 251, 0.16);
+      font-size: 13px;
+      letter-spacing: 0.02em;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 22px;
+      margin-top: 22px;
+    }
+
+    .panel {
+      background: rgba(255, 250, 244, 0.86);
+      border: 1px solid rgba(221, 209, 192, 0.86);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .controls {
+      padding: 18px;
+      position: sticky;
+      top: 18px;
+      align-self: start;
+    }
+
+    .section {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section:last-child {
+      border-bottom: 0;
+    }
+
+    .section h2,
+    .lab h2 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .section p,
+    .lab p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .tab-btn,
+    .action-btn {
+      border: 0;
+      cursor: pointer;
+      border-radius: 14px;
+      font: inherit;
+      transition: transform 120ms ease, opacity 120ms ease, background 120ms ease;
+    }
+
+    .tab-btn {
+      padding: 12px;
+      background: #efe5d8;
+      color: var(--text);
+      text-align: left;
+      min-height: 82px;
+    }
+
+    .tab-btn.active {
+      background: var(--secondary);
+      color: #f6fbfa;
+      transform: translateY(-1px);
+    }
+
+    .tab-btn strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 14px;
+    }
+
+    .tab-btn span {
+      display: block;
+      font-size: 12px;
+      line-height: 1.35;
+      color: var(--muted);
+    }
+
+    .tab-btn.active span {
+      color: rgba(246, 251, 250, 0.8);
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #fffdf8;
+      color: var(--text);
+      font: inherit;
+    }
+
+    .check-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .check {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 10px 12px;
+      background: #fffdf8;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+    }
+
+    .check input {
+      width: 16px;
+      height: 16px;
+      margin-top: 2px;
+    }
+
+    .check strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .check span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .action-btn {
+      width: 100%;
+      margin-top: 14px;
+      padding: 13px 14px;
+      background: var(--primary);
+      color: #fff8f2;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .labs {
+      display: grid;
+      gap: 18px;
+    }
+
+    .lab {
+      padding: 20px;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .metric {
+      padding: 14px;
+      border-radius: 18px;
+      background: #fffdf8;
+      border: 1px solid var(--line);
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    .metric .value {
+      font-size: 28px;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      margin-bottom: 6px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .step {
+      position: relative;
+      display: grid;
+      grid-template-columns: 28px 1fr auto;
+      gap: 12px;
+      align-items: start;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: #fffdf8;
+      border: 1px solid var(--line);
+      overflow: hidden;
+    }
+
+    .step::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 5px;
+      background: var(--accent);
+    }
+
+    .step.phase::before {
+      background: var(--secondary);
+    }
+
+    .step.bean::before {
+      background: var(--primary);
+    }
+
+    .step.error::before {
+      background: var(--danger);
+    }
+
+    .index {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .step.phase .index {
+      background: var(--secondary-soft);
+      color: var(--secondary);
+    }
+
+    .step.bean .index {
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+
+    .step.error .index {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .step strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .step p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-family: var(--mono);
+      background: var(--surface-soft);
+      white-space: nowrap;
+    }
+
+    .lane {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .lane-row {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 14px;
+    }
+
+    .lane-label {
+      padding: 14px;
+      border-radius: 16px;
+      background: #f3e7d7;
+      border: 1px solid var(--line);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .lane-track {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 14px;
+      border-radius: 16px;
+      background: #fffdf8;
+      border: 1px solid var(--line);
+      min-height: 62px;
+    }
+
+    .event {
+      padding: 9px 11px;
+      border-radius: 12px;
+      font-size: 12px;
+      background: var(--primary-soft);
+      color: #5f2812;
+    }
+
+    .event.secondary {
+      background: var(--accent-soft);
+      color: #224a81;
+    }
+
+    .event.success {
+      background: var(--secondary-soft);
+      color: #1d5c56;
+    }
+
+    .event.error {
+      background: var(--danger-soft);
+      color: #7d2424;
+    }
+
+    .code {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 18px;
+      background: #1f1b18;
+      color: #f7efe5;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      overflow: auto;
+    }
+
+    .footer-note {
+      margin-top: 22px;
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: rgba(255, 250, 244, 0.78);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 980px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .controls {
+        position: static;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .metrics,
+      .tabs {
+        grid-template-columns: 1fr;
+      }
+
+      .lane-row,
+      .step {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <h1>Spring Lite Container Lab</h1>
+      <p>
+        Explore the part that usually stays hidden: how Spring Lite builds an application context,
+        gathers bean definitions, creates singletons, applies post-processors, and finishes the bean lifecycle.
+      </p>
+      <div class="badge-row">
+        <span>ApplicationContext bootstrap</span>
+        <span>BeanDefinition registry</span>
+        <span>Lifecycle callbacks</span>
+        <span>Proxy wrapping and destroy hooks</span>
+      </div>
+    </section>
+
+    <div class="grid">
+      <aside class="panel controls">
+        <div class="section">
+          <h2>Choose Lab</h2>
+          <p>Switch between container bootstrap and single-bean lifecycle exploration.</p>
+          <div class="tabs">
+            <button class="tab-btn active" id="tab-bootstrap" type="button">
+              <strong>Bootstrap Flow</strong>
+              <span>Scan, register, conditionally add infra, instantiate, and refresh.</span>
+            </button>
+            <button class="tab-btn" id="tab-lifecycle" type="button">
+              <strong>Bean Lifecycle</strong>
+              <span>Constructor, @Value, post-processors, proxy wrapping, destroy callbacks.</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="section" id="controls-bootstrap">
+          <h2>Bootstrap Setup</h2>
+          <p>Shape the application context and see how the startup phases change.</p>
+          <div class="form-grid">
+            <div class="field">
+              <label for="boot-config-count">Configuration classes</label>
+              <select id="boot-config-count">
+                <option value="1">1 class</option>
+                <option value="2" selected>2 classes</option>
+                <option value="3">3 classes</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="boot-scan-mode">Scan source</label>
+              <select id="boot-scan-mode">
+                <option value="filesystem">Filesystem package scan</option>
+                <option value="jar">JAR package scan</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="boot-bean-count">Component candidates</label>
+              <select id="boot-bean-count">
+                <option value="4">4 candidates</option>
+                <option value="7" selected>7 candidates</option>
+                <option value="10">10 candidates</option>
+              </select>
+            </div>
+          </div>
+          <div class="check-grid">
+            <label class="check">
+              <input id="boot-conditional" type="checkbox" checked>
+              <span><strong>Conditional beans</strong><span>Evaluate `@ConditionalOnBean`, `@ConditionalOnMissingBean`, and property-based conditions.</span></span>
+            </label>
+            <label class="check">
+              <input id="boot-aop" type="checkbox" checked>
+              <span><strong>AOP infrastructure</strong><span>Register `AspectBeanPostProcessor` and allow proxy wrapping later.</span></span>
+            </label>
+            <label class="check">
+              <input id="boot-jdbc" type="checkbox" checked>
+              <span><strong>DataSource present</strong><span>Activate JDBC and transactional infrastructure.</span></span>
+            </label>
+            <label class="check">
+              <input id="boot-web" type="checkbox" checked>
+              <span><strong>Web runtime</strong><span>Build `DispatcherServlet` and connect a `WebServerFactory`.</span></span>
+            </label>
+          </div>
+          <button class="action-btn" id="run-bootstrap" type="button">Run bootstrap simulation</button>
+        </div>
+
+        <div class="section hidden" id="controls-lifecycle">
+          <h2>Lifecycle Setup</h2>
+          <p>Configure one bean and inspect which lifecycle stages the container will apply.</p>
+          <div class="form-grid">
+            <div class="field">
+              <label for="life-bean-name">Bean name</label>
+              <input id="life-bean-name" type="text" value="orderService">
+            </div>
+            <div class="field">
+              <label for="life-origin">Bean origin</label>
+              <select id="life-origin">
+                <option value="component">Component class</option>
+                <option value="factory">Factory method (@Bean)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="life-proxy">Proxy wrapping</label>
+              <select id="life-proxy">
+                <option value="none">No proxy</option>
+                <option value="aop">AOP proxy</option>
+                <option value="tx" selected>Transactional proxy</option>
+                <option value="aop-tx">AOP + Transaction chain</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="life-destroy">Destroy callback</label>
+              <select id="life-destroy">
+                <option value="predestroy">Only @PreDestroy</option>
+                <option value="autoclose">Only AutoCloseable</option>
+                <option value="both" selected>Both callbacks</option>
+                <option value="none">No destroy callback</option>
+              </select>
+            </div>
+          </div>
+          <div class="check-grid">
+            <label class="check">
+              <input id="life-constructor-deps" type="checkbox" checked>
+              <span><strong>Constructor dependencies</strong><span>Resolve other beans before instantiating this bean.</span></span>
+            </label>
+            <label class="check">
+              <input id="life-value" type="checkbox" checked>
+              <span><strong>@Value injection</strong><span>Inject property-backed values through constructor or fields.</span></span>
+            </label>
+            <label class="check">
+              <input id="life-post-construct" type="checkbox" checked>
+              <span><strong>@PostConstruct</strong><span>Run initialization logic between post-processors.</span></span>
+            </label>
+            <label class="check">
+              <input id="life-prototype" type="checkbox">
+              <span><strong>Prototype scope</strong><span>Skip singleton cache registration and create a new instance per lookup.</span></span>
+            </label>
+          </div>
+          <button class="action-btn" id="run-lifecycle" type="button">Run lifecycle simulation</button>
+        </div>
+      </aside>
+
+      <main class="labs">
+        <section class="panel lab" id="lab-bootstrap">
+          <h2>ApplicationContext Bootstrap</h2>
+          <p>
+            This lab mirrors the startup path discussed in `AnnotationConfigApplicationContextTest`,
+            `ClassPathScannerTest`, and `SpringLiteApplicationTest`.
+          </p>
+          <div class="metrics">
+            <div class="metric">
+              <strong>Startup phases</strong>
+              <div class="value" id="boot-phase-count">0</div>
+              <span>Distinct high-level phases executed before the context is ready.</span>
+            </div>
+            <div class="metric">
+              <strong>Singletons created</strong>
+              <div class="value" id="boot-singletons">0</div>
+              <span>Approximate singleton instances created during refresh.</span>
+            </div>
+            <div class="metric">
+              <strong>Infra beans</strong>
+              <div class="value" id="boot-infra">0</div>
+              <span>How many framework infrastructure beans were conditionally added.</span>
+            </div>
+          </div>
+          <div class="timeline" id="boot-timeline"></div>
+          <div class="lane" id="boot-lanes"></div>
+          <div class="code" id="boot-summary"></div>
+        </section>
+
+        <section class="panel lab hidden" id="lab-lifecycle">
+          <h2>Single Bean Lifecycle</h2>
+          <p>
+            This lab follows one bean from definition lookup to final cached instance, including
+            `@Value`, `@PostConstruct`, post-processor hooks, proxy wrapping, and destroy registration.
+          </p>
+          <div class="metrics">
+            <div class="metric">
+              <strong>Lifecycle stages</strong>
+              <div class="value" id="life-stage-count">0</div>
+              <span>How many lifecycle checkpoints this bean went through.</span>
+            </div>
+            <div class="metric">
+              <strong>Final bean form</strong>
+              <div class="value" id="life-final-form">-</div>
+              <span>Whether the context stores the target instance or a proxy.</span>
+            </div>
+            <div class="metric">
+              <strong>Destroy hook</strong>
+              <div class="value" id="life-destroy-kind">-</div>
+              <span>What the context will call during shutdown.</span>
+            </div>
+          </div>
+          <div class="timeline" id="life-timeline"></div>
+          <div class="lane" id="life-lanes"></div>
+          <div class="code" id="life-summary"></div>
+        </section>
+
+        <div class="footer-note">
+          This lab focuses on mental models rather than full runtime fidelity. Read it beside
+          `visual-architecture-guide.md`, `runtime-sequence-diagrams.md`, and the context/boot test suites.
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const tabBootstrap = document.getElementById("tab-bootstrap");
+    const tabLifecycle = document.getElementById("tab-lifecycle");
+    const controlsBootstrap = document.getElementById("controls-bootstrap");
+    const controlsLifecycle = document.getElementById("controls-lifecycle");
+    const labBootstrap = document.getElementById("lab-bootstrap");
+    const labLifecycle = document.getElementById("lab-lifecycle");
+
+    function setTab(name) {
+      const bootstrap = name === "bootstrap";
+      tabBootstrap.classList.toggle("active", bootstrap);
+      tabLifecycle.classList.toggle("active", !bootstrap);
+      controlsBootstrap.classList.toggle("hidden", !bootstrap);
+      controlsLifecycle.classList.toggle("hidden", bootstrap);
+      labBootstrap.classList.toggle("hidden", !bootstrap);
+      labLifecycle.classList.toggle("hidden", bootstrap);
+    }
+
+    tabBootstrap.addEventListener("click", () => setTab("bootstrap"));
+    tabLifecycle.addEventListener("click", () => setTab("lifecycle"));
+
+    function renderSteps(containerId, steps) {
+      document.getElementById(containerId).innerHTML = steps.map((step, index) => `
+        <article class="step ${step.kind}">
+          <div class="index">${index + 1}</div>
+          <div>
+            <strong>${step.title}</strong>
+            <p>${step.body}</p>
+          </div>
+          <div class="chip">${step.marker}</div>
+        </article>
+      `).join("");
+    }
+
+    function renderLanes(containerId, lanes) {
+      document.getElementById(containerId).innerHTML = lanes.map((lane) => `
+        <div class="lane-row">
+          <div class="lane-label"><strong>${lane.label}</strong><br>${lane.detail}</div>
+          <div class="lane-track">
+            ${lane.events.map((event) => `<span class="event ${event.kind}">${event.text}</span>`).join("")}
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function runBootstrapSimulation() {
+      const configCount = Number(document.getElementById("boot-config-count").value);
+      const scanMode = document.getElementById("boot-scan-mode").value;
+      const beanCount = Number(document.getElementById("boot-bean-count").value);
+      const useConditional = document.getElementById("boot-conditional").checked;
+      const useAop = document.getElementById("boot-aop").checked;
+      const useJdbc = document.getElementById("boot-jdbc").checked;
+      const useWeb = document.getElementById("boot-web").checked;
+
+      const steps = [];
+      const bootstrapEvents = [];
+      const registryEvents = [];
+      const singletonEvents = [];
+      const infraEvents = [];
+      let infraCount = 0;
+      let singletonCount = configCount + beanCount;
+
+      function addStep(kind, title, body, marker) {
+        steps.push({ kind, title, body, marker });
+      }
+
+      addStep("phase", "Application properties prepared", "SpringLiteApplication collects command-line overrides and active profile properties before creating the context.", "properties");
+      bootstrapEvents.push({ text: "application properties", kind: "secondary" });
+
+      addStep("phase", "Configuration classes registered", `${configCount} configuration class definitions are registered as the initial context input.`, `${configCount} configs`);
+      registryEvents.push({ text: `${configCount} config definitions`, kind: "success" });
+
+      addStep("phase", "Classpath scanning begins", `ClassPathScanner explores the ${scanMode === "jar" ? "JAR archive" : "filesystem packages"} and discovers ${beanCount} candidate components.`, scanMode);
+      registryEvents.push({ text: `${beanCount} scanned candidates`, kind: "secondary" });
+
+      addStep("phase", "BeanDefinition registry built", "The context turns configuration beans, @Bean factory methods, and component classes into bean definitions.", "registry");
+      registryEvents.push({ text: "BeanDefinition map", kind: "success" });
+
+      if (useConditional) {
+        addStep("phase", "Conditional beans evaluated", "ConditionalOnBean, ConditionalOnMissingBean, and property/class conditions are checked after definitions are known.", "conditional");
+        registryEvents.push({ text: "conditional filter", kind: "secondary" });
+        singletonCount -= 1;
+      }
+
+      addStep("phase", "BeanPostProcessors instantiated first", "Infrastructure that can wrap or customize later beans is created ahead of normal singletons.", "bpp-first");
+      infraEvents.push({ text: "base post-processors", kind: "success" });
+      infraCount += 1;
+
+      if (useAop) {
+        addStep("phase", "AOP infrastructure added", "AspectBeanPostProcessor is registered so eligible beans can be proxied after initialization.", "aspect-bpp");
+        infraEvents.push({ text: "AspectBeanPostProcessor", kind: "success" });
+        infraCount += 1;
+      }
+
+      if (useJdbc) {
+        addStep("phase", "Transactional infrastructure added", "A DataSource is present, so TransactionManager and TransactionalBeanPostProcessor are registered.", "tx-infra");
+        infraEvents.push({ text: "TransactionManager", kind: "success" });
+        infraEvents.push({ text: "TransactionalBPP", kind: "success" });
+        infraCount += 2;
+      }
+
+      addStep("phase", "Configuration beans instantiated", "The context creates configuration beans and invokes @Bean factory methods for early infrastructure objects.", "config-create");
+      singletonEvents.push({ text: "configuration beans", kind: "secondary" });
+
+      addStep("phase", "Remaining singletons created", `${Math.max(singletonCount, 1)} singleton beans are instantiated, initialized, and optionally proxied.`, "singletons");
+      singletonEvents.push({ text: `${Math.max(singletonCount, 1)} singleton instances`, kind: "success" });
+
+      if (useWeb) {
+        addStep("phase", "Web infrastructure assembled", "DispatcherServlet, handler mapping, adapter, return value handler, and WebServerFactory are wired in.", "web");
+        infraEvents.push({ text: "DispatcherServlet", kind: "secondary" });
+        infraEvents.push({ text: "WebServerFactory", kind: "secondary" });
+        infraCount += 2;
+      }
+
+      addStep("phase", "ContextRefreshedEvent published", "Once singleton creation completes, listeners receive the refreshed signal and the context becomes ready.", "refresh");
+      bootstrapEvents.push({ text: "ContextRefreshedEvent", kind: "success" });
+
+      document.getElementById("boot-phase-count").textContent = String(steps.length);
+      document.getElementById("boot-singletons").textContent = String(Math.max(singletonCount, 1));
+      document.getElementById("boot-infra").textContent = String(infraCount);
+      renderSteps("boot-timeline", steps);
+      renderLanes("boot-lanes", [
+        { label: "Bootstrap", detail: "Boot entrypoint and refresh completion.", events: bootstrapEvents },
+        { label: "Registry", detail: "Scanning and BeanDefinition registration.", events: registryEvents },
+        { label: "Singletons", detail: "Objects created during refresh.", events: singletonEvents },
+        { label: "Infrastructure", detail: "Framework beans that support AOP, TX, and web.", events: infraEvents.length ? infraEvents : [{ text: "minimal infra only", kind: "secondary" }] }
+      ]);
+      document.getElementById("boot-summary").textContent =
+`source mapping
+- spring-lite-boot: SpringLiteApplication, ApplicationProperties
+- spring-lite-context: AnnotationConfigApplicationContext, ClassPathScanner
+- test anchor: AnnotationConfigApplicationContextTest, ClassPathScannerTest, SpringLiteApplicationTest
+
+current simulation
+- configuration classes: ${configCount}
+- scan mode: ${scanMode}
+- component candidates: ${beanCount}
+- conditional beans: ${useConditional}
+- aop infrastructure: ${useAop}
+- data source present: ${useJdbc}
+- web runtime: ${useWeb}
+- created singletons: ${Math.max(singletonCount, 1)}
+- infrastructure beans: ${infraCount}`;
+    }
+
+    function runLifecycleSimulation() {
+      const beanName = document.getElementById("life-bean-name").value.trim() || "exampleBean";
+      const origin = document.getElementById("life-origin").value;
+      const proxy = document.getElementById("life-proxy").value;
+      const destroy = document.getElementById("life-destroy").value;
+      const constructorDeps = document.getElementById("life-constructor-deps").checked;
+      const useValue = document.getElementById("life-value").checked;
+      const usePostConstruct = document.getElementById("life-post-construct").checked;
+      const prototype = document.getElementById("life-prototype").checked;
+
+      const steps = [];
+      const definitionEvents = [];
+      const instanceEvents = [];
+      const postProcessEvents = [];
+      const shutdownEvents = [];
+      let finalForm = "target";
+      let destroyKind = "none";
+
+      function addStep(kind, title, body, marker) {
+        steps.push({ kind, title, body, marker });
+      }
+
+      addStep("phase", "Definition lookup", `The context resolves the BeanDefinition for \`${beanName}\` and checks the singleton cache first.`, "lookup");
+      definitionEvents.push({ text: `${beanName} definition`, kind: "secondary" });
+
+      addStep("phase", "beansInCreation marked", "The bean name is tracked to prevent circular dependency re-entry during construction.", "in-creation");
+      definitionEvents.push({ text: "beansInCreation", kind: "success" });
+
+      if (constructorDeps) {
+        addStep("bean", "Constructor dependencies resolved", "Other beans required by the constructor or factory method are obtained before instantiation.", "deps");
+        instanceEvents.push({ text: "constructor deps", kind: "secondary" });
+      }
+
+      if (useValue) {
+        addStep("bean", "@Value resolved and converted", "PropertyResolver finds the configured value and ConversionService adapts it to the target type.", "@Value");
+        instanceEvents.push({ text: "property injection", kind: "success" });
+      }
+
+      if (origin === "factory") {
+        addStep("bean", "@Bean factory method invoked", "A configuration bean method produces the new instance instead of direct constructor instantiation.", "factory()");
+      } else {
+        addStep("bean", "Constructor invoked", "The component class constructor is called to create the raw target instance.", "new");
+      }
+      instanceEvents.push({ text: "target instance", kind: "success" });
+
+      addStep("phase", "postProcessBeforeInitialization", "BeanPostProcessors can inspect or mutate the bean before init callbacks run.", "before-init");
+      postProcessEvents.push({ text: "before-init hooks", kind: "secondary" });
+
+      if (usePostConstruct) {
+        addStep("bean", "@PostConstruct executed", "The container invokes initialization logic on the raw target instance.", "@PostConstruct");
+        instanceEvents.push({ text: "init callback", kind: "success" });
+      }
+
+      addStep("phase", "postProcessAfterInitialization", "This is the point where proxy-capable post-processors can replace the exposed bean.", "after-init");
+      postProcessEvents.push({ text: "after-init hooks", kind: "secondary" });
+
+      if (proxy !== "none") {
+        finalForm = proxy === "aop" ? "aop-proxy" : proxy === "tx" ? "tx-proxy" : "proxy-chain";
+        addStep("bean", "Proxy wrapped", `The original target is wrapped as a ${finalForm} and that proxy becomes the exposed bean instance.`, finalForm);
+        postProcessEvents.push({ text: finalForm, kind: "success" });
+      }
+
+      if (destroy === "predestroy" || destroy === "both") {
+        shutdownEvents.push({ text: "@PreDestroy", kind: "secondary" });
+      }
+      if (destroy === "autoclose" || destroy === "both") {
+        shutdownEvents.push({ text: "AutoCloseable.close()", kind: "secondary" });
+      }
+      destroyKind = destroy;
+
+      if (destroy !== "none") {
+        addStep("phase", "Destroy callbacks registered", "The context remembers how to close the original target during shutdown.", destroy);
+      } else {
+        addStep("phase", "No destroy callback registered", "The bean does not contribute explicit shutdown work beyond ordinary garbage collection.", "none");
+      }
+
+      if (prototype) {
+        addStep("bean", "Prototype exits without cache", "Because the bean scope is prototype, the context returns the instance without caching it as a singleton.", "prototype");
+        instanceEvents.push({ text: "not cached", kind: "error" });
+      } else {
+        addStep("bean", "Singleton cached", "The final exposed instance is stored in the singleton registry for future lookups.", "singleton");
+        instanceEvents.push({ text: "singleton cache", kind: "success" });
+      }
+
+      addStep("phase", "beansInCreation cleared", "Creation tracking is removed so future lookups see the bean as fully initialized.", "done");
+      definitionEvents.push({ text: "creation cleared", kind: "success" });
+
+      document.getElementById("life-stage-count").textContent = String(steps.length);
+      document.getElementById("life-final-form").textContent = finalForm;
+      document.getElementById("life-destroy-kind").textContent = destroyKind;
+      renderSteps("life-timeline", steps);
+      renderLanes("life-lanes", [
+        { label: "Definition", detail: "BeanDefinition lookup and circular dependency guard.", events: definitionEvents },
+        { label: "Instance", detail: "Target object creation and init callbacks.", events: instanceEvents },
+        { label: "Post-processors", detail: "Before-init, after-init, and proxy wrapping.", events: postProcessEvents },
+        { label: "Shutdown", detail: "What the context will remember for close().", events: shutdownEvents.length ? shutdownEvents : [{ text: "no explicit destroy", kind: "secondary" }] }
+      ]);
+      document.getElementById("life-summary").textContent =
+`source mapping
+- spring-lite-context: AnnotationConfigApplicationContext
+- spring-lite-core: PropertyResolver, DefaultConversionService
+- test anchor: AnnotationConfigApplicationContextTest
+
+current simulation
+- bean name: ${beanName}
+- origin: ${origin}
+- constructor dependencies: ${constructorDeps}
+- @Value injection: ${useValue}
+- @PostConstruct: ${usePostConstruct}
+- proxy wrapping: ${proxy}
+- scope: ${prototype ? "prototype" : "singleton"}
+- destroy callback: ${destroy}
+- final bean form: ${finalForm}`;
+    }
+
+    document.getElementById("run-bootstrap").addEventListener("click", runBootstrapSimulation);
+    document.getElementById("run-lifecycle").addEventListener("click", runLifecycleSimulation);
+
+    runBootstrapSimulation();
+    runLifecycleSimulation();
+  </script>
+</body>
+</html>

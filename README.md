@@ -98,6 +98,7 @@
 
 - [Visual Lab 안내](./visual-lab/README.md)
 - [Spring Lite Playground](./visual-lab/spring-lite-playground.html)
+- [Spring Lite Container Lab](./visual-lab/spring-lite-container-lab.html)
 
 ## 책 초안 문서
 
