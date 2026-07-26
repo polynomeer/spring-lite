@@ -448,6 +448,33 @@
       line-height: 1.55;
     }
 
+    .snapshot-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .snapshot-card {
+      padding: 16px;
+      border-radius: 18px;
+      background: #fffdf8;
+      border: 1px solid var(--line);
+    }
+
+    .snapshot-card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .snapshot-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
     .footer-note {
       margin-top: 20px;
       padding: 16px 18px;
@@ -554,13 +581,15 @@
 
     @media (max-width: 760px) {
       .metrics,
-      .next-path-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .next-path-grid,
+      .snapshot-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .lane-row, .step { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 520px) {
       .metrics,
-      .next-path-grid { grid-template-columns: 1fr; }
+      .next-path-grid,
+      .snapshot-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -667,6 +696,20 @@
             <div class="value" id="flow-branch">-</div>
             <span>The main application path the controller and service actually took.</span>
           </div>
+        </div>
+        <div class="snapshot-grid">
+          <section class="snapshot-card">
+            <strong>What Changed</strong>
+            <p id="flow-snapshot-watch"></p>
+          </section>
+          <section class="snapshot-card">
+            <strong>Why This Branch Matters</strong>
+            <p id="flow-snapshot-why"></p>
+          </section>
+          <section class="snapshot-card">
+            <strong>Next File To Read</strong>
+            <p id="flow-snapshot-next"></p>
+          </section>
         </div>
         <div class="timeline" id="flow-timeline"></div>
         <div class="step-detail" id="flow-step-detail"></div>
@@ -826,6 +869,12 @@
           </div>
         </div>
       `).join("");
+    }
+
+    function renderFlowSnapshot(snapshot) {
+      document.getElementById("flow-snapshot-watch").textContent = snapshot.watch;
+      document.getElementById("flow-snapshot-why").textContent = snapshot.why;
+      document.getElementById("flow-snapshot-next").textContent = snapshot.next;
     }
 
     function safeParseBody(raw) {
@@ -1050,6 +1099,55 @@
             events: responseEvents.length ? responseEvents : [{ text: "response pending", kind: "warn" }]
           }
         ]);
+
+        const snapshot = branch === "bad-json"
+          ? {
+              watch: "The request failed during request-body parsing, so the controller, transaction layer, and JDBC path never started.",
+              why: "This branch isolates transport-level failure from business logic failure and shows why some 400 responses happen before application code runs.",
+              next: "Read RequestBodyArgumentResolver.java and JsonMapper.java to connect malformed JSON handling to the early 400 response."
+            }
+          : branch === "validation"
+            ? {
+                watch: "Binding succeeded, but validation rejected the command object before controller business flow could proceed.",
+                why: "This is the cleanest example of framework-enforced guard rails stopping invalid input before service and persistence layers activate.",
+                next: "Read SimpleValidator.java, OrderController.java, and RequestMappingHandlerAdapter.java to trace the pre-controller validation path."
+              }
+            : branch === "list"
+              ? {
+                  watch: "The request stayed entirely on the read path: controller delegation, service read, optional SQL select, and JSON response.",
+                  why: "Read-only flows help separate basic MVC dispatch from transaction-heavy write behavior.",
+                  next: "Read OrderController.java and JdbcOrderRepository.java to line up the listing path with the generated lane events."
+                }
+              : branch === "not-found"
+                ? {
+                    watch: "The request matched a controller method and reached the service layer, but the domain lookup missed and surfaced an application error response.",
+                    why: "This branch clarifies the difference between routing failures and domain-not-found failures: both can look like client errors, but they happen at different layers.",
+                    next: "Read DefaultOrderService.java and ExampleApplicationTest.java to compare the lookup miss with the normal `getById` branch."
+                  }
+                : branch === "getById"
+                  ? {
+                      watch: "The request completed a read-hit branch: controller entry, service lookup, repository row mapping, and successful JSON response.",
+                      why: "This is the simplest full end-to-end read scenario and a good baseline before studying write transactions.",
+                      next: "Read JdbcOrderRepository.java and ExampleApplicationTest.java to connect seeded-row lookup with the response trace."
+                    }
+                  : branch === "service-error"
+                    ? {
+                        watch: "The write flow reached business logic, then failed before persistence completed, producing an application error and optional transaction rollback.",
+                        why: "This branch separates service-layer failure from repository-layer failure, which matters when reasoning about what should and should not have touched the database.",
+                        next: "Read DefaultOrderService.java and TransactionInterceptor.java to trace where the exception is raised and how rollback gets decided."
+                      }
+                    : branch === "rollback"
+                      ? {
+                          watch: "The write flow progressed into persistence work and then failed, so the transaction path had to unwind JDBC changes instead of merely skipping them.",
+                          why: "This is the best branch for understanding why transaction boundaries exist: without rollback, partially started write work could leak into storage state.",
+                          next: "Read JdbcTemplate.java and TransactionManager.java to follow connection reuse, rollback, and cleanup behavior."
+                        }
+                      : {
+                          watch: "The request completed the full happy-path write flow from MVC dispatch through transactional service logic, JDBC insert, and JSON response.",
+                          why: "This branch is the best end-to-end baseline because every major framework layer participates without error handling noise.",
+                          next: "Read OrderController.java, DefaultOrderService.java, JdbcOrderRepository.java, and ExampleApplicationTest.java in that order."
+                        };
+        renderFlowSnapshot(snapshot);
 
         document.getElementById("flow-summary").textContent =
 `source mapping
