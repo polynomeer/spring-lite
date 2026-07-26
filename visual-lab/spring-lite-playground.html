@@ -490,6 +490,33 @@
       line-height: 1.55;
     }
 
+    .snapshot-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .snapshot-card {
+      padding: 16px;
+      border-radius: 18px;
+      background: #fffdf8;
+      border: 1px solid var(--line);
+    }
+
+    .snapshot-card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .snapshot-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
     .footer-note {
       margin-top: 22px;
       padding: 16px 18px;
@@ -602,7 +629,8 @@
     @media (max-width: 720px) {
       .metrics,
       .tabs,
-      .next-path-grid {
+      .next-path-grid,
+      .snapshot-grid {
         grid-template-columns: 1fr;
       }
 
@@ -763,6 +791,20 @@
               <span>Highest nested transaction depth reached during the run.</span>
             </div>
           </div>
+          <div class="snapshot-grid">
+            <section class="snapshot-card">
+              <strong>What Changed</strong>
+              <p id="aop-snapshot-watch"></p>
+            </section>
+            <section class="snapshot-card">
+              <strong>Why This Branch Matters</strong>
+              <p id="aop-snapshot-why"></p>
+            </section>
+            <section class="snapshot-card">
+              <strong>Next File To Read</strong>
+              <p id="aop-snapshot-next"></p>
+            </section>
+          </div>
           <div class="timeline" id="aop-timeline"></div>
           <div class="step-detail" id="aop-step-detail"></div>
           <div class="lane" id="aop-lanes"></div>
@@ -791,6 +833,20 @@
               <div class="value" id="mvc-validation">-</div>
               <span>Whether argument binding reached the controller or failed earlier.</span>
             </div>
+          </div>
+          <div class="snapshot-grid">
+            <section class="snapshot-card">
+              <strong>What Changed</strong>
+              <p id="mvc-snapshot-watch"></p>
+            </section>
+            <section class="snapshot-card">
+              <strong>Why This Branch Matters</strong>
+              <p id="mvc-snapshot-why"></p>
+            </section>
+            <section class="snapshot-card">
+              <strong>Next File To Read</strong>
+              <p id="mvc-snapshot-next"></p>
+            </section>
           </div>
           <div class="timeline" id="mvc-timeline"></div>
           <div class="step-detail" id="mvc-step-detail"></div>
@@ -957,6 +1013,12 @@
       `).join("");
     }
 
+    function renderSnapshot(prefix, snapshot) {
+      document.getElementById(`${prefix}-snapshot-watch`).textContent = snapshot.watch;
+      document.getElementById(`${prefix}-snapshot-why`).textContent = snapshot.why;
+      document.getElementById(`${prefix}-snapshot-next`).textContent = snapshot.next;
+    }
+
     function runAopSimulation() {
       const method = document.getElementById("aop-method").value.trim() || "serviceMethod";
       const outcome = document.getElementById("aop-result").value;
@@ -1060,6 +1122,21 @@
         { label: "Transaction", detail: "Root boundary, nested depth, commit or rollback.", events: txEvents.length ? txEvents : [{ text: "transaction disabled", kind: "secondary" }] },
         { label: "Target", detail: "Actual service method and optional nested call.", events: targetEvents }
       ]);
+      renderSnapshot("aop", {
+        watch: outcome === "error"
+          ? "The target threw, so the interceptor chain switched from normal return flow into rollback and exception propagation."
+          : outcome === "rollbackOnly"
+            ? "The target returned normally, but the transaction state changed underneath it, so the outer commit path turned into rollback."
+            : `The target returned successfully${useTx ? " and the outer transactional boundary committed" : " without a transactional boundary"}.`,
+        why: !useTx
+          ? "This branch isolates advice ordering without transaction noise, which helps separate proxy concerns from transaction policy."
+          : nestedCall
+            ? "Nested REQUIRED calls explain why one logical service flow can increase depth without opening a second real transaction."
+            : "This is the core mental model for `@Transactional`: the proxy decides whether the call commits, rolls back, or rethrows.",
+        next: outcome === "error" || outcome === "rollbackOnly"
+          ? "Read TransactionInterceptor.java and TransactionManager.java to line up rollback decisions with the timeline."
+          : "Read AspectBeanPostProcessor.java and MethodInvocation.java to connect advice order to proxy assembly."
+      });
 
       document.getElementById("aop-summary").textContent =
 `source mapping
@@ -1123,6 +1200,11 @@ current simulation
           { label: "Controller", detail: "Controller method invocation.", events: [{ text: "not reached", kind: "secondary" }] },
           { label: "Response", detail: "ReturnValueHandler and error response.", events: responseEvents }
         ]);
+        renderSnapshot("mvc", {
+          watch: "The request failed before binding because routing never found a compatible handler method.",
+          why: "A 404 path is the cleanest way to separate HandlerMapping concerns from argument resolution, validation, and controller code.",
+          next: "Read DispatcherServlet.java and RequestMappingHandlerMapping.java to follow route lookup and miss handling."
+        });
         document.getElementById("mvc-summary").textContent =
 `source mapping
 - spring-lite-web: DispatcherServlet, RequestMappingHandlerMapping, DefaultExceptionResolver
@@ -1157,6 +1239,11 @@ current simulation
             { label: "Controller", detail: "Controller method invocation.", events: [{ text: "not reached", kind: "secondary" }] },
             { label: "Response", detail: "ReturnValueHandler and error response.", events: responseEvents }
           ]);
+          renderSnapshot("mvc", {
+            watch: "Binding failed while deserializing the request body, so the controller never received typed arguments.",
+            why: "This branch isolates JSON parsing and request-body binding from later validation and controller behavior.",
+            next: "Read RequestBodyArgumentResolver.java and JsonMapper.java to connect malformed JSON handling to the 400 response."
+          });
           document.getElementById("mvc-summary").textContent =
 `source mapping
 - spring-lite-web: RequestBodyArgumentResolver, JsonMapper
@@ -1219,6 +1306,25 @@ current simulation
         { label: "Controller", detail: "Controller invocation or local exception handling.", events: controllerEvents.length ? controllerEvents : [{ text: "not reached", kind: "secondary" }] },
         { label: "Response", detail: "ReturnValueHandler or ExceptionResolver output.", events: responseEvents.length ? responseEvents : [{ text: "response pending", kind: "secondary" }] }
       ]);
+      renderSnapshot("mvc", {
+        watch: scenario === "validation"
+          ? "The request reached validation and failed before controller invocation, so binding succeeded but business logic never started."
+          : scenario === "illegalArgument"
+            ? "The controller threw and the framework-level exception resolver converted that failure into an HTTP 400 response."
+            : scenario === "handled"
+              ? "The controller raised an error, but a local exception handler translated it into a structured response body."
+              : "The request completed the full happy path from routing through controller invocation and JSON response writing.",
+        why: scenario === "success"
+          ? "This branch shows the smallest complete MVC loop and is the best baseline before exploring errors."
+          : scenario === "validation"
+            ? "Validation failures clarify that some 400 responses come from framework guards before controller code runs."
+            : "Exception branches explain where Spring-style MVC decides between local handlers and global resolvers.",
+        next: scenario === "validation"
+          ? "Read SimpleValidator.java and RequestMappingHandlerAdapter.java to trace pre-controller validation."
+          : scenario === "illegalArgument" || scenario === "handled"
+            ? "Read DefaultExceptionResolver.java and the controller exception handling path in DispatcherServlet.java."
+            : "Read JsonReturnValueHandler.java and RequestMappingHandlerAdapter.java to connect controller return values to the final response."
+      });
 
       document.getElementById("mvc-summary").textContent =
 `source mapping
