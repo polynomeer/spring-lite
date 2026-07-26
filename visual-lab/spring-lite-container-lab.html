@@ -495,6 +495,33 @@
       line-height: 1.55;
     }
 
+    .snapshot-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .snapshot-card {
+      padding: 16px;
+      border-radius: 18px;
+      background: #fffdf8;
+      border: 1px solid var(--line);
+    }
+
+    .snapshot-card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .snapshot-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
     .footer-note {
       margin-top: 22px;
       padding: 16px 18px;
@@ -607,7 +634,8 @@
     @media (max-width: 720px) {
       .metrics,
       .tabs,
-      .next-path-grid {
+      .next-path-grid,
+      .snapshot-grid {
         grid-template-columns: 1fr;
       }
 
@@ -780,6 +808,20 @@
               <span>How many framework infrastructure beans were conditionally added.</span>
             </div>
           </div>
+          <div class="snapshot-grid">
+            <section class="snapshot-card">
+              <strong>What Changed</strong>
+              <p id="boot-snapshot-watch"></p>
+            </section>
+            <section class="snapshot-card">
+              <strong>Why This Branch Matters</strong>
+              <p id="boot-snapshot-why"></p>
+            </section>
+            <section class="snapshot-card">
+              <strong>Next File To Read</strong>
+              <p id="boot-snapshot-next"></p>
+            </section>
+          </div>
           <div class="timeline" id="boot-timeline"></div>
           <div class="step-detail" id="boot-step-detail"></div>
           <div class="lane" id="boot-lanes"></div>
@@ -808,6 +850,20 @@
               <div class="value" id="life-destroy-kind">-</div>
               <span>What the context will call during shutdown.</span>
             </div>
+          </div>
+          <div class="snapshot-grid">
+            <section class="snapshot-card">
+              <strong>What Changed</strong>
+              <p id="life-snapshot-watch"></p>
+            </section>
+            <section class="snapshot-card">
+              <strong>Why This Branch Matters</strong>
+              <p id="life-snapshot-why"></p>
+            </section>
+            <section class="snapshot-card">
+              <strong>Next File To Read</strong>
+              <p id="life-snapshot-next"></p>
+            </section>
           </div>
           <div class="timeline" id="life-timeline"></div>
           <div class="step-detail" id="life-step-detail"></div>
@@ -964,6 +1020,12 @@
       `).join("");
     }
 
+    function renderSnapshot(prefix, snapshot) {
+      document.getElementById(`${prefix}-snapshot-watch`).textContent = snapshot.watch;
+      document.getElementById(`${prefix}-snapshot-why`).textContent = snapshot.why;
+      document.getElementById(`${prefix}-snapshot-next`).textContent = snapshot.next;
+    }
+
     function runBootstrapSimulation() {
       const configCount = Number(document.getElementById("boot-config-count").value);
       const scanMode = document.getElementById("boot-scan-mode").value;
@@ -1046,6 +1108,21 @@
         { label: "Singletons", detail: "Objects created during refresh.", events: singletonEvents },
         { label: "Infrastructure", detail: "Framework beans that support AOP, TX, and web.", events: infraEvents.length ? infraEvents : [{ text: "minimal infra only", kind: "secondary" }] }
       ]);
+      renderSnapshot("boot", {
+        watch: useWeb
+          ? "The refresh path included web infrastructure, so container startup expanded beyond core bean creation into DispatcherServlet and server wiring."
+          : useAop || useJdbc
+            ? "The refresh path stayed non-web but still added cross-cutting infrastructure, so BeanPostProcessors and transaction support changed later singleton creation."
+            : "The refresh path stayed close to the minimal container core: definitions, scanning, singleton creation, and refresh completion.",
+        why: useConditional
+          ? "Conditional filtering matters because some beans disappear only after the registry is known, which changes the final singleton set without changing the source scan."
+          : "This branch shows that most container complexity comes from infrastructure decisions layered on top of the same refresh skeleton.",
+        next: useWeb
+          ? "Read SpringLiteApplication.java and DispatcherServlet.java to connect context refresh with web runtime assembly."
+          : useAop || useJdbc
+            ? "Read AnnotationConfigApplicationContext.java, AspectBeanPostProcessor.java, and TransactionalBeanPostProcessor.java in that order."
+            : "Read AnnotationConfigApplicationContext.java and ClassPathScanner.java to follow the smallest bootstrap loop end to end."
+      });
       document.getElementById("boot-summary").textContent =
 `source mapping
 - spring-lite-boot: SpringLiteApplication, ApplicationProperties
@@ -1161,6 +1238,23 @@ current simulation
         { label: "Post-processors", detail: "Before-init, after-init, and proxy wrapping.", events: postProcessEvents },
         { label: "Shutdown", detail: "What the context will remember for close().", events: shutdownEvents.length ? shutdownEvents : [{ text: "no explicit destroy", kind: "secondary" }] }
       ]);
+      renderSnapshot("life", {
+        watch: prototype
+          ? `The bean \`${beanName}\` completed initialization but exited without entering the singleton cache, so the context only returns the fresh instance for this lookup.`
+          : proxy !== "none"
+            ? `The raw target for \`${beanName}\` was created and initialized first, then replaced by a ${finalForm} before caching.`
+            : `The bean \`${beanName}\` stayed as a plain target instance from construction through cache registration.`,
+        why: proxy !== "none"
+          ? "Proxy wrapping is the key reason Spring beans can behave differently from their raw classes at runtime, especially for AOP and transactions."
+          : prototype
+            ? "Prototype scope is the clearest way to see that lifecycle completion and singleton caching are separate container concerns."
+            : "This branch isolates the core lifecycle skeleton without extra proxy or scope behavior hiding the basic initialization path.",
+        next: proxy !== "none"
+          ? "Read AnnotationConfigApplicationContext.java and the relevant BeanPostProcessor implementation to trace postProcessAfterInitialization replacement."
+          : useValue || usePostConstruct
+            ? "Read PropertyResolver.java, DefaultConversionService.java, and the initialization path inside AnnotationConfigApplicationContext.java."
+            : "Read AnnotationConfigApplicationContext.java around bean creation, singleton registration, and destroy callback tracking."
+      });
       document.getElementById("life-summary").textContent =
 `source mapping
 - spring-lite-context: AnnotationConfigApplicationContext
