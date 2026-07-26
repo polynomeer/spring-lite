@@ -212,6 +212,31 @@
       margin-top: 18px;
     }
 
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .filter-btn {
+      border: 1px solid var(--line);
+      background: #fffdf8;
+      color: var(--text);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+    }
+
+    .filter-btn.active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+
     .card {
       padding: 20px;
       border-radius: 22px;
@@ -219,6 +244,11 @@
       border: 1px solid var(--line);
       display: grid;
       gap: 14px;
+      transition: opacity 140ms ease, transform 140ms ease;
+    }
+
+    .card.hidden {
+      display: none;
     }
 
     .card-head {
@@ -439,7 +469,7 @@
         <div class="metrics">
           <div class="metric">
             <strong>Interactive pages</strong>
-            <div class="value">4</div>
+            <div class="value" id="visible-lab-count">4</div>
             <span>Focused labs and dashboards you can open directly in the browser.</span>
           </div>
           <div class="metric">
@@ -448,9 +478,9 @@
             <span>Container, lifecycle, AOP/Tx, MVC, example flow, and Spring comparison.</span>
           </div>
           <div class="metric">
-            <strong>Best start</strong>
-            <div class="value">AOP</div>
-            <span>The smallest “magic-feeling” runtime loop for most readers.</span>
+            <strong>Current Filter</strong>
+            <div class="value" id="active-filter-label">all</div>
+            <span>The current learning objective used to narrow the lab list.</span>
           </div>
           <div class="metric">
             <strong>Bridge to Spring</strong>
@@ -459,8 +489,16 @@
           </div>
         </div>
 
+        <div class="filter-bar" id="lab-filters">
+          <button class="filter-btn active" type="button" data-filter="all">All</button>
+          <button class="filter-btn" type="button" data-filter="intro">Intro</button>
+          <button class="filter-btn" type="button" data-filter="flow">Flow Tracking</button>
+          <button class="filter-btn" type="button" data-filter="compare">Spring Compare</button>
+          <button class="filter-btn" type="button" data-filter="code">Code Entry</button>
+        </div>
+
         <div class="cards">
-          <article class="card">
+          <article class="card" data-tags="intro flow code">
             <div class="card-head">
               <div>
                 <h3>Playground</h3>
@@ -483,7 +521,7 @@
             </div>
           </article>
 
-          <article class="card">
+          <article class="card" data-tags="intro code">
             <div class="card-head">
               <div>
                 <h3>Container Lab</h3>
@@ -506,7 +544,7 @@
             </div>
           </article>
 
-          <article class="card">
+          <article class="card" data-tags="flow code">
             <div class="card-head">
               <div>
                 <h3>Example Flow Lab</h3>
@@ -530,7 +568,7 @@
             </div>
           </article>
 
-          <article class="card">
+          <article class="card" data-tags="compare code">
             <div class="card-head">
               <div>
                 <h3>Spring Comparison Dashboard</h3>
@@ -607,5 +645,36 @@
       </main>
     </div>
   </div>
+  <script>
+    const filterButtons = Array.from(document.querySelectorAll(".filter-btn"));
+    const labCards = Array.from(document.querySelectorAll(".cards .card"));
+    const visibleLabCount = document.getElementById("visible-lab-count");
+    const activeFilterLabel = document.getElementById("active-filter-label");
+
+    function applyFilter(filter) {
+      filterButtons.forEach((button) => {
+        button.classList.toggle("active", button.dataset.filter === filter);
+      });
+
+      let visibleCount = 0;
+      labCards.forEach((card) => {
+        const tags = (card.dataset.tags || "").split(" ");
+        const visible = filter === "all" || tags.includes(filter);
+        card.classList.toggle("hidden", !visible);
+        if (visible) {
+          visibleCount += 1;
+        }
+      });
+
+      visibleLabCount.textContent = String(visibleCount);
+      activeFilterLabel.textContent = filter;
+    }
+
+    filterButtons.forEach((button) => {
+      button.addEventListener("click", () => applyFilter(button.dataset.filter));
+    });
+
+    applyFilter("all");
+  </script>
 </body>
 </html>
