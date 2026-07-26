@@ -290,6 +290,23 @@
       gap: 8px;
     }
 
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .meta-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      background: #f6efe4;
+      border: 1px solid var(--line);
+      color: var(--text);
+    }
+
     .pill {
       display: inline-flex;
       align-items: center;
@@ -548,6 +565,10 @@
               <span class="pill">Transaction begin/commit/rollback</span>
               <span class="pill">MVC request pipeline</span>
             </div>
+            <div class="meta-row">
+              <span class="meta-badge">Difficulty: Easy</span>
+              <span class="meta-badge">Time: 10-15 min</span>
+            </div>
             <div class="bullet-list">
               <div class="bullet">Use this when the framework feels magical and you want to see the smallest runtime loop.</div>
               <div class="bullet">Maps directly to `AspectBeanPostProcessorTest`, `TransactionManagerTest`, and `DispatcherServletTest`.</div>
@@ -570,6 +591,10 @@
               <span class="pill">ApplicationContext refresh</span>
               <span class="pill">@Value and @PostConstruct</span>
               <span class="pill">Proxy wrapping and destroy hooks</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-badge">Difficulty: Medium</span>
+              <span class="meta-badge">Time: 15-20 min</span>
             </div>
             <div class="bullet-list">
               <div class="bullet">Open this when you need to answer “what happens before my bean even exists?”</div>
@@ -595,6 +620,10 @@
               <span class="pill">Rollback branch</span>
               <span class="pill">Unknown id path</span>
             </div>
+            <div class="meta-row">
+              <span class="meta-badge">Difficulty: Medium</span>
+              <span class="meta-badge">Time: 20-25 min</span>
+            </div>
             <div class="bullet-list">
               <div class="bullet">Use this after you understand the smaller loops and want a realistic composed request path.</div>
               <div class="bullet">Anchored to `example-app` and the matching integration tests.</div>
@@ -617,6 +646,10 @@
               <span class="pill">DI comparison</span>
               <span class="pill">MVC comparison</span>
               <span class="pill">Transaction comparison</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-badge">Difficulty: Medium-High</span>
+              <span class="meta-badge">Time: 20-30 min</span>
             </div>
             <div class="bullet-list">
               <div class="bullet">Use this after at least one Spring Lite lab so the abstraction gap is meaningful.</div>
