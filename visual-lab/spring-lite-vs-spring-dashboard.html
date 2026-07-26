@@ -440,6 +440,32 @@
       overflow: auto;
     }
 
+    .snapshot-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .snapshot-card {
+      padding: 16px;
+      border-radius: 18px;
+      background: #fffdf8;
+      border: 1px solid var(--line);
+    }
+
+    .snapshot-card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .snapshot-card p {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
     .footer-note {
       margin-top: 20px;
       padding: 16px 18px;
@@ -547,7 +573,8 @@
     @media (max-width: 800px) {
       .metrics,
       .compare-grid,
-      .next-path-grid {
+      .next-path-grid,
+      .snapshot-grid {
         grid-template-columns: 1fr;
       }
       .lane-row { grid-template-columns: 1fr; }
@@ -659,6 +686,21 @@
           </div>
         </div>
 
+        <div class="snapshot-grid">
+          <section class="snapshot-card">
+            <strong>What To Watch</strong>
+            <p id="snapshot-watch"></p>
+          </section>
+          <section class="snapshot-card">
+            <strong>Why It Matters</strong>
+            <p id="snapshot-why"></p>
+          </section>
+          <section class="snapshot-card">
+            <strong>Best Next Step</strong>
+            <p id="snapshot-next"></p>
+          </section>
+        </div>
+
         <div class="compare-grid">
           <section class="compare-card lite">
             <div class="card-head">
@@ -765,6 +807,11 @@
         title: "DI Comparison",
         desc: "Compare how constructor injection, qualifier resolution, and property-backed values are assembled in each runtime.",
         metrics: { overlap: "high", lite: "explicit", spring: "high", learning: "first" },
+        snapshot: {
+          watch: "Focus on where dependency resolution stays visible in Spring Lite but becomes layered through environment, candidate selection, and auto-configuration in Spring Boot.",
+          why: "This is the cleanest starting point because the user-facing annotations are nearly identical while the hidden runtime depth changes dramatically.",
+          next: "After DI, move to MVC so the same container decisions can be seen driving a real request pipeline."
+        },
         liteExplainer: "Spring Lite keeps dependency resolution close to the surface. You can usually trace bean registration, candidate selection, and value conversion directly through the context code.",
         springExplainer: "Spring Boot exposes the same user-facing programming model, but the supporting layers are broader: environment abstraction, bean factory policies, conditions, and auto-configuration sit beneath the same annotations.",
         liteCode: `@Configuration\nclass GreetingConfig {\n  @Bean\n  GreetingService greetingService(\n      @Qualifier("specialFormatter") Formatter formatter,\n      @Value("\${app.greeting}") String message\n  ) {\n    return new DefaultGreetingService(formatter, message);\n  }\n}`,
@@ -808,6 +855,11 @@
         title: "MVC Comparison",
         desc: "Compare how HTTP requests turn into controller method invocations, validation, exception handling, and JSON responses.",
         metrics: { overlap: "high", lite: "visible", spring: "very-high", learning: "second" },
+        snapshot: {
+          watch: "Focus on the front controller pipeline: mapping, argument resolution, validation, controller invocation, and response writing exist on both sides but with very different breadth.",
+          why: "MVC is where the simplified model pays off because one request makes multiple framework layers cooperate in a single trace.",
+          next: "After MVC, move to transaction comparison so you can isolate proxy-driven service boundaries and rollback behavior."
+        },
         liteExplainer: "Spring Lite's MVC path is compact enough that `DispatcherServlet`, `RequestMappingHandlerMapping`, and `RequestMappingHandlerAdapter` can be read almost as the whole story.",
         springExplainer: "Spring MVC follows the same front controller architecture, but with more adapter types, converters, resolvers, content negotiation rules, and compatibility behaviors.",
         liteCode: `@RestController\n@RequestMapping("/greetings")\nclass GreetingController {\n  @GetMapping("/{id}")\n  GreetingResponse greet(@PathVariable Long id,\n      @RequestParam String name) {\n    return new GreetingResponse("hello " + name + " #" + id);\n  }\n}`,
@@ -851,6 +903,11 @@
         title: "Transaction Comparison",
         desc: "Compare how a service method becomes transactional, how rollback rules are chosen, and how JDBC work is attached to the current context.",
         metrics: { overlap: "medium-high", lite: "traceable", spring: "very-high", learning: "third" },
+        snapshot: {
+          watch: "Focus on where the transactional boundary is actually created: proxy wrapping, interceptor entry, rollback rule choice, and connection reuse are the core comparison points.",
+          why: "Transactions are usually where Spring feels magical. Seeing the small version first makes propagation and rollback rules far less opaque in the full framework.",
+          next: "After this comparison, revisit the example flow lab and line up one concrete request with the broader Spring Boot mental model."
+        },
         liteExplainer: "Spring Lite makes transaction boundaries easy to trace because the proxy, interceptor, and manager are all small and deliberately focused.",
         springExplainer: "Spring Boot uses the same high-level annotation model but delegates through a deeper stack, including transaction attributes, manager strategies, and broader integration points.",
         liteCode: `class OrderServiceImpl implements OrderService {\n  @Transactional\n  public Order createOrder(String product, int quantity) {\n    return repository.save(product, quantity);\n  }\n}`,
@@ -965,6 +1022,9 @@
       document.getElementById("metric-lite").textContent = scenario.metrics.lite;
       document.getElementById("metric-spring").textContent = scenario.metrics.spring;
       document.getElementById("metric-learning").textContent = scenario.metrics.learning;
+      document.getElementById("snapshot-watch").textContent = scenario.snapshot.watch;
+      document.getElementById("snapshot-why").textContent = scenario.snapshot.why;
+      document.getElementById("snapshot-next").textContent = scenario.snapshot.next;
 
       document.getElementById("lite-explainer").textContent = scenario.liteExplainer;
       document.getElementById("spring-explainer").textContent = scenario.springExplainer;
