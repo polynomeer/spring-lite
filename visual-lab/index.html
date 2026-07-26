@@ -475,6 +475,57 @@
       background: var(--accent-soft);
     }
 
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .preview-card {
+      padding: 16px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #fffdf8 0%, #f8f0e4 100%);
+      border: 1px solid var(--line);
+      display: grid;
+      gap: 12px;
+    }
+
+    .preview-card strong {
+      display: block;
+      font-size: 15px;
+    }
+
+    .preview-card p {
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .preview-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .preview-item {
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid var(--line);
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+
+    .preview-item span {
+      display: block;
+      margin-bottom: 3px;
+      color: var(--text);
+      font-size: 11px;
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
     .footer-note {
       margin-top: 18px;
       padding: 16px 18px;
@@ -496,6 +547,7 @@
       .cards,
       .path-grid,
       .rail-grid,
+      .preview-grid,
       .recommend-grid {
         grid-template-columns: 1fr;
       }
@@ -711,6 +763,57 @@
             </div>
           </article>
         </div>
+
+        <section class="reading-path">
+          <h2>Lab Preview Matrix</h2>
+          <p>Use this matrix when you want to compare each page by what it simulates, which code is worth opening next, and which tests best anchor the behavior.</p>
+          <div class="preview-grid">
+            <div class="preview-card">
+              <div>
+                <strong>Playground</strong>
+                <p>Smallest runtime loops for AOP advice order, transaction boundary outcome, and MVC request dispatch.</p>
+              </div>
+              <div class="preview-list">
+                <div class="preview-item"><span>Simulates</span>`@Before`, `@Around`, rollback, route match, binding, validation, response writing</div>
+                <div class="preview-item"><span>Read Next</span>`AspectBeanPostProcessor.java`, `MethodInvocation.java`, `DispatcherServlet.java`</div>
+                <div class="preview-item"><span>Test Anchor</span>`AspectBeanPostProcessorTest`, `TransactionManagerTest`, `DispatcherServletTest`</div>
+              </div>
+            </div>
+            <div class="preview-card">
+              <div>
+                <strong>Container Lab</strong>
+                <p>Context refresh and single-bean lifecycle from definition lookup to proxy exposure and destroy registration.</p>
+              </div>
+              <div class="preview-list">
+                <div class="preview-item"><span>Simulates</span>scan, `BeanDefinition` registry, early infrastructure beans, singleton creation, `@Value`, `@PostConstruct`, proxies</div>
+                <div class="preview-item"><span>Read Next</span>`AnnotationConfigApplicationContext.java`, `ClassPathScanner.java`, `DefaultConversionService.java`</div>
+                <div class="preview-item"><span>Test Anchor</span>`AnnotationConfigApplicationContextTest`, `SpringLiteApplicationTest`, `ClassPathScannerTest`</div>
+              </div>
+            </div>
+            <div class="preview-card">
+              <div>
+                <strong>Example Flow Lab</strong>
+                <p>One realistic application request across HTTP dispatch, service proxying, JDBC, validation, and rollback branches.</p>
+              </div>
+              <div class="preview-list">
+                <div class="preview-item"><span>Simulates</span>`POST /orders`, lookup by id, malformed JSON, validation failure, service error, JDBC rollback</div>
+                <div class="preview-item"><span>Read Next</span>`OrderController.java`, `DefaultOrderService.java`, `JdbcOrderRepository.java`, `TransactionInterceptor.java`</div>
+                <div class="preview-item"><span>Test Anchor</span>`ExampleApplicationTest`, `ExampleApplicationWebTest`, `example-app-request-flow.md`</div>
+              </div>
+            </div>
+            <div class="preview-card">
+              <div>
+                <strong>Spring Comparison Dashboard</strong>
+                <p>Side-by-side concept transfer from Spring Lite to Spring Boot for DI, MVC, and transaction behavior.</p>
+              </div>
+              <div class="preview-list">
+                <div class="preview-item"><span>Simulates</span>concept overlap, hidden runtime depth, automation tradeoffs, study order across DI -> MVC -> Tx</div>
+                <div class="preview-item"><span>Read Next</span>`sample-scenarios/*`, `spring-lite-to-real-spring-code-map.md`, `official-spring-doc-study-map.md`</div>
+                <div class="preview-item"><span>Test Anchor</span>comparison app READMEs, scenario docs, code-level comparison guide</div>
+              </div>
+            </div>
+          </div>
+        </section>
 
         <section class="reading-path">
           <h2>Suggested Study Order</h2>
