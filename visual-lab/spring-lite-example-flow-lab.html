@@ -459,6 +459,43 @@
       line-height: 1.5;
     }
 
+    .next-paths {
+      margin-top: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .next-path-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .next-path-card {
+      padding: 16px;
+      border-radius: 18px;
+      background: #fffdf8;
+      border: 1px solid var(--line);
+    }
+
+    .next-path-card strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+
+    .next-path-card p {
+      margin: 0 0 10px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .next-path-card a {
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 12px;
+    }
+
     .reference-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -516,12 +553,14 @@
     }
 
     @media (max-width: 760px) {
-      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .metrics,
+      .next-path-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .lane-row, .step { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 520px) {
-      .metrics { grid-template-columns: 1fr; }
+      .metrics,
+      .next-path-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -638,6 +677,26 @@
           [ExampleApplicationTest.java](/Users/hammac/Projects/spring-lite/example-app/src/test/java/lite/spring/example/ExampleApplicationTest.java),
           and [ExampleApplicationWebTest.java](/Users/hammac/Projects/spring-lite/example-app/src/test/java/lite/spring/example/ExampleApplicationWebTest.java).
         </div>
+        <section class="next-paths">
+          <h3>Next Recommended Pages</h3>
+          <div class="next-path-grid">
+            <div class="next-path-card">
+              <strong>Compare against full Spring</strong>
+              <p>Take this concrete request trace and map each phase onto the Spring Boot runtime shape.</p>
+              <a href="./spring-lite-vs-spring-dashboard.html">Open Comparison Dashboard</a>
+            </div>
+            <div class="next-path-card">
+              <strong>Revisit the smaller mechanics</strong>
+              <p>Return to the playground when you want to isolate AOP and MVC loops again without the full app context.</p>
+              <a href="./spring-lite-playground.html">Open Playground</a>
+            </div>
+            <div class="next-path-card">
+              <strong>Return to the hub</strong>
+              <p>Use the hub to switch into code-first, docs-first, or tests-first reading rails.</p>
+              <a href="./index.html">Open Visual Lab Hub</a>
+            </div>
+          </div>
+        </section>
         <div class="reference-grid">
           <section class="reference-card" id="flow-ref-app">
             <h3>Example App Source</h3>

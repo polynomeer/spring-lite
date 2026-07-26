@@ -451,6 +451,43 @@
       line-height: 1.5;
     }
 
+    .next-paths {
+      margin-top: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .next-path-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .next-path-card {
+      padding: 16px;
+      border-radius: 18px;
+      background: #fffdf8;
+      border: 1px solid var(--line);
+    }
+
+    .next-path-card strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+
+    .next-path-card p {
+      margin: 0 0 10px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .next-path-card a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 12px;
+    }
+
     .reference-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -509,7 +546,8 @@
 
     @media (max-width: 800px) {
       .metrics,
-      .compare-grid {
+      .compare-grid,
+      .next-path-grid {
         grid-template-columns: 1fr;
       }
       .lane-row { grid-template-columns: 1fr; }
@@ -654,6 +692,26 @@
           [comparison-spring-lite-app/README.md](/Users/hammac/Projects/spring-lite/comparison-spring-lite-app/README.md),
           and [comparison-spring-boot-app/README.md](/Users/hammac/Projects/spring-lite/comparison-spring-boot-app/README.md).
         </div>
+        <section class="next-paths">
+          <h3>Next Recommended Pages</h3>
+          <div class="next-path-grid">
+            <div class="next-path-card">
+              <strong>Rebuild the smaller runtime intuition</strong>
+              <p>After comparing abstractions, return to the smaller sandbox and inspect one moving part in isolation.</p>
+              <a href="./spring-lite-playground.html">Open Playground</a>
+            </div>
+            <div class="next-path-card">
+              <strong>Revisit one real application trace</strong>
+              <p>Go back to the end-to-end example flow and line up the comparison model with one actual request.</p>
+              <a href="./spring-lite-example-flow-lab.html">Open Example Flow Lab</a>
+            </div>
+            <div class="next-path-card">
+              <strong>Return to the hub</strong>
+              <p>Use the hub to pivot by Spring topic, learning goal, or reading style.</p>
+              <a href="./index.html">Open Visual Lab Hub</a>
+            </div>
+          </div>
+        </section>
         <div class="reference-grid">
           <section class="reference-card" id="compare-ref-scenarios">
             <h3>Scenario Docs</h3>

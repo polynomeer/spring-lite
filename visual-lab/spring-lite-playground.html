@@ -501,6 +501,43 @@
       line-height: 1.5;
     }
 
+    .next-paths {
+      margin-top: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .next-path-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .next-path-card {
+      padding: 16px;
+      border-radius: 18px;
+      background: #fffdf8;
+      border: 1px solid var(--line);
+    }
+
+    .next-path-card strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+
+    .next-path-card p {
+      margin: 0 0 10px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .next-path-card a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 12px;
+    }
+
     .reference-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -564,7 +601,8 @@
 
     @media (max-width: 720px) {
       .metrics,
-      .tabs {
+      .tabs,
+      .next-path-grid {
         grid-template-columns: 1fr;
       }
 
@@ -765,6 +803,26 @@
           entire framework. Use it together with `docs/architecture/visual-architecture-guide.md`,
           `docs/architecture/runtime-sequence-diagrams.md`, and the module test suite.
         </div>
+        <section class="next-paths">
+          <h3>Next Recommended Pages</h3>
+          <div class="next-path-grid">
+            <div class="next-path-card">
+              <strong>Go deeper into bean creation</strong>
+              <p>After proxy and dispatch intuition, move to context bootstrap and bean lifecycle assembly.</p>
+              <a href="./spring-lite-container-lab.html">Open Container Lab</a>
+            </div>
+            <div class="next-path-card">
+              <strong>Trace one real request</strong>
+              <p>See the same moving parts composed into a realistic application request path.</p>
+              <a href="./spring-lite-example-flow-lab.html">Open Example Flow Lab</a>
+            </div>
+            <div class="next-path-card">
+              <strong>Return to the hub</strong>
+              <p>Use the visual lab hub to switch by learning goal, reading style, or Spring comparison focus.</p>
+              <a href="./index.html">Open Visual Lab Hub</a>
+            </div>
+          </div>
+        </section>
         <div class="reference-grid">
           <section class="reference-card" id="playground-ref-aop">
             <h3>AOP Source</h3>
