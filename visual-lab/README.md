@@ -10,6 +10,9 @@
 - `spring-lite-container-lab.html`
   - `ApplicationContext` 부트스트랩 실험실
   - 개별 빈 생성/초기화/프록시/종료 생명주기 실험실
+- `spring-lite-example-flow-lab.html`
+  - `example-app` 기준 종단간 요청 흐름 실험실
+  - validation 실패, unknown id, service error, rollback 분기 실험
 
 ## 왜 필요한가
 
@@ -28,6 +31,7 @@
 
 - `visual-lab/spring-lite-playground.html`
 - `visual-lab/spring-lite-container-lab.html`
+- `visual-lab/spring-lite-example-flow-lab.html`
 
 또는 간단히 로컬 서버를 띄워도 된다.
 

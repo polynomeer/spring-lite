@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spring Lite Example Flow Lab</title>
+  <style>
+    :root {
+      --bg: #f4efe6;
+      --surface: #fffaf3;
+      --surface-soft: #efe2d0;
+      --text: #1f2530;
+      --muted: #606b79;
+      --line: #d9cebf;
+      --primary: #9a4522;
+      --primary-soft: #f4d0bd;
+      --secondary: #1f5d55;
+      --secondary-soft: #cde3de;
+      --accent: #2f5e93;
+      --accent-soft: #d9e4f5;
+      --danger: #a33333;
+      --danger-soft: #f6d7d7;
+      --warning: #866116;
+      --warning-soft: #f2e0b3;
+      --shadow: 0 18px 40px rgba(49, 35, 18, 0.12);
+      --radius: 22px;
+      --mono: "SFMono-Regular", Consolas, Menlo, monospace;
+      --sans: "Avenir Next", "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(154, 69, 34, 0.16), transparent 24%),
+        radial-gradient(circle at top right, rgba(47, 94, 147, 0.14), transparent 22%),
+        linear-gradient(180deg, #fbf8f2 0%, var(--bg) 100%);
+    }
+
+    .page {
+      width: min(1240px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 28px 0 48px;
+    }
+
+    .hero {
+      border-radius: 30px;
+      padding: 30px;
+      background: linear-gradient(135deg, rgba(154, 69, 34, 0.95), rgba(31, 93, 85, 0.95));
+      color: #fff8f2;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -28px;
+      bottom: -42px;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: rgba(255, 248, 242, 0.1);
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(30px, 5vw, 54px);
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 800px;
+      color: rgba(255, 248, 242, 0.88);
+      line-height: 1.55;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .badge-row span {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      background: rgba(255, 248, 242, 0.14);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: 22px;
+      margin-top: 22px;
+    }
+
+    .panel {
+      background: rgba(255, 250, 243, 0.88);
+      border: 1px solid rgba(217, 206, 191, 0.9);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .controls {
+      padding: 20px;
+      position: sticky;
+      top: 18px;
+      align-self: start;
+    }
+
+    .section + .section {
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fffdf8;
+      color: var(--text);
+      font: inherit;
+    }
+
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .check-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .check {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 10px 12px;
+      background: #fffdf8;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+    }
+
+    .check input {
+      width: 16px;
+      height: 16px;
+      margin-top: 2px;
+    }
+
+    .check strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .check span {
+      display: block;
+      font-size: 12px;
+      line-height: 1.4;
+      color: var(--muted);
+    }
+
+    .action-btn {
+      width: 100%;
+      margin-top: 16px;
+      padding: 13px 14px;
+      border: 0;
+      border-radius: 14px;
+      background: var(--secondary);
+      color: #f8fffd;
+      font: inherit;
+      cursor: pointer;
+      transition: transform 120ms ease, opacity 120ms ease;
+    }
+
+    .action-btn:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
+
+    .lab {
+      padding: 20px;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .metric {
+      padding: 14px;
+      border-radius: 18px;
+      background: #fffdf8;
+      border: 1px solid var(--line);
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    .metric .value {
+      font-size: 28px;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      margin-bottom: 6px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .step {
+      position: relative;
+      display: grid;
+      grid-template-columns: 28px 1fr auto;
+      gap: 12px;
+      align-items: start;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: #fffdf8;
+      border: 1px solid var(--line);
+      overflow: hidden;
+    }
+
+    .step::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 5px;
+      background: var(--accent);
+    }
+
+    .step.tx::before { background: var(--secondary); }
+    .step.error::before { background: var(--danger); }
+    .step.warn::before { background: var(--warning); }
+
+    .index {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .step.tx .index {
+      background: var(--secondary-soft);
+      color: var(--secondary);
+    }
+
+    .step.error .index {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .step.warn .index {
+      background: var(--warning-soft);
+      color: var(--warning);
+    }
+
+    .step strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .step p {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+      font-size: 12px;
+      font-family: var(--mono);
+      background: var(--surface-soft);
+    }
+
+    .lane {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .lane-row {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 14px;
+    }
+
+    .lane-label {
+      padding: 14px;
+      border-radius: 16px;
+      background: #f3e8da;
+      border: 1px solid var(--line);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .lane-track {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 14px;
+      border-radius: 16px;
+      background: #fffdf8;
+      border: 1px solid var(--line);
+      min-height: 62px;
+    }
+
+    .event {
+      padding: 9px 11px;
+      border-radius: 12px;
+      font-size: 12px;
+      background: var(--primary-soft);
+      color: #5a2612;
+    }
+
+    .event.secondary {
+      background: var(--accent-soft);
+      color: #234b82;
+    }
+
+    .event.success {
+      background: var(--secondary-soft);
+      color: #1c5a53;
+    }
+
+    .event.error {
+      background: var(--danger-soft);
+      color: #7d2323;
+    }
+
+    .event.warn {
+      background: var(--warning-soft);
+      color: #71500d;
+    }
+
+    .code {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 18px;
+      background: #201c18;
+      color: #f6eee5;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      overflow: auto;
+    }
+
+    .footer-note {
+      margin-top: 20px;
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: rgba(255, 250, 243, 0.78);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 1000px) {
+      .grid { grid-template-columns: 1fr; }
+      .controls { position: static; }
+    }
+
+    @media (max-width: 760px) {
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .lane-row, .step { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 520px) {
+      .metrics { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <h1>Spring Lite Example Flow Lab</h1>
+      <p>
+        Follow one request all the way through the real shape of the framework: HTTP dispatch,
+        argument binding, validation, controller entry, transactional service proxy, JDBC execution,
+        and JSON response writing.
+      </p>
+      <div class="badge-row">
+        <span>Example application</span>
+        <span>End-to-end request path</span>
+        <span>Rollback and validation branches</span>
+        <span>Maps to tests and source files</span>
+      </div>
+    </section>
+
+    <div class="grid">
+      <aside class="panel controls">
+        <div class="section">
+          <h2>Scenario</h2>
+          <p>Choose the request shape and force the application into a success or failure branch.</p>
+          <div class="form-grid">
+            <div class="field">
+              <label for="request-kind">Request</label>
+              <select id="request-kind">
+                <option value="create" selected>POST /orders</option>
+                <option value="list">GET /orders</option>
+                <option value="getById">GET /orders/{id}</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="flow-scenario">Behavior</label>
+              <select id="flow-scenario">
+                <option value="success" selected>Normal success</option>
+                <option value="validation">Validation failure</option>
+                <option value="serviceError">Service exception</option>
+                <option value="rollback">Repository failure with rollback</option>
+                <option value="notFound">Unknown order id</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="order-id">Order id</label>
+              <input id="order-id" type="number" value="1" min="1">
+            </div>
+            <div class="field">
+              <label for="request-body">Request body</label>
+              <textarea id="request-body">{"product":"book","quantity":2}</textarea>
+            </div>
+            <div class="field">
+              <label for="accept-type">Accept</label>
+              <select id="accept-type">
+                <option value="application/json" selected>application/json</option>
+                <option value="application/vnd.demo+json">application/vnd.demo+json</option>
+              </select>
+            </div>
+          </div>
+          <div class="check-grid">
+            <label class="check">
+              <input id="use-tx" type="checkbox" checked>
+              <span><strong>Transactional service</strong><span>Wrap the service call with `TransactionInterceptor` and `TransactionManager`.</span></span>
+            </label>
+            <label class="check">
+              <input id="seeded-order" type="checkbox" checked>
+              <span><strong>Seeded order exists</strong><span>Simulate the startup data inserted by the example application.</span></span>
+            </label>
+            <label class="check">
+              <input id="show-sql" type="checkbox" checked>
+              <span><strong>Show JDBC details</strong><span>Include SQL-level events and connection reuse details in the lane view.</span></span>
+            </label>
+          </div>
+          <button class="action-btn" id="run-flow" type="button">Run example flow</button>
+        </div>
+      </aside>
+
+      <main class="panel lab">
+        <h2>End-to-End Request Flow</h2>
+        <p>
+          This lab aligns with `ExampleApplicationTest`, `ExampleApplicationWebTest`, and
+          `docs/architecture/example-app-request-flow.md`. It highlights where each branch changes
+          the runtime path.
+        </p>
+        <div class="metrics">
+          <div class="metric">
+            <strong>HTTP status</strong>
+            <div class="value" id="flow-status">-</div>
+            <span>Final response status after handler, validation, and exception resolution.</span>
+          </div>
+          <div class="metric">
+            <strong>Tx outcome</strong>
+            <div class="value" id="flow-tx">-</div>
+            <span>Whether the service boundary committed, rolled back, or never opened a transaction.</span>
+          </div>
+          <div class="metric">
+            <strong>DB effect</strong>
+            <div class="value" id="flow-db">-</div>
+            <span>Whether the request inserted, read, rolled back, or skipped persistence work.</span>
+          </div>
+          <div class="metric">
+            <strong>Controller branch</strong>
+            <div class="value" id="flow-branch">-</div>
+            <span>The main application path the controller and service actually took.</span>
+          </div>
+        </div>
+        <div class="timeline" id="flow-timeline"></div>
+        <div class="lane" id="flow-lanes"></div>
+        <div class="code" id="flow-summary"></div>
+        <div class="footer-note">
+          Use this page with [example-app-request-flow.md](/Users/hammac/Projects/spring-lite/docs/architecture/example-app-request-flow.md),
+          [ExampleApplicationTest.java](/Users/hammac/Projects/spring-lite/example-app/src/test/java/lite/spring/example/ExampleApplicationTest.java),
+          and [ExampleApplicationWebTest.java](/Users/hammac/Projects/spring-lite/example-app/src/test/java/lite/spring/example/ExampleApplicationWebTest.java).
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    function renderSteps(steps) {
+      document.getElementById("flow-timeline").innerHTML = steps.map((step, index) => `
+        <article class="step ${step.kind}">
+          <div class="index">${index + 1}</div>
+          <div>
+            <strong>${step.title}</strong>
+            <p>${step.body}</p>
+          </div>
+          <div class="chip">${step.marker}</div>
+        </article>
+      `).join("");
+    }
+
+    function renderLanes(lanes) {
+      document.getElementById("flow-lanes").innerHTML = lanes.map((lane) => `
+        <div class="lane-row">
+          <div class="lane-label"><strong>${lane.label}</strong><br>${lane.detail}</div>
+          <div class="lane-track">
+            ${lane.events.map((event) => `<span class="event ${event.kind}">${event.text}</span>`).join("")}
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function safeParseBody(raw) {
+      try {
+        return { ok: true, value: JSON.parse(raw) };
+      } catch (error) {
+        return { ok: false, error };
+      }
+    }
+
+    function runFlow() {
+      const requestKind = document.getElementById("request-kind").value;
+      const scenario = document.getElementById("flow-scenario").value;
+      const orderId = Number(document.getElementById("order-id").value || "1");
+      const rawBody = document.getElementById("request-body").value;
+      const acceptType = document.getElementById("accept-type").value;
+      const useTx = document.getElementById("use-tx").checked;
+      const seededOrder = document.getElementById("seeded-order").checked;
+      const showSql = document.getElementById("show-sql").checked;
+
+      const steps = [];
+      const webEvents = [{ text: "DispatcherServlet", kind: "secondary" }];
+      const serviceEvents = [];
+      const txEvents = [];
+      const jdbcEvents = [];
+      const responseEvents = [];
+
+      let status = "200";
+      let txOutcome = useTx ? "commit" : "no-tx";
+      let dbEffect = "read";
+      let branch = "success";
+
+      function addStep(kind, title, body, marker) {
+        steps.push({ kind, title, body, marker });
+      }
+
+      const routeLabel = requestKind === "create"
+        ? "POST /orders"
+        : requestKind === "list"
+          ? "GET /orders"
+          : `GET /orders/${orderId}`;
+
+      addStep("info", "Request enters DispatcherServlet", `The example app receives \`${routeLabel}\` with Accept \`${acceptType}\`.`, "dispatch");
+      webEvents.push({ text: routeLabel, kind: "success" });
+
+      if (requestKind === "create") {
+        addStep("info", "Request body deserialized", "JsonMapper and RequestBodyArgumentResolver convert the body into CreateOrderRequest.", "bind");
+        webEvents.push({ text: "body -> CreateOrderRequest", kind: "secondary" });
+
+        const parsed = safeParseBody(rawBody);
+        if (!parsed.ok) {
+          addStep("error", "Malformed JSON rejected", "Binding fails before the controller runs, so the exception resolver returns 400.", "400");
+          status = "400";
+          txOutcome = "no-tx";
+          dbEffect = "none";
+          branch = "bad-json";
+          responseEvents.push({ text: "400 malformed JSON", kind: "error" });
+          renderFinal();
+          return;
+        }
+
+        if (scenario === "validation") {
+          addStep("error", "Validation stops the request", "SimpleValidator rejects the request because product or quantity does not satisfy constraints.", "validation");
+          webEvents.push({ text: "@Valid failed", kind: "error" });
+          status = "400";
+          txOutcome = "no-tx";
+          dbEffect = "none";
+          branch = "validation";
+          responseEvents.push({ text: "400 validation error", kind: "error" });
+          renderFinal();
+          return;
+        }
+      } else {
+        addStep("info", "Path and query parameters resolved", "Argument resolvers prepare method parameters directly from the URL.", "params");
+        webEvents.push({ text: "path/query args", kind: "secondary" });
+      }
+
+      addStep("info", "Controller method selected", `HandlerMapping resolves the example application's controller method for \`${routeLabel}\`.`, "handler");
+      webEvents.push({ text: "OrderController", kind: "success" });
+
+      if (requestKind === "list") {
+        addStep("info", "Controller delegates to service", "The controller asks the service for the full order list.", "list()");
+        serviceEvents.push({ text: "listOrders()", kind: "success" });
+        dbEffect = seededOrder ? "select" : "empty-select";
+        if (showSql) {
+          jdbcEvents.push({ text: "select * from orders", kind: seededOrder ? "success" : "warn" });
+        }
+        responseEvents.push({ text: seededOrder ? "200 seeded list" : "200 empty list", kind: "success" });
+        branch = "list";
+        renderFinal();
+        return;
+      }
+
+      if (requestKind === "getById") {
+        addStep("info", "Controller delegates to service", "The controller requests one order by id from the service layer.", "getOrder()");
+        serviceEvents.push({ text: `getOrder(${orderId})`, kind: "success" });
+        if (showSql) {
+          jdbcEvents.push({ text: `select * from orders where id=${orderId}`, kind: "secondary" });
+        }
+        if (scenario === "notFound" || !seededOrder || orderId !== 1) {
+          addStep("error", "Service raises unknown-order error", "DefaultOrderService cannot find the order and throws IllegalArgumentException.", "not-found");
+          serviceEvents.push({ text: "IllegalArgumentException", kind: "error" });
+          status = "400";
+          txOutcome = "no-tx";
+          dbEffect = "select-miss";
+          branch = "not-found";
+          responseEvents.push({ text: "400 order not found", kind: "error" });
+          renderFinal();
+          return;
+        }
+        addStep("info", "Repository returns seeded row", "JdbcOrderRepository maps the existing row into the Order record.", "row-map");
+        serviceEvents.push({ text: "Order{id=1}", kind: "success" });
+        dbEffect = "select-hit";
+        branch = "getById";
+        responseEvents.push({ text: "200 order JSON", kind: "success" });
+        renderFinal();
+        return;
+      }
+
+      addStep("info", "Controller enters service proxy", "OrderController calls OrderService, which is exposed through a transactional proxy.", "service-proxy");
+      serviceEvents.push({ text: "createOrder(...)", kind: "success" });
+
+      if (useTx) {
+        addStep("tx", "Transaction boundary opens", "TransactionInterceptor asks TransactionManager to begin the service invocation boundary.", "begin()");
+        txEvents.push({ text: "begin depth=1", kind: "success" });
+      }
+
+      addStep("info", "Service performs business logic", "DefaultOrderService computes status and delegates persistence to JdbcOrderRepository.", "business");
+      serviceEvents.push({ text: "status=PENDING_APPROVAL", kind: "secondary" });
+
+      if (showSql) {
+        jdbcEvents.push({ text: "reuse tx connection", kind: useTx ? "success" : "warn" });
+        jdbcEvents.push({ text: "insert into orders ...", kind: "secondary" });
+      }
+
+      if (scenario === "serviceError") {
+        addStep("error", "Service throws domain exception", "Business logic fails before the repository completes, so the invocation returns through the error path.", "throw");
+        serviceEvents.push({ text: "IllegalStateException", kind: "error" });
+        status = "500";
+        branch = "service-error";
+        dbEffect = "no-insert";
+        if (useTx) {
+          addStep("error", "Transaction rolls back", "The transactional interceptor catches the failure and rolls back the outer connection.", "rollback()");
+          txEvents.push({ text: "rollback", kind: "error" });
+          txOutcome = "rollback";
+        } else {
+          txOutcome = "no-tx";
+        }
+        responseEvents.push({ text: "500 internal error", kind: "error" });
+        renderFinal();
+        return;
+      }
+
+      if (scenario === "rollback") {
+        addStep("warn", "Repository fails after SQL work begins", "The repository starts write work but then throws, forcing the transaction manager to unwind the insert.", "repo-fail");
+        jdbcEvents.push({ text: "constraint/driver error", kind: "error" });
+        serviceEvents.push({ text: "repository exception", kind: "error" });
+        status = "500";
+        branch = "rollback";
+        dbEffect = "rolled-back";
+        if (useTx) {
+          addStep("error", "Transaction rolls back JDBC work", "The open connection is rolled back, so the attempted order insert does not persist.", "rollback()");
+          txEvents.push({ text: "rollback", kind: "error" });
+          txOutcome = "rollback";
+        } else {
+          txOutcome = "no-tx";
+        }
+        responseEvents.push({ text: "500 after rollback", kind: "error" });
+        renderFinal();
+        return;
+      }
+
+      addStep("info", "Repository maps created order", "JdbcTemplate executes the insert/select sequence and JdbcOrderRepository maps the new row.", "jdbc");
+      jdbcEvents.push({ text: "select created row", kind: "success" });
+      serviceEvents.push({ text: "Order{id=2}", kind: "success" });
+      dbEffect = "insert";
+      branch = "create";
+
+      if (useTx) {
+        addStep("tx", "Transaction commits", "The outer service invocation completes successfully, so the connection is committed and cleaned up.", "commit()");
+        txEvents.push({ text: "commit", kind: "success" });
+        txOutcome = "commit";
+      }
+
+      addStep("info", "Response serialized as JSON", "JsonReturnValueHandler turns the Order record into the final HTTP response body.", "json");
+      responseEvents.push({ text: "200 created order", kind: "success" });
+
+      renderFinal();
+
+      function renderFinal() {
+        document.getElementById("flow-status").textContent = status;
+        document.getElementById("flow-tx").textContent = txOutcome;
+        document.getElementById("flow-db").textContent = dbEffect;
+        document.getElementById("flow-branch").textContent = branch;
+
+        renderSteps(steps);
+        renderLanes([
+          {
+            label: "Web",
+            detail: "DispatcherServlet, argument binding, validation, controller entry.",
+            events: webEvents
+          },
+          {
+            label: "Service",
+            detail: "Controller delegation, proxy entry, business logic, exception branch.",
+            events: serviceEvents.length ? serviceEvents : [{ text: "not reached", kind: "warn" }]
+          },
+          {
+            label: "Transaction",
+            detail: "TransactionInterceptor and TransactionManager outcome.",
+            events: txEvents.length ? txEvents : [{ text: "no transaction", kind: "warn" }]
+          },
+          {
+            label: "JDBC",
+            detail: "JdbcTemplate connection reuse, SQL, row mapping, rollback effect.",
+            events: jdbcEvents.length ? jdbcEvents : [{ text: "no SQL work", kind: "warn" }]
+          },
+          {
+            label: "Response",
+            detail: "Exception resolution and JSON response writing.",
+            events: responseEvents.length ? responseEvents : [{ text: "response pending", kind: "warn" }]
+          }
+        ]);
+
+        document.getElementById("flow-summary").textContent =
+`source mapping
+- example-app: OrderController, DefaultOrderService, JdbcOrderRepository
+- spring-lite-web: DispatcherServlet, JsonReturnValueHandler
+- spring-lite-tx: TransactionalBeanPostProcessor, TransactionInterceptor, TransactionManager
+- spring-lite-jdbc: JdbcTemplate
+- test anchor: ExampleApplicationTest, ExampleApplicationWebTest
+
+current simulation
+- route: ${routeLabel}
+- scenario: ${scenario}
+- transactional service: ${useTx}
+- seeded order present: ${seededOrder}
+- show jdbc details: ${showSql}
+- http status: ${status}
+- tx outcome: ${txOutcome}
+- db effect: ${dbEffect}
+- branch: ${branch}`;
+      }
+    }
+
+    document.getElementById("run-flow").addEventListener("click", runFlow);
+    document.getElementById("request-kind").addEventListener("change", runFlow);
+    document.getElementById("flow-scenario").addEventListener("change", runFlow);
+
+    runFlow();
+  </script>
+</body>
+</html>
