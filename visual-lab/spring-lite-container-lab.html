@@ -478,6 +478,43 @@
       line-height: 1.5;
     }
 
+    .reference-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .reference-card {
+      padding: 16px;
+      border-radius: 18px;
+      background: #fffdf8;
+      border: 1px solid var(--line);
+    }
+
+    .reference-card h3 {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .resource-link {
+      display: block;
+      padding: 10px 11px;
+      border-radius: 12px;
+      background: #faf5ec;
+      border: 1px solid var(--line);
+      text-decoration: none;
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
     @media (max-width: 980px) {
       .grid {
         grid-template-columns: 1fr;
@@ -699,6 +736,35 @@
         <div class="footer-note">
           This lab focuses on mental models rather than full runtime fidelity. Read it beside
           `visual-architecture-guide.md`, `runtime-sequence-diagrams.md`, and the context/boot test suites.
+        </div>
+        <div class="reference-grid">
+          <section class="reference-card">
+            <h3>Container Source</h3>
+            <p>Core classes for refresh, scanning, bean creation, and lifecycle hooks.</p>
+            <div class="link-list">
+              <a class="resource-link" href="../spring-lite-context/src/main/java/lite/spring/context/support/AnnotationConfigApplicationContext.java">AnnotationConfigApplicationContext.java</a>
+              <a class="resource-link" href="../spring-lite-context/src/main/java/lite/spring/context/scan/ClassPathScanner.java">ClassPathScanner.java</a>
+              <a class="resource-link" href="../spring-lite-core/src/main/java/lite/spring/core/convert/DefaultConversionService.java">DefaultConversionService.java</a>
+            </div>
+          </section>
+          <section class="reference-card">
+            <h3>Boot Source</h3>
+            <p>Entry points and property loading used during application startup.</p>
+            <div class="link-list">
+              <a class="resource-link" href="../spring-lite-boot/src/main/java/lite/spring/boot/SpringLiteApplication.java">SpringLiteApplication.java</a>
+              <a class="resource-link" href="../spring-lite-boot/src/main/java/lite/spring/boot/support/ApplicationProperties.java">ApplicationProperties.java</a>
+              <a class="resource-link" href="../spring-lite-web/src/main/java/lite/spring/web/support/DispatcherServlet.java">DispatcherServlet.java</a>
+            </div>
+          </section>
+          <section class="reference-card">
+            <h3>Tests and Docs</h3>
+            <p>Tests and architecture docs that anchor the same startup phases.</p>
+            <div class="link-list">
+              <a class="resource-link" href="../spring-lite-context/src/test/java/lite/spring/context/AnnotationConfigApplicationContextTest.java">AnnotationConfigApplicationContextTest.java</a>
+              <a class="resource-link" href="../spring-lite-boot/src/test/java/lite/spring/boot/SpringLiteApplicationTest.java">SpringLiteApplicationTest.java</a>
+              <a class="resource-link" href="../docs/architecture/visual-architecture-guide.md">visual-architecture-guide.md</a>
+            </div>
+          </section>
         </div>
       </main>
     </div>

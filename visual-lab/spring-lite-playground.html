@@ -481,6 +481,43 @@
       line-height: 1.5;
     }
 
+    .reference-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .reference-card {
+      padding: 16px;
+      border-radius: 18px;
+      background: #fffdf8;
+      border: 1px solid var(--line);
+    }
+
+    .reference-card h3 {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .resource-link {
+      display: block;
+      padding: 10px 11px;
+      border-radius: 12px;
+      background: #faf5ec;
+      border: 1px solid var(--line);
+      text-decoration: none;
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
     @media (max-width: 980px) {
       .grid {
         grid-template-columns: 1fr;
@@ -691,6 +728,35 @@
           This page is intentionally simplified. It explains the runtime contract rather than replicating the
           entire framework. Use it together with `docs/architecture/visual-architecture-guide.md`,
           `docs/architecture/runtime-sequence-diagrams.md`, and the module test suite.
+        </div>
+        <div class="reference-grid">
+          <section class="reference-card">
+            <h3>AOP Source</h3>
+            <p>Classes that implement the advice chain and proxy wrapping.</p>
+            <div class="link-list">
+              <a class="resource-link" href="../spring-lite-aop/src/main/java/lite/spring/aop/support/AspectBeanPostProcessor.java">AspectBeanPostProcessor.java</a>
+              <a class="resource-link" href="../spring-lite-aop/src/main/java/lite/spring/aop/MethodInvocation.java">MethodInvocation.java</a>
+              <a class="resource-link" href="../spring-lite-tx/src/main/java/lite/spring/tx/support/TransactionInterceptor.java">TransactionInterceptor.java</a>
+            </div>
+          </section>
+          <section class="reference-card">
+            <h3>Web Source</h3>
+            <p>Classes that implement handler mapping, binding, and response writing.</p>
+            <div class="link-list">
+              <a class="resource-link" href="../spring-lite-web/src/main/java/lite/spring/web/support/DispatcherServlet.java">DispatcherServlet.java</a>
+              <a class="resource-link" href="../spring-lite-web/src/main/java/lite/spring/web/handler/RequestMappingHandlerAdapter.java">RequestMappingHandlerAdapter.java</a>
+              <a class="resource-link" href="../spring-lite-web/src/main/java/lite/spring/web/exception/DefaultExceptionResolver.java">DefaultExceptionResolver.java</a>
+            </div>
+          </section>
+          <section class="reference-card">
+            <h3>Tests and Docs</h3>
+            <p>Tests and diagrams that explain the same paths in code form.</p>
+            <div class="link-list">
+              <a class="resource-link" href="../spring-lite-aop/src/test/java/lite/spring/aop/support/AspectBeanPostProcessorTest.java">AspectBeanPostProcessorTest.java</a>
+              <a class="resource-link" href="../spring-lite-web/src/test/java/lite/spring/web/support/DispatcherServletTest.java">DispatcherServletTest.java</a>
+              <a class="resource-link" href="../docs/architecture/runtime-sequence-diagrams.md">runtime-sequence-diagrams.md</a>
+            </div>
+          </section>
         </div>
       </main>
     </div>
