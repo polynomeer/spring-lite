@@ -100,6 +100,7 @@
 - [Spring Lite Playground](./visual-lab/spring-lite-playground.html)
 - [Spring Lite Container Lab](./visual-lab/spring-lite-container-lab.html)
 - [Spring Lite Example Flow Lab](./visual-lab/spring-lite-example-flow-lab.html)
+- [Spring Lite vs Spring Dashboard](./visual-lab/spring-lite-vs-spring-dashboard.html)
 
 ## 책 초안 문서
 

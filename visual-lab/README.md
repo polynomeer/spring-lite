@@ -13,6 +13,9 @@
 - `spring-lite-example-flow-lab.html`
   - `example-app` 기준 종단간 요청 흐름 실험실
   - validation 실패, unknown id, service error, rollback 분기 실험
+- `spring-lite-vs-spring-dashboard.html`
+  - `spring-lite`와 실제 Spring Boot를 DI / MVC / Transaction 축으로 나란히 비교
+  - 공통 개념, 내부 엔진, 자동화 차이, 학습 포인트를 한 화면에서 정리
 
 ## 왜 필요한가
 
@@ -32,6 +35,7 @@
 - `visual-lab/spring-lite-playground.html`
 - `visual-lab/spring-lite-container-lab.html`
 - `visual-lab/spring-lite-example-flow-lab.html`
+- `visual-lab/spring-lite-vs-spring-dashboard.html`
 
 또는 간단히 로컬 서버를 띄워도 된다.
 

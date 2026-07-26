@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spring Lite vs Spring Dashboard</title>
+  <style>
+    :root {
+      --bg: #f5efe6;
+      --surface: #fffaf4;
+      --surface-soft: #efe3d2;
+      --text: #1e2631;
+      --muted: #606c7a;
+      --line: #dacfbf;
+      --lite: #9b4725;
+      --lite-soft: #f4d2bf;
+      --spring: #21634f;
+      --spring-soft: #d1e6dc;
+      --accent: #315f93;
+      --accent-soft: #d8e4f5;
+      --warning: #835d15;
+      --warning-soft: #f2e1b5;
+      --shadow: 0 18px 42px rgba(50, 37, 18, 0.12);
+      --radius: 22px;
+      --mono: "SFMono-Regular", Consolas, Menlo, monospace;
+      --sans: "Avenir Next", "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(155, 71, 37, 0.16), transparent 24%),
+        radial-gradient(circle at top right, rgba(33, 99, 79, 0.15), transparent 22%),
+        linear-gradient(180deg, #fcf8f2 0%, var(--bg) 100%);
+    }
+
+    .page {
+      width: min(1260px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 28px 0 48px;
+    }
+
+    .hero {
+      padding: 30px;
+      border-radius: 30px;
+      background: linear-gradient(135deg, rgba(155, 71, 37, 0.95), rgba(33, 99, 79, 0.95));
+      color: #fff8f3;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -30px;
+      top: -18px;
+      width: 210px;
+      height: 210px;
+      border-radius: 50%;
+      background: rgba(255, 248, 243, 0.1);
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(30px, 5vw, 54px);
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 860px;
+      color: rgba(255, 248, 243, 0.88);
+      line-height: 1.55;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .badge-row span {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      background: rgba(255, 248, 243, 0.14);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 22px;
+      margin-top: 22px;
+    }
+
+    .panel {
+      background: rgba(255, 250, 244, 0.88);
+      border: 1px solid rgba(218, 207, 191, 0.92);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .controls {
+      padding: 20px;
+      position: sticky;
+      top: 18px;
+      align-self: start;
+    }
+
+    .section + .section {
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .tab-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .tab-btn,
+    .action-btn {
+      border: 0;
+      cursor: pointer;
+      font: inherit;
+      border-radius: 14px;
+      transition: transform 120ms ease, opacity 120ms ease, background 120ms ease;
+    }
+
+    .tab-btn {
+      padding: 12px;
+      text-align: left;
+      background: #efe5d8;
+      color: var(--text);
+    }
+
+    .tab-btn strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 14px;
+    }
+
+    .tab-btn span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .tab-btn.active {
+      background: var(--accent);
+      color: #f7fbff;
+      transform: translateY(-1px);
+    }
+
+    .tab-btn.active span {
+      color: rgba(247, 251, 255, 0.82);
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    select,
+    input {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fffdf8;
+      color: var(--text);
+      font: inherit;
+    }
+
+    .check-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .check {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 10px 12px;
+      background: #fffdf8;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+    }
+
+    .check input {
+      width: 16px;
+      height: 16px;
+      margin-top: 2px;
+    }
+
+    .check strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .check span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .action-btn {
+      width: 100%;
+      margin-top: 16px;
+      padding: 13px 14px;
+      background: var(--spring);
+      color: #f5fffb;
+    }
+
+    .lab {
+      padding: 20px;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .metric {
+      padding: 14px;
+      border-radius: 18px;
+      background: #fffdf8;
+      border: 1px solid var(--line);
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    .metric .value {
+      font-size: 28px;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      margin-bottom: 6px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .compare-card {
+      padding: 18px;
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      background: #fffdf8;
+    }
+
+    .compare-card.lite {
+      box-shadow: inset 0 0 0 2px rgba(155, 71, 37, 0.12);
+    }
+
+    .compare-card.spring {
+      box-shadow: inset 0 0 0 2px rgba(33, 99, 79, 0.12);
+    }
+
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .card-head h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-family: var(--mono);
+    }
+
+    .tag.lite {
+      background: var(--lite-soft);
+      color: #6b2b13;
+    }
+
+    .tag.spring {
+      background: var(--spring-soft);
+      color: #17483a;
+    }
+
+    .code-block {
+      padding: 14px;
+      border-radius: 16px;
+      background: #201c18;
+      color: #f6eee5;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .bullet-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .bullet {
+      padding: 11px 12px;
+      border-radius: 14px;
+      background: #faf5ec;
+      border: 1px solid var(--line);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .lane {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .lane-row {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 14px;
+    }
+
+    .lane-label {
+      padding: 14px;
+      border-radius: 16px;
+      background: #f3e8d9;
+      border: 1px solid var(--line);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .lane-track {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 14px;
+      border-radius: 16px;
+      background: #fffdf8;
+      border: 1px solid var(--line);
+      min-height: 62px;
+    }
+
+    .event {
+      padding: 9px 11px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+
+    .event.lite {
+      background: var(--lite-soft);
+      color: #692b13;
+    }
+
+    .event.spring {
+      background: var(--spring-soft);
+      color: #18473a;
+    }
+
+    .event.shared {
+      background: var(--accent-soft);
+      color: #234b82;
+    }
+
+    .event.warn {
+      background: var(--warning-soft);
+      color: #71500d;
+    }
+
+    .summary {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 18px;
+      background: #201c18;
+      color: #f6eee5;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      overflow: auto;
+    }
+
+    .footer-note {
+      margin-top: 20px;
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: rgba(255, 250, 244, 0.78);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 1020px) {
+      .grid { grid-template-columns: 1fr; }
+      .controls { position: static; }
+    }
+
+    @media (max-width: 800px) {
+      .metrics,
+      .compare-grid {
+        grid-template-columns: 1fr;
+      }
+      .lane-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <h1>Spring Lite vs Spring Dashboard</h1>
+      <p>
+        Compare the same learning scenario in two runtimes: `spring-lite`, where the machinery is small enough
+        to inspect directly, and Spring Boot, where the same core ideas appear through richer infrastructure and
+        more automation.
+      </p>
+      <div class="badge-row">
+        <span>DI comparison</span>
+        <span>MVC comparison</span>
+        <span>Transaction comparison</span>
+        <span>Same scenario, different runtime density</span>
+      </div>
+    </section>
+
+    <div class="grid">
+      <aside class="panel controls">
+        <div class="section">
+          <h2>Scenario</h2>
+          <p>Pick one comparison axis and tune how much infrastructure each side is using.</p>
+          <div class="tab-list">
+            <button class="tab-btn active" id="tab-di" type="button">
+              <strong>DI</strong>
+              <span>Constructor injection, qualifier, value resolution, context bootstrap.</span>
+            </button>
+            <button class="tab-btn" id="tab-mvc" type="button">
+              <strong>MVC</strong>
+              <span>DispatcherServlet, handler mapping, argument binding, exception flow.</span>
+            </button>
+            <button class="tab-btn" id="tab-tx" type="button">
+              <strong>Transaction</strong>
+              <span>Proxy interception, begin/commit/rollback, repository interaction.</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Options</h2>
+          <div class="form-grid">
+            <div class="field">
+              <label for="level">Detail level</label>
+              <select id="level">
+                <option value="overview">Overview</option>
+                <option value="runtime" selected>Runtime path</option>
+                <option value="architecture">Architecture emphasis</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="scenario-strength">Scenario strength</label>
+              <select id="scenario-strength">
+                <option value="minimal">Minimal path</option>
+                <option value="default" selected>Typical usage</option>
+                <option value="advanced">More framework features</option>
+              </select>
+            </div>
+          </div>
+          <div class="check-grid">
+            <label class="check">
+              <input id="include-internals" type="checkbox" checked>
+              <span><strong>Show internal engine names</strong><span>Include concrete classes like `AnnotationConfigApplicationContext`, `RequestMappingHandlerAdapter`, and `TransactionInterceptor`.</span></span>
+            </label>
+            <label class="check">
+              <input id="include-code" type="checkbox" checked>
+              <span><strong>Show code snippets</strong><span>Render a compact side-by-side code view for the selected scenario.</span></span>
+            </label>
+            <label class="check">
+              <input id="include-tradeoffs" type="checkbox" checked>
+              <span><strong>Call out tradeoffs</strong><span>Explicitly list what Spring Boot automates and what Spring Lite keeps visible.</span></span>
+            </label>
+          </div>
+          <button class="action-btn" id="refresh-dashboard" type="button">Refresh comparison</button>
+        </div>
+      </aside>
+
+      <main class="panel lab">
+        <h2 id="scenario-title">DI Comparison</h2>
+        <p id="scenario-desc">
+          Compare how constructor injection, `@Qualifier`, and `@Value` feel when the runtime is deliberately small
+          versus when it is backed by Spring Boot's broader infrastructure.
+        </p>
+        <div class="metrics">
+          <div class="metric">
+            <strong>Concept overlap</strong>
+            <div class="value" id="metric-overlap">-</div>
+            <span>How much of the learning model is shared between both runtimes.</span>
+          </div>
+          <div class="metric">
+            <strong>Spring Lite surface</strong>
+            <div class="value" id="metric-lite">-</div>
+            <span>How explicit the internal machinery remains in the smaller implementation.</span>
+          </div>
+          <div class="metric">
+            <strong>Spring Boot automation</strong>
+            <div class="value" id="metric-spring">-</div>
+            <span>How much setup and indirection the full framework absorbs for you.</span>
+          </div>
+          <div class="metric">
+            <strong>Best learning use</strong>
+            <div class="value" id="metric-learning">-</div>
+            <span>Where this scenario is best used during study.</span>
+          </div>
+        </div>
+
+        <div class="compare-grid">
+          <section class="compare-card lite">
+            <div class="card-head">
+              <h3>Spring Lite</h3>
+              <span class="tag lite">smaller runtime</span>
+            </div>
+            <p id="lite-explainer"></p>
+            <div class="code-block" id="lite-code"></div>
+            <div class="bullet-list" id="lite-bullets"></div>
+          </section>
+
+          <section class="compare-card spring">
+            <div class="card-head">
+              <h3>Spring Boot</h3>
+              <span class="tag spring">full framework</span>
+            </div>
+            <p id="spring-explainer"></p>
+            <div class="code-block" id="spring-code"></div>
+            <div class="bullet-list" id="spring-bullets"></div>
+          </section>
+        </div>
+
+        <div class="lane" id="comparison-lanes"></div>
+        <div class="summary" id="comparison-summary"></div>
+
+        <div class="footer-note">
+          Use this dashboard with
+          [sample-scenarios/01-di/README.md](/Users/hammac/Projects/spring-lite/sample-scenarios/01-di/README.md),
+          [sample-scenarios/02-mvc/README.md](/Users/hammac/Projects/spring-lite/sample-scenarios/02-mvc/README.md),
+          [sample-scenarios/03-transaction/README.md](/Users/hammac/Projects/spring-lite/sample-scenarios/03-transaction/README.md),
+          [comparison-spring-lite-app/README.md](/Users/hammac/Projects/spring-lite/comparison-spring-lite-app/README.md),
+          and [comparison-spring-boot-app/README.md](/Users/hammac/Projects/spring-lite/comparison-spring-boot-app/README.md).
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const tabs = {
+      di: document.getElementById("tab-di"),
+      mvc: document.getElementById("tab-mvc"),
+      tx: document.getElementById("tab-tx")
+    };
+
+    let currentScenario = "di";
+
+    const scenarios = {
+      di: {
+        title: "DI Comparison",
+        desc: "Compare how constructor injection, qualifier resolution, and property-backed values are assembled in each runtime.",
+        metrics: { overlap: "high", lite: "explicit", spring: "high", learning: "first" },
+        liteExplainer: "Spring Lite keeps dependency resolution close to the surface. You can usually trace bean registration, candidate selection, and value conversion directly through the context code.",
+        springExplainer: "Spring Boot exposes the same user-facing programming model, but the supporting layers are broader: environment abstraction, bean factory policies, conditions, and auto-configuration sit beneath the same annotations.",
+        liteCode: `@Configuration\nclass GreetingConfig {\n  @Bean\n  GreetingService greetingService(\n      @Qualifier("specialFormatter") Formatter formatter,\n      @Value("\${app.greeting}") String message\n  ) {\n    return new DefaultGreetingService(formatter, message);\n  }\n}`,
+        springCode: `@SpringBootApplication\nclass GreetingApplication {\n  @Bean\n  GreetingService greetingService(\n      @Qualifier("specialFormatter") Formatter formatter,\n      @Value("\${app.greeting}") String message\n  ) {\n    return new DefaultGreetingService(formatter, message);\n  }\n}`,
+        liteBullets: [
+          "BeanDefinition registration and dependency resolution are part of the learning surface.",
+          "`PropertyResolver` and `DefaultConversionService` are easy to inspect end to end.",
+          "Conditional behavior exists, but is intentionally narrower and easier to trace."
+        ],
+        springBullets: [
+          "The public coding style stays almost identical, which makes the conceptual bridge strong.",
+          "The runtime layers are deeper: environment, factory post-processors, conditions, profiles, auto-configuration.",
+          "This is what you want in production, but it hides more machinery from first-time learners."
+        ],
+        lanes: {
+          shared: [
+            "constructor injection",
+            "@Qualifier",
+            "@Value",
+            "context bootstrap"
+          ],
+          lite: [
+            "AnnotationConfigApplicationContext",
+            "resolveDependency(...)",
+            "PropertyResolver",
+            "DefaultConversionService"
+          ],
+          spring: [
+            "ApplicationContext + BeanFactory stack",
+            "Environment / PropertySources",
+            "Autowire candidate resolution",
+            "Auto-configuration context"
+          ],
+          tradeoff: [
+            "Spring Lite exposes the mechanism",
+            "Spring Boot hides boilerplate and adds policy layers"
+          ]
+        }
+      },
+      mvc: {
+        title: "MVC Comparison",
+        desc: "Compare how HTTP requests turn into controller method invocations, validation, exception handling, and JSON responses.",
+        metrics: { overlap: "high", lite: "visible", spring: "very-high", learning: "second" },
+        liteExplainer: "Spring Lite's MVC path is compact enough that `DispatcherServlet`, `RequestMappingHandlerMapping`, and `RequestMappingHandlerAdapter` can be read almost as the whole story.",
+        springExplainer: "Spring MVC follows the same front controller architecture, but with more adapter types, converters, resolvers, content negotiation rules, and compatibility behaviors.",
+        liteCode: `@RestController\n@RequestMapping("/greetings")\nclass GreetingController {\n  @GetMapping("/{id}")\n  GreetingResponse greet(@PathVariable Long id,\n      @RequestParam String name) {\n    return new GreetingResponse("hello " + name + " #" + id);\n  }\n}`,
+        springCode: `@RestController\n@RequestMapping("/greetings")\nclass GreetingController {\n  @GetMapping("/{id}")\n  GreetingResponse greet(@PathVariable Long id,\n      @RequestParam String name) {\n    return new GreetingResponse("hello " + name + " #" + id);\n  }\n}`,
+        liteBullets: [
+          "The runtime path is short enough to hold in your head: mapping -> adapter -> argument resolver -> validator -> controller -> return value handler.",
+          "Exception rules are simplified, so branch behavior is easier to correlate with tests.",
+          "This is ideal when learning what Spring MVC is fundamentally doing."
+        ],
+        springBullets: [
+          "The architecture is recognizably the same, but the ecosystem of resolvers and converters is much richer.",
+          "Production behavior includes many more edge cases: media types, conversion rules, message converters, global exception layers.",
+          "This is where the simplified model pays off as a mental primer."
+        ],
+        lanes: {
+          shared: [
+            "DispatcherServlet",
+            "RequestMappingHandlerMapping",
+            "RequestMappingHandlerAdapter",
+            "controller method"
+          ],
+          lite: [
+            "RequestBodyArgumentResolver",
+            "SimpleValidator",
+            "JsonReturnValueHandler",
+            "DefaultExceptionResolver"
+          ],
+          spring: [
+            "HttpMessageConverter stack",
+            "HandlerMethodArgumentResolver composite",
+            "Bean Validation integration",
+            "ExceptionHandlerExceptionResolver"
+          ],
+          tradeoff: [
+            "Spring Lite clarifies the core pipeline",
+            "Spring Boot adds breadth, defaults, and integration depth"
+          ]
+        }
+      },
+      tx: {
+        title: "Transaction Comparison",
+        desc: "Compare how a service method becomes transactional, how rollback rules are chosen, and how JDBC work is attached to the current context.",
+        metrics: { overlap: "medium-high", lite: "traceable", spring: "very-high", learning: "third" },
+        liteExplainer: "Spring Lite makes transaction boundaries easy to trace because the proxy, interceptor, and manager are all small and deliberately focused.",
+        springExplainer: "Spring Boot uses the same high-level annotation model but delegates through a deeper stack, including transaction attributes, manager strategies, and broader integration points.",
+        liteCode: `class OrderServiceImpl implements OrderService {\n  @Transactional\n  public Order createOrder(String product, int quantity) {\n    return repository.save(product, quantity);\n  }\n}`,
+        springCode: `@Service\nclass OrderServiceImpl implements OrderService {\n  @Transactional\n  public Order createOrder(String product, int quantity) {\n    return repository.save(product, quantity);\n  }\n}`,
+        liteBullets: [
+          "You can see exactly where begin, commit, rollback, and rollback-only decisions happen.",
+          "Nested REQUIRED behavior is small enough to visualize directly.",
+          "Excellent for learning why proxy-based transactions behave the way they do."
+        ],
+        springBullets: [
+          "The user annotation is the same, but the runtime policy space is much broader.",
+          "Spring's transaction stack integrates with more manager types, propagation rules, and data technologies.",
+          "After learning the small model, the large one becomes much easier to navigate."
+        ],
+        lanes: {
+          shared: [
+            "@Transactional",
+            "proxy invocation",
+            "target method",
+            "commit or rollback"
+          ],
+          lite: [
+            "TransactionalBeanPostProcessor",
+            "TransactionInterceptor",
+            "TransactionManager",
+            "JdbcTemplate connection reuse"
+          ],
+          spring: [
+            "TransactionInterceptor",
+            "TransactionAspectSupport",
+            "PlatformTransactionManager",
+            "transaction attribute resolution"
+          ],
+          tradeoff: [
+            "Spring Lite shows the boundary mechanics clearly",
+            "Spring Boot supplies industrial-scale transaction infrastructure"
+          ]
+        }
+      }
+    };
+
+    function renderBullets(id, items) {
+      document.getElementById(id).innerHTML = items.map((item) => `<div class="bullet">${item}</div>`).join("");
+    }
+
+    function renderLanes(lanes, includeInternals, includeTradeoffs) {
+      const rows = [
+        {
+          label: "Shared Concepts",
+          detail: "What transfers directly between both runtimes.",
+          events: lanes.shared.map((text) => ({ text, kind: "shared" }))
+        }
+      ];
+
+      if (includeInternals) {
+        rows.push(
+          {
+            label: "Spring Lite Internals",
+            detail: "The smaller engine pieces you can read directly.",
+            events: lanes.lite.map((text) => ({ text, kind: "lite" }))
+          },
+          {
+            label: "Spring Boot Internals",
+            detail: "The fuller engine stack carrying the same user-facing feature.",
+            events: lanes.spring.map((text) => ({ text, kind: "spring" }))
+          }
+        );
+      }
+
+      if (includeTradeoffs) {
+        rows.push({
+          label: "Tradeoff",
+          detail: "What each side optimizes for.",
+          events: lanes.tradeoff.map((text) => ({ text, kind: "warn" }))
+        });
+      }
+
+      document.getElementById("comparison-lanes").innerHTML = rows.map((lane) => `
+        <div class="lane-row">
+          <div class="lane-label"><strong>${lane.label}</strong><br>${lane.detail}</div>
+          <div class="lane-track">
+            ${lane.events.map((event) => `<span class="event ${event.kind}">${event.text}</span>`).join("")}
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderScenario() {
+      const level = document.getElementById("level").value;
+      const strength = document.getElementById("scenario-strength").value;
+      const includeInternals = document.getElementById("include-internals").checked;
+      const includeCode = document.getElementById("include-code").checked;
+      const includeTradeoffs = document.getElementById("include-tradeoffs").checked;
+      const scenario = scenarios[currentScenario];
+
+      Object.entries(tabs).forEach(([key, button]) => button.classList.toggle("active", key === currentScenario));
+
+      document.getElementById("scenario-title").textContent = scenario.title;
+      document.getElementById("scenario-desc").textContent = scenario.desc;
+
+      document.getElementById("metric-overlap").textContent = scenario.metrics.overlap;
+      document.getElementById("metric-lite").textContent = scenario.metrics.lite;
+      document.getElementById("metric-spring").textContent = scenario.metrics.spring;
+      document.getElementById("metric-learning").textContent = scenario.metrics.learning;
+
+      document.getElementById("lite-explainer").textContent = scenario.liteExplainer;
+      document.getElementById("spring-explainer").textContent = scenario.springExplainer;
+      document.getElementById("lite-code").textContent = includeCode ? scenario.liteCode : "Code view hidden. Enable “Show code snippets” to compare the surface API.";
+      document.getElementById("spring-code").textContent = includeCode ? scenario.springCode : "Code view hidden. Enable “Show code snippets” to compare the surface API.";
+      renderBullets("lite-bullets", scenario.liteBullets);
+      renderBullets("spring-bullets", scenario.springBullets);
+
+      renderLanes(scenario.lanes, includeInternals, includeTradeoffs);
+
+      document.getElementById("comparison-summary").textContent =
+`comparison dashboard
+- scenario: ${currentScenario}
+- detail level: ${level}
+- scenario strength: ${strength}
+- include internals: ${includeInternals}
+- include code snippets: ${includeCode}
+- include tradeoffs: ${includeTradeoffs}
+
+interpretation
+- "concept overlap" tells you how much learning transfers 1:1.
+- "spring-lite surface" reflects how much machinery remains inspectable.
+- "spring boot automation" reflects how much setup and policy the framework absorbs.
+- best study order is DI -> MVC -> Transaction so the runtime stack grows in manageable layers.`;
+    }
+
+    tabs.di.addEventListener("click", () => { currentScenario = "di"; renderScenario(); });
+    tabs.mvc.addEventListener("click", () => { currentScenario = "mvc"; renderScenario(); });
+    tabs.tx.addEventListener("click", () => { currentScenario = "tx"; renderScenario(); });
+    document.getElementById("refresh-dashboard").addEventListener("click", renderScenario);
+
+    renderScenario();
+  </script>
+</body>
+</html>
