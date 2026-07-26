@@ -470,6 +470,26 @@
       white-space: pre-wrap;
     }
 
+    .step-detail {
+      margin-top: 18px;
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: rgba(211, 226, 245, 0.38);
+      border: 1px solid var(--line);
+    }
+
+    .step-detail h3 {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+
+    .step-detail p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
     .footer-note {
       margin-top: 22px;
       padding: 16px 18px;
@@ -706,6 +726,7 @@
             </div>
           </div>
           <div class="timeline" id="aop-timeline"></div>
+          <div class="step-detail" id="aop-step-detail"></div>
           <div class="lane" id="aop-lanes"></div>
           <div class="code" id="aop-summary"></div>
         </section>
@@ -734,6 +755,7 @@
             </div>
           </div>
           <div class="timeline" id="mvc-timeline"></div>
+          <div class="step-detail" id="mvc-step-detail"></div>
           <div class="lane" id="mvc-lanes"></div>
           <div class="code" id="mvc-summary"></div>
         </section>
@@ -788,6 +810,16 @@
       mvc: document.getElementById("playground-ref-web"),
       tests: document.getElementById("playground-ref-tests")
     };
+    const playgroundStepDetails = {
+      aop: {
+        title: "Advice And Transaction Stage",
+        text: "This step is part of the proxy chain around the target method. Read `AspectBeanPostProcessor.java`, then verify ordering in `AspectBeanPostProcessorTest.java` and `TransactionManagerTest.java`."
+      },
+      mvc: {
+        title: "MVC Dispatch Stage",
+        text: "This step belongs to request dispatch, argument binding, validation, or exception resolution. Read `DispatcherServlet.java` and match it with the branch covered in `DispatcherServletTest.java`."
+      }
+    };
 
     function highlightLinks(container, focus) {
       container.querySelectorAll(".resource-link").forEach((link) => {
@@ -803,6 +835,11 @@
       highlightLinks(playgroundReferenceCards.aop, name);
       highlightLinks(playgroundReferenceCards.mvc, name);
       highlightLinks(playgroundReferenceCards.tests, name);
+    }
+
+    function updatePlaygroundStepDetail(tab) {
+      const detail = playgroundStepDetails[tab];
+      document.getElementById(`${tab}-step-detail`).innerHTML = `<h3>${detail.title}</h3><p>${detail.text}</p>`;
     }
 
     function setTab(name) {
@@ -841,12 +878,14 @@
           steps.forEach((candidate) => candidate.classList.remove("active"));
           step.classList.add("active");
           updateReferenceFocus(activeTab);
+          updatePlaygroundStepDetail(activeTab);
         });
         if (index === 0) {
           step.classList.add("active");
           playgroundSelectedFocus = step.dataset.stepFocus || null;
         }
       });
+      updatePlaygroundStepDetail(activeTab);
     }
 
     function renderLanes(container, lanes) {

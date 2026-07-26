@@ -428,6 +428,26 @@
       overflow: auto;
     }
 
+    .step-detail {
+      margin-top: 18px;
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: rgba(244, 208, 189, 0.38);
+      border: 1px solid var(--line);
+    }
+
+    .step-detail h3 {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+
+    .step-detail p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
     .footer-note {
       margin-top: 20px;
       padding: 16px 18px;
@@ -610,6 +630,7 @@
           </div>
         </div>
         <div class="timeline" id="flow-timeline"></div>
+        <div class="step-detail" id="flow-step-detail"></div>
         <div class="lane" id="flow-lanes"></div>
         <div class="code" id="flow-summary"></div>
         <div class="footer-note">
@@ -656,6 +677,36 @@
       framework: document.getElementById("flow-ref-framework"),
       tests: document.getElementById("flow-ref-tests")
     };
+    const flowStepDetails = {
+      create: {
+        title: "Create Order Path",
+        text: "This step belongs to the normal `POST /orders` flow. Read `OrderController.java` and `DefaultOrderService.java`, then confirm the branch in `ExampleApplicationTest.java`."
+      },
+      list: {
+        title: "List Orders Path",
+        text: "This step belongs to the read-only list flow. Read `OrderController.java` and `JdbcOrderRepository.java`, then compare with the seeded-list assertions."
+      },
+      getById: {
+        title: "Get Order By Id Path",
+        text: "This step belongs to fetching a single order. Focus on `DefaultOrderService#getOrder` and the repository mapping path."
+      },
+      validation: {
+        title: "Validation Branch",
+        text: "This step stops before the service layer. Read `DispatcherServlet.java` and `ExampleApplicationWebTest.java` to see why the request fails early."
+      },
+      notFound: {
+        title: "Unknown Order Branch",
+        text: "This step is a service lookup failure. Read `DefaultOrderService.java` and the `throwsForUnknownOrderId` test in `ExampleApplicationTest.java`."
+      },
+      serviceError: {
+        title: "Service Exception Branch",
+        text: "This step represents business logic failure after controller entry. Use it to reason about proxy exit and transaction failure handling."
+      },
+      rollback: {
+        title: "Rollback Branch",
+        text: "This step highlights where SQL work has started but the transaction still aborts. Read `TransactionManager.java` and `JdbcTemplate.java` together."
+      }
+    };
 
     function updateFlowReferences(requestKind, scenario) {
       const focus = requestKind === "create"
@@ -672,6 +723,11 @@
           link.classList.toggle("active", groups.includes(focus));
         });
       });
+    }
+
+    function updateFlowStepDetail(focus) {
+      const detail = flowStepDetails[focus] || flowStepDetails.create;
+      document.getElementById("flow-step-detail").innerHTML = `<h3>${detail.title}</h3><p>${detail.text}</p>`;
     }
 
     function renderSteps(steps) {
@@ -693,11 +749,13 @@
           const requestKind = document.getElementById("request-kind").value;
           const scenario = item.dataset.stepFocus || document.getElementById("flow-scenario").value;
           updateFlowReferences(requestKind, scenario);
+          updateFlowStepDetail(scenario);
         });
         if (index === 0) {
           item.classList.add("active");
         }
       });
+      updateFlowStepDetail(steps[0]?.focus);
     }
 
     function renderLanes(lanes) {

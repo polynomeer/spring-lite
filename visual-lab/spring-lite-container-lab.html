@@ -475,6 +475,26 @@
       overflow: auto;
     }
 
+    .step-detail {
+      margin-top: 18px;
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: rgba(205, 229, 224, 0.38);
+      border: 1px solid var(--line);
+    }
+
+    .step-detail h3 {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+
+    .step-detail p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
     .footer-note {
       margin-top: 22px;
       padding: 16px 18px;
@@ -723,6 +743,7 @@
             </div>
           </div>
           <div class="timeline" id="boot-timeline"></div>
+          <div class="step-detail" id="boot-step-detail"></div>
           <div class="lane" id="boot-lanes"></div>
           <div class="code" id="boot-summary"></div>
         </section>
@@ -751,6 +772,7 @@
             </div>
           </div>
           <div class="timeline" id="life-timeline"></div>
+          <div class="step-detail" id="life-step-detail"></div>
           <div class="lane" id="life-lanes"></div>
           <div class="code" id="life-summary"></div>
         </section>
@@ -804,6 +826,16 @@
       boot: document.getElementById("container-ref-boot"),
       tests: document.getElementById("container-ref-tests")
     };
+    const containerStepDetails = {
+      bootstrap: {
+        title: "Bootstrap Phase",
+        text: "This step is part of context startup. Read `SpringLiteApplication.java`, then follow the refresh path in `AnnotationConfigApplicationContext.java` and compare with `SpringLiteApplicationTest.java`."
+      },
+      lifecycle: {
+        title: "Bean Lifecycle Phase",
+        text: "This step belongs to one bean’s construction, initialization, or shutdown. Read `AnnotationConfigApplicationContext.java` and the corresponding assertions in `AnnotationConfigApplicationContextTest.java`."
+      }
+    };
 
     function updateContainerReferences(focus) {
       containerReferenceCards.core.classList.add("active");
@@ -815,6 +847,12 @@
           link.classList.toggle("active", groups.includes(focus));
         });
       });
+    }
+
+    function updateContainerStepDetail(focus) {
+      const detail = containerStepDetails[focus] || containerStepDetails.bootstrap;
+      const target = focus === "lifecycle" ? "life-step-detail" : "boot-step-detail";
+      document.getElementById(target).innerHTML = `<h3>${detail.title}</h3><p>${detail.text}</p>`;
     }
 
     function setTab(name) {
@@ -848,11 +886,13 @@
           items.forEach((candidate) => candidate.classList.remove("active"));
           item.classList.add("active");
           updateContainerReferences(item.dataset.stepFocus || focus);
+          updateContainerStepDetail(item.dataset.stepFocus || focus);
         });
         if (index === 0) {
           item.classList.add("active");
         }
       });
+      updateContainerStepDetail(focus);
     }
 
     function renderLanes(containerId, lanes) {
