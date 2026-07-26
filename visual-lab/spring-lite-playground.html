@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spring Lite Playground</title>
+  <style>
+    :root {
+      --bg: #f5efe3;
+      --surface: #fffaf2;
+      --surface-strong: #f2e5cc;
+      --text: #1e2430;
+      --muted: #5d6472;
+      --line: #dccfb8;
+      --primary: #b44f2d;
+      --primary-soft: #f4cbb3;
+      --secondary: #205c54;
+      --secondary-soft: #c9e4df;
+      --accent: #264f86;
+      --accent-soft: #d3e2f5;
+      --danger: #9c2f2f;
+      --danger-soft: #f6d0d0;
+      --shadow: 0 18px 40px rgba(52, 39, 19, 0.12);
+      --radius: 22px;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      --sans: "Avenir Next", "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(180, 79, 45, 0.18), transparent 28%),
+        radial-gradient(circle at top right, rgba(38, 79, 134, 0.16), transparent 22%),
+        linear-gradient(180deg, #fcf8f0 0%, var(--bg) 100%);
+    }
+
+    .page {
+      width: min(1200px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 28px 0 48px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, rgba(180, 79, 45, 0.94), rgba(38, 79, 134, 0.94));
+      color: #fff8f0;
+      border-radius: 30px;
+      padding: 28px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -40px -50px auto;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: rgba(255, 248, 240, 0.12);
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(32px, 5vw, 54px);
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 760px;
+      color: rgba(255, 248, 240, 0.88);
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    .hero-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .hero-badges span {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 248, 240, 0.18);
+      font-size: 13px;
+      letter-spacing: 0.02em;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 22px;
+      margin-top: 22px;
+    }
+
+    .panel {
+      background: rgba(255, 250, 242, 0.86);
+      border: 1px solid rgba(220, 207, 184, 0.8);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .controls {
+      padding: 18px;
+      position: sticky;
+      top: 18px;
+      align-self: start;
+    }
+
+    .section {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section:last-child {
+      border-bottom: 0;
+    }
+
+    .section h2,
+    .lab h2 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .section p,
+    .lab p,
+    .note {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .tab-btn,
+    .action-btn {
+      border: 0;
+      cursor: pointer;
+      font: inherit;
+      border-radius: 14px;
+      transition: transform 120ms ease, opacity 120ms ease, background 120ms ease;
+    }
+
+    .tab-btn {
+      padding: 12px;
+      background: #f0e6d4;
+      color: var(--text);
+      text-align: left;
+      min-height: 72px;
+    }
+
+    .tab-btn strong,
+    .metric strong {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .tab-btn span {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .tab-btn.active {
+      background: var(--primary);
+      color: #fff7f0;
+      transform: translateY(-1px);
+    }
+
+    .tab-btn.active span {
+      color: rgba(255, 247, 240, 0.82);
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 11px 12px;
+      background: #fffdf8;
+      color: var(--text);
+      font: inherit;
+    }
+
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .check-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .check {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 10px 12px;
+      background: #fffdf8;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+    }
+
+    .check input {
+      width: 16px;
+      height: 16px;
+      margin-top: 2px;
+    }
+
+    .check strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .check span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .action-btn {
+      width: 100%;
+      margin-top: 14px;
+      padding: 13px 14px;
+      background: var(--secondary);
+      color: #f7fffd;
+    }
+
+    .action-btn:hover,
+    .tab-btn:hover {
+      opacity: 0.94;
+      transform: translateY(-1px);
+    }
+
+    .labs {
+      display: grid;
+      gap: 18px;
+    }
+
+    .lab {
+      padding: 20px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .metric {
+      padding: 14px;
+      border-radius: 18px;
+      background: #fffdf8;
+      border: 1px solid var(--line);
+    }
+
+    .metric .value {
+      font-size: 28px;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      margin-bottom: 6px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .step {
+      position: relative;
+      display: grid;
+      grid-template-columns: 28px 1fr auto;
+      gap: 12px;
+      align-items: start;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: #fffdf8;
+      border: 1px solid var(--line);
+      overflow: hidden;
+    }
+
+    .step::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 5px;
+      background: var(--accent);
+    }
+
+    .step.tx::before {
+      background: var(--secondary);
+    }
+
+    .step.error::before {
+      background: var(--danger);
+    }
+
+    .step .index {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent-soft);
+      color: var(--accent);
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .step.tx .index {
+      background: var(--secondary-soft);
+      color: var(--secondary);
+    }
+
+    .step.error .index {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .step strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .step p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-family: var(--mono);
+      background: var(--surface-strong);
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .lane {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .lane-row {
+      display: grid;
+      grid-template-columns: 170px 1fr;
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .lane-label {
+      padding: 14px;
+      border-radius: 16px;
+      background: #f3e8d5;
+      border: 1px solid var(--line);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .lane-track {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 14px;
+      border-radius: 16px;
+      background: #fffdf8;
+      border: 1px solid var(--line);
+      min-height: 62px;
+    }
+
+    .event {
+      padding: 9px 11px;
+      border-radius: 12px;
+      font-size: 12px;
+      background: var(--primary-soft);
+      color: #5a230f;
+    }
+
+    .event.secondary {
+      background: var(--accent-soft);
+      color: #183d73;
+    }
+
+    .event.success {
+      background: var(--secondary-soft);
+      color: #1d5a51;
+    }
+
+    .event.error {
+      background: var(--danger-soft);
+      color: #7a2020;
+    }
+
+    .code {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 18px;
+      background: #201b17;
+      color: #f7eee4;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.6;
+      overflow: auto;
+      white-space: pre-wrap;
+    }
+
+    .footer-note {
+      margin-top: 22px;
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: rgba(255, 250, 242, 0.74);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 980px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .controls {
+        position: static;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .metrics,
+      .tabs {
+        grid-template-columns: 1fr;
+      }
+
+      .lane-row,
+      .step {
+        grid-template-columns: 1fr;
+      }
+
+      .step .index {
+        margin-bottom: 6px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <h1>Spring Lite Playground</h1>
+      <p>
+        A small learning dashboard for the two parts that feel most "magical" in Spring-style frameworks:
+        proxy-based AOP and request dispatch. Change the inputs, rerun the flow, and watch the internal
+        pipeline shift step by step.
+      </p>
+      <div class="hero-badges">
+        <span>Container mental model</span>
+        <span>AOP and transaction chain</span>
+        <span>MVC request lab</span>
+        <span>Maps to spring-lite source code</span>
+      </div>
+    </section>
+
+    <div class="grid">
+      <aside class="panel controls">
+        <div class="section">
+          <h2>Choose Lab</h2>
+          <p>Switch between the interceptor chain simulator and the MVC request pipeline lab.</p>
+          <div class="tabs">
+            <button class="tab-btn active" id="tab-aop" type="button">
+              <strong>AOP + Tx Chain</strong>
+              <span>Before, around, transaction, target, after-returning.</span>
+            </button>
+            <button class="tab-btn" id="tab-mvc" type="button">
+              <strong>MVC Request Lab</strong>
+              <span>Routing, binding, validation, controller, exception resolution.</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="section" id="controls-aop">
+          <h2>Interceptor Setup</h2>
+          <p>Toggle individual advice types and choose whether the target succeeds or fails.</p>
+          <div class="form-grid">
+            <div class="field">
+              <label for="aop-method">Method</label>
+              <input id="aop-method" type="text" value="createOrder">
+            </div>
+            <div class="field">
+              <label for="aop-result">Target outcome</label>
+              <select id="aop-result">
+                <option value="success">Success</option>
+                <option value="rollbackOnly">Success but mark rollback-only</option>
+                <option value="error">Throw exception</option>
+              </select>
+            </div>
+          </div>
+          <div class="check-grid">
+            <label class="check">
+              <input id="use-before" type="checkbox" checked>
+              <span><strong>@Before advice</strong><span>Records method intent before entering the target.</span></span>
+            </label>
+            <label class="check">
+              <input id="use-around" type="checkbox" checked>
+              <span><strong>@Around advice</strong><span>Wraps the target call and can alter the return value.</span></span>
+            </label>
+            <label class="check">
+              <input id="use-tx" type="checkbox" checked>
+              <span><strong>@Transactional interceptor</strong><span>Begins and completes the transaction boundary.</span></span>
+            </label>
+            <label class="check">
+              <input id="use-after" type="checkbox" checked>
+              <span><strong>@AfterReturning advice</strong><span>Runs only when the invocation returns successfully.</span></span>
+            </label>
+            <label class="check">
+              <input id="nested-call" type="checkbox">
+              <span><strong>Nested REQUIRED call</strong><span>Add an inner service call that joins the outer transaction.</span></span>
+            </label>
+          </div>
+          <button class="action-btn" id="run-aop" type="button">Run interceptor simulation</button>
+        </div>
+
+        <div class="section hidden" id="controls-mvc">
+          <h2>Request Setup</h2>
+          <p>Change the incoming request shape and observe which branch the DispatcherServlet takes.</p>
+          <div class="form-grid">
+            <div class="field">
+              <label for="mvc-method">HTTP method</label>
+              <select id="mvc-method">
+                <option value="POST">POST</option>
+                <option value="GET">GET</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="mvc-path">Request path</label>
+              <input id="mvc-path" type="text" value="/orders">
+            </div>
+            <div class="field">
+              <label for="mvc-query">Query string</label>
+              <input id="mvc-query" type="text" value="mode=create">
+            </div>
+            <div class="field">
+              <label for="mvc-content-type">Content-Type</label>
+              <select id="mvc-content-type">
+                <option value="application/json">application/json</option>
+                <option value="application/vnd.demo+json">application/vnd.demo+json</option>
+                <option value="text/plain">text/plain</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="mvc-body">Request body</label>
+              <textarea id="mvc-body">{"product":"book","quantity":2}</textarea>
+            </div>
+            <div class="field">
+              <label for="mvc-scenario">Expected controller behavior</label>
+              <select id="mvc-scenario">
+                <option value="success">Normal success</option>
+                <option value="validation">Validation failure</option>
+                <option value="illegalArgument">IllegalArgumentException</option>
+                <option value="handled">Handled by @ExceptionHandler</option>
+                <option value="missing">No route match</option>
+              </select>
+            </div>
+          </div>
+          <button class="action-btn" id="run-mvc" type="button">Run request simulation</button>
+        </div>
+      </aside>
+
+      <main class="labs">
+        <section class="panel lab" id="lab-aop">
+          <h2>AOP and Transaction Chain</h2>
+          <p>
+            This lab mirrors the flow tested in `AspectBeanPostProcessorTest`, `TransactionManagerTest`, and
+            `TransactionalAspectChainTest`. It shows the exact order in which each interceptor joins the call.
+          </p>
+          <div class="metrics">
+            <div class="metric">
+              <strong>Active steps</strong>
+              <div class="value" id="aop-step-count">0</div>
+              <span>How many distinct operations ran in the current call path.</span>
+            </div>
+            <div class="metric">
+              <strong>Final status</strong>
+              <div class="value" id="aop-status">-</div>
+              <span>Committed, rolled back, or rethrown to the caller.</span>
+            </div>
+            <div class="metric">
+              <strong>Tx depth peak</strong>
+              <div class="value" id="aop-depth">0</div>
+              <span>Highest nested transaction depth reached during the run.</span>
+            </div>
+          </div>
+          <div class="timeline" id="aop-timeline"></div>
+          <div class="lane" id="aop-lanes"></div>
+          <div class="code" id="aop-summary"></div>
+        </section>
+
+        <section class="panel lab hidden" id="lab-mvc">
+          <h2>MVC Request Pipeline</h2>
+          <p>
+            This lab mirrors the flow covered by `DispatcherServletTest`, `ArgumentResolverTest`, and
+            `DefaultExceptionResolverTest`. It shows how a request becomes a controller method call and response.
+          </p>
+          <div class="metrics">
+            <div class="metric">
+              <strong>Matched route</strong>
+              <div class="value" id="mvc-match">-</div>
+              <span>Whether `HandlerMapping` found a compatible controller method.</span>
+            </div>
+            <div class="metric">
+              <strong>Status code</strong>
+              <div class="value" id="mvc-status">-</div>
+              <span>Final HTTP status emitted by the simulated response pipeline.</span>
+            </div>
+            <div class="metric">
+              <strong>Validation</strong>
+              <div class="value" id="mvc-validation">-</div>
+              <span>Whether argument binding reached the controller or failed earlier.</span>
+            </div>
+          </div>
+          <div class="timeline" id="mvc-timeline"></div>
+          <div class="lane" id="mvc-lanes"></div>
+          <div class="code" id="mvc-summary"></div>
+        </section>
+
+        <div class="footer-note">
+          This page is intentionally simplified. It explains the runtime contract rather than replicating the
+          entire framework. Use it together with `docs/architecture/visual-architecture-guide.md`,
+          `docs/architecture/runtime-sequence-diagrams.md`, and the module test suite.
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const tabAop = document.getElementById("tab-aop");
+    const tabMvc = document.getElementById("tab-mvc");
+    const controlsAop = document.getElementById("controls-aop");
+    const controlsMvc = document.getElementById("controls-mvc");
+    const labAop = document.getElementById("lab-aop");
+    const labMvc = document.getElementById("lab-mvc");
+
+    function setTab(name) {
+      const aop = name === "aop";
+      tabAop.classList.toggle("active", aop);
+      tabMvc.classList.toggle("active", !aop);
+      controlsAop.classList.toggle("hidden", !aop);
+      controlsMvc.classList.toggle("hidden", aop);
+      labAop.classList.toggle("hidden", !aop);
+      labMvc.classList.toggle("hidden", aop);
+    }
+
+    tabAop.addEventListener("click", () => setTab("aop"));
+    tabMvc.addEventListener("click", () => setTab("mvc"));
+
+    function stepTemplate(step, index) {
+      return `
+        <article class="step ${step.kind}">
+          <div class="index">${index + 1}</div>
+          <div>
+            <strong>${step.title}</strong>
+            <p>${step.body}</p>
+          </div>
+          <div class="chip">${step.marker}</div>
+        </article>
+      `;
+    }
+
+    function renderLanes(container, lanes) {
+      container.innerHTML = lanes.map((lane) => `
+        <div class="lane-row">
+          <div class="lane-label"><strong>${lane.label}</strong><br>${lane.detail}</div>
+          <div class="lane-track">
+            ${lane.events.map((event) => `<span class="event ${event.kind}">${event.text}</span>`).join("")}
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function runAopSimulation() {
+      const method = document.getElementById("aop-method").value.trim() || "serviceMethod";
+      const outcome = document.getElementById("aop-result").value;
+      const useBefore = document.getElementById("use-before").checked;
+      const useAround = document.getElementById("use-around").checked;
+      const useTx = document.getElementById("use-tx").checked;
+      const useAfter = document.getElementById("use-after").checked;
+      const nestedCall = document.getElementById("nested-call").checked;
+
+      const steps = [];
+      const callerEvents = [{ text: "proxy.invoke", kind: "secondary" }];
+      const proxyEvents = [];
+      const txEvents = [];
+      const targetEvents = [];
+      let depthPeak = 0;
+      let finalStatus = "returned";
+
+      function addStep(kind, title, body, marker) {
+        steps.push({ kind, title, body, marker });
+      }
+
+      if (useBefore) {
+        addStep("info", "@Before advice", "The advice sees the method name before any business logic runs.", "before()");
+        proxyEvents.push({ text: "@Before", kind: "secondary" });
+      }
+
+      if (useAround) {
+        addStep("info", "@Around enters", "Around advice opens the wrapper and decides when to call proceed().", "around-enter");
+        proxyEvents.push({ text: "@Around enter", kind: "secondary" });
+      }
+
+      if (useTx) {
+        addStep("tx", "Transaction begins", "TransactionManager creates or reuses the root transaction context.", "begin()");
+        txEvents.push({ text: "begin depth=1", kind: "success" });
+        depthPeak = 1;
+      }
+
+      addStep("info", "Target method enters", `The proxy calls the target method \`${method}(...)\`.`, "target()");
+      targetEvents.push({ text: method, kind: "success" });
+
+      if (nestedCall && useTx) {
+        addStep("tx", "Nested REQUIRED join", "An inner service call joins the same transaction and only increases depth.", "depth=2");
+        txEvents.push({ text: "nested begin depth=2", kind: "success" });
+        targetEvents.push({ text: "innerService.save()", kind: "secondary" });
+        depthPeak = 2;
+      }
+
+      if (outcome === "error") {
+        addStep("error", "Target throws exception", "The business method fails and bubbles an exception back into the interceptor chain.", "throw");
+        targetEvents.push({ text: "IllegalStateException", kind: "error" });
+        if (useTx) {
+          addStep("error", "Transaction rolls back", "The interceptor marks the transaction for rollback and closes the boundary with rollback().", "rollback()");
+          txEvents.push({ text: "rollback", kind: "error" });
+        }
+        finalStatus = "rethrow";
+      } else if (outcome === "rollbackOnly") {
+        addStep("tx", "Rollback-only flagged", "The target returned normally but marked the current transaction as rollback-only.", "setRollbackOnly");
+        txEvents.push({ text: "rollbackOnly=true", kind: "error" });
+        if (useTx) {
+          addStep("error", "Outer commit becomes rollback", "The outer boundary tries to commit, sees rollback-only, and performs rollback instead.", "commit->rollback");
+          txEvents.push({ text: "outer commit => rollback", kind: "error" });
+        }
+        finalStatus = "rolledBack";
+      } else {
+        addStep("info", "Target returns value", "The target completes successfully and yields its return value back to the chain.", "return");
+        targetEvents.push({ text: "Order created", kind: "success" });
+        if (useTx) {
+          addStep("tx", "Transaction commits", "The outermost transactional boundary commits the JDBC connection.", "commit()");
+          txEvents.push({ text: "commit", kind: "success" });
+        }
+        if (useAfter) {
+          addStep("info", "@AfterReturning advice", "AfterReturning sees the successful return value and can record or transform metadata.", "afterReturning()");
+          proxyEvents.push({ text: "@AfterReturning", kind: "secondary" });
+        }
+        finalStatus = "committed";
+      }
+
+      if (useAround) {
+        if (outcome === "error") {
+          addStep("error", "@Around rethrows", "The around advice does not get a normal return value, so it rethrows the exception.", "around-throw");
+          proxyEvents.push({ text: "@Around throw", kind: "error" });
+        } else {
+          addStep("info", "@Around exits", "Around advice receives the value from proceed() and can decorate the final result.", "around-exit");
+          proxyEvents.push({ text: "@Around exit", kind: "secondary" });
+        }
+      }
+
+      callerEvents.push({
+        text: outcome === "error" ? "exception to caller" : "return to caller",
+        kind: outcome === "error" ? "error" : "success"
+      });
+
+      document.getElementById("aop-step-count").textContent = String(steps.length);
+      document.getElementById("aop-status").textContent = finalStatus;
+      document.getElementById("aop-depth").textContent = String(depthPeak);
+      document.getElementById("aop-timeline").innerHTML = steps.map(stepTemplate).join("");
+      renderLanes(document.getElementById("aop-lanes"), [
+        { label: "Caller", detail: "What the client sees at the boundary.", events: callerEvents },
+        { label: "Proxy / Advice", detail: "MethodInvocation chain and non-transaction advice.", events: proxyEvents.length ? proxyEvents : [{ text: "no extra advice", kind: "secondary" }] },
+        { label: "Transaction", detail: "Root boundary, nested depth, commit or rollback.", events: txEvents.length ? txEvents : [{ text: "transaction disabled", kind: "secondary" }] },
+        { label: "Target", detail: "Actual service method and optional nested call.", events: targetEvents }
+      ]);
+
+      document.getElementById("aop-summary").textContent =
+`source mapping
+- spring-lite-aop: AspectBeanPostProcessor, ProxyFactory, MethodInvocation
+- spring-lite-tx: TransactionalBeanPostProcessor, TransactionInterceptor, TransactionManager
+- test anchor: AspectBeanPostProcessorTest, TransactionManagerTest, TransactionalAspectChainTest
+
+current simulation
+- method: ${method}
+- before advice: ${useBefore}
+- around advice: ${useAround}
+- transactional interceptor: ${useTx}
+- after returning advice: ${useAfter}
+- nested REQUIRED call: ${nestedCall}
+- target outcome: ${outcome}
+- final status: ${finalStatus}
+- tx depth peak: ${depthPeak}`;
+    }
+
+    function parseBody(raw) {
+      try {
+        return { ok: true, value: JSON.parse(raw) };
+      } catch (error) {
+        return { ok: false, error };
+      }
+    }
+
+    function runMvcSimulation() {
+      const method = document.getElementById("mvc-method").value;
+      const path = document.getElementById("mvc-path").value.trim();
+      const query = document.getElementById("mvc-query").value.trim();
+      const contentType = document.getElementById("mvc-content-type").value;
+      const rawBody = document.getElementById("mvc-body").value;
+      const scenario = document.getElementById("mvc-scenario").value;
+
+      const steps = [];
+      const routerEvents = [{ text: `${method} ${path}`, kind: "secondary" }];
+      const bindingEvents = [];
+      const controllerEvents = [];
+      const responseEvents = [];
+
+      function addStep(kind, title, body, marker) {
+        steps.push({ kind, title, body, marker });
+      }
+
+      addStep("info", "DispatcherServlet receives request", "The HTTP exchange enters the central front controller.", "dispatch");
+
+      const routeMissing = scenario === "missing" || path !== "/orders" || (method === "GET" && path !== "/orders");
+      if (routeMissing) {
+        addStep("error", "No handler matched", "HandlerMapping cannot find a controller method whose path, HTTP method, and conditions match.", "404");
+        routerEvents.push({ text: "route miss", kind: "error" });
+        responseEvents.push({ text: "404 Not Found", kind: "error" });
+        document.getElementById("mvc-match").textContent = "no";
+        document.getElementById("mvc-status").textContent = "404";
+        document.getElementById("mvc-validation").textContent = "n/a";
+        document.getElementById("mvc-timeline").innerHTML = steps.map(stepTemplate).join("");
+        renderLanes(document.getElementById("mvc-lanes"), [
+          { label: "Routing", detail: "HandlerMapping phase.", events: routerEvents },
+          { label: "Binding", detail: "Argument resolution and validation.", events: [{ text: "skipped", kind: "secondary" }] },
+          { label: "Controller", detail: "Controller method invocation.", events: [{ text: "not reached", kind: "secondary" }] },
+          { label: "Response", detail: "ReturnValueHandler and error response.", events: responseEvents }
+        ]);
+        document.getElementById("mvc-summary").textContent =
+`source mapping
+- spring-lite-web: DispatcherServlet, RequestMappingHandlerMapping, DefaultExceptionResolver
+- test anchor: DispatcherServletTest, DefaultExceptionResolverTest
+
+current simulation
+- request: ${method} ${path}${query ? `?${query}` : ""}
+- content-type: ${contentType}
+- scenario: ${scenario}
+- matched route: no
+- final status: 404`;
+        return;
+      }
+
+      routerEvents.push({ text: "OrderController#createOrder", kind: "success" });
+      addStep("info", "Handler method selected", "RequestMappingHandlerMapping resolves the target controller method.", "handler");
+
+      if (method === "POST") {
+        const parsed = parseBody(rawBody);
+        if (!parsed.ok) {
+          addStep("error", "JSON parse failed", "RequestBodyArgumentResolver cannot deserialize the incoming JSON body.", "400");
+          bindingEvents.push({ text: "invalid JSON", kind: "error" });
+          responseEvents.push({ text: "400 malformed body", kind: "error" });
+          document.getElementById("mvc-match").textContent = "yes";
+          document.getElementById("mvc-status").textContent = "400";
+          document.getElementById("mvc-validation").textContent = "failed";
+          document.getElementById("mvc-timeline").innerHTML = steps.map(stepTemplate).join("");
+          renderLanes(document.getElementById("mvc-lanes"), [
+            { label: "Routing", detail: "HandlerMapping phase.", events: routerEvents },
+            { label: "Binding", detail: "Argument resolution and validation.", events: bindingEvents },
+            { label: "Controller", detail: "Controller method invocation.", events: [{ text: "not reached", kind: "secondary" }] },
+            { label: "Response", detail: "ReturnValueHandler and error response.", events: responseEvents }
+          ]);
+          document.getElementById("mvc-summary").textContent =
+`source mapping
+- spring-lite-web: RequestBodyArgumentResolver, JsonMapper
+- test anchor: ArgumentResolverTest, JsonMapperTest
+
+current simulation
+- request: ${method} ${path}${query ? `?${query}` : ""}
+- body parse: failed
+- final status: 400`;
+          return;
+        }
+
+        bindingEvents.push({ text: "json -> CreateOrderRequest", kind: "success" });
+        addStep("info", "Request body bound", "JsonMapper deserializes the body and the adapter prepares controller arguments.", "bind");
+      } else {
+        bindingEvents.push({ text: "query params resolved", kind: "success" });
+        addStep("info", "Query parameters resolved", "ArgumentResolver converts string query values into controller method parameters.", "param");
+      }
+
+      if (scenario === "validation") {
+        addStep("error", "Validation failed", "SimpleValidator rejects the request before the controller method is called.", "validation");
+        bindingEvents.push({ text: "quantity >= 1 failed", kind: "error" });
+        responseEvents.push({ text: "400 validation error", kind: "error" });
+        document.getElementById("mvc-match").textContent = "yes";
+        document.getElementById("mvc-status").textContent = "400";
+        document.getElementById("mvc-validation").textContent = "failed";
+      } else {
+        addStep("info", "Controller method invoked", "The adapter calls the controller with fully prepared arguments.", "invoke");
+        controllerEvents.push({ text: "controller entered", kind: "success" });
+
+        if (scenario === "illegalArgument") {
+          addStep("error", "Controller throws IllegalArgumentException", "DefaultExceptionResolver converts this into a 400 response.", "throw");
+          controllerEvents.push({ text: "IllegalArgumentException", kind: "error" });
+          responseEvents.push({ text: "400 via resolver", kind: "error" });
+          document.getElementById("mvc-match").textContent = "yes";
+          document.getElementById("mvc-status").textContent = "400";
+          document.getElementById("mvc-validation").textContent = "passed";
+        } else if (scenario === "handled") {
+          addStep("info", "@ExceptionHandler handles exception", "The controller-local handler turns the exception into a structured response body.", "handled");
+          controllerEvents.push({ text: "@ExceptionHandler", kind: "secondary" });
+          responseEvents.push({ text: "400 handled body", kind: "success" });
+          document.getElementById("mvc-match").textContent = "yes";
+          document.getElementById("mvc-status").textContent = "400";
+          document.getElementById("mvc-validation").textContent = "passed";
+        } else {
+          addStep("info", "Return value serialized", "JsonReturnValueHandler writes the controller result as JSON with a success status.", "200");
+          controllerEvents.push({ text: "OrderResponse", kind: "success" });
+          responseEvents.push({ text: "200 JSON response", kind: "success" });
+          document.getElementById("mvc-match").textContent = "yes";
+          document.getElementById("mvc-status").textContent = "200";
+          document.getElementById("mvc-validation").textContent = "passed";
+        }
+      }
+
+      document.getElementById("mvc-timeline").innerHTML = steps.map(stepTemplate).join("");
+      renderLanes(document.getElementById("mvc-lanes"), [
+        { label: "Routing", detail: "DispatcherServlet + HandlerMapping.", events: routerEvents },
+        { label: "Binding", detail: "Argument resolution, conversion, validation.", events: bindingEvents.length ? bindingEvents : [{ text: "none", kind: "secondary" }] },
+        { label: "Controller", detail: "Controller invocation or local exception handling.", events: controllerEvents.length ? controllerEvents : [{ text: "not reached", kind: "secondary" }] },
+        { label: "Response", detail: "ReturnValueHandler or ExceptionResolver output.", events: responseEvents.length ? responseEvents : [{ text: "response pending", kind: "secondary" }] }
+      ]);
+
+      document.getElementById("mvc-summary").textContent =
+`source mapping
+- spring-lite-web: DispatcherServlet, RequestMappingHandlerAdapter, ArgumentResolver, SimpleValidator, JsonReturnValueHandler, DefaultExceptionResolver
+- test anchor: DispatcherServletTest, ArgumentResolverTest, DefaultExceptionResolverTest
+
+current simulation
+- request: ${method} ${path}${query ? `?${query}` : ""}
+- content-type: ${contentType}
+- scenario: ${scenario}
+- matched route: yes
+- final status: ${document.getElementById("mvc-status").textContent}
+- validation: ${document.getElementById("mvc-validation").textContent}`;
+    }
+
+    document.getElementById("run-aop").addEventListener("click", runAopSimulation);
+    document.getElementById("run-mvc").addEventListener("click", runMvcSimulation);
+
+    runAopSimulation();
+    runMvcSimulation();
+  </script>
+</body>
+</html>

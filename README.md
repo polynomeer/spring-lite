@@ -94,6 +94,11 @@
 - [실행 가능한 spring-lite 비교 앱](./comparison-spring-lite-app/README.md)
 - [실행 가능한 Spring Boot 비교 앱](./comparison-spring-boot-app/README.md)
 
+## Visual Lab
+
+- [Visual Lab 안내](./visual-lab/README.md)
+- [Spring Lite Playground](./visual-lab/spring-lite-playground.html)
+
 ## 책 초안 문서
 
 - [Part 1 원고 초안](./docs/book/part-1-draft.md)
