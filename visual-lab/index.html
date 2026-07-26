@@ -427,6 +427,54 @@
       line-height: 1.45;
     }
 
+    .rail-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .rail-card {
+      padding: 16px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #fffdf8 0%, #f7efe2 100%);
+      border: 1px solid var(--line);
+      display: grid;
+      gap: 12px;
+    }
+
+    .rail-card strong {
+      display: block;
+      font-size: 15px;
+    }
+
+    .rail-card p {
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .rail-links {
+      display: grid;
+      gap: 8px;
+    }
+
+    .rail-links a {
+      display: block;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.75);
+      border: 1px solid var(--line);
+      color: var(--text);
+      text-decoration: none;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .rail-links a:hover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
     .footer-note {
       margin-top: 18px;
       padding: 16px 18px;
@@ -446,7 +494,9 @@
     @media (max-width: 840px) {
       .metrics,
       .cards,
-      .path-grid {
+      .path-grid,
+      .rail-grid,
+      .recommend-grid {
         grid-template-columns: 1fr;
       }
     }
@@ -705,6 +755,46 @@
               <strong>I want to compare with real Spring</strong>
               <span>Go straight to the dashboard that maps Spring Lite concepts to Spring Boot.</span>
             </button>
+          </div>
+        </section>
+
+        <section class="reading-path">
+          <h2>Start By Reading Style</h2>
+          <p>Pick the first entry rail that matches how you usually learn: implementation first, explanation first, or verification first.</p>
+          <div class="rail-grid">
+            <div class="rail-card">
+              <div>
+                <strong>Code First</strong>
+                <p>Start from the runtime entry classes when you want to build a concrete mental model directly from the implementation.</p>
+              </div>
+              <div class="rail-links">
+                <a href="../spring-lite-context/src/main/java/lite/spring/context/support/AnnotationConfigApplicationContext.java">Open `AnnotationConfigApplicationContext.java` and trace bean registration, instantiation, and initialization.</a>
+                <a href="../spring-lite-web/src/main/java/lite/spring/web/support/DispatcherServlet.java">Open `DispatcherServlet.java` and follow request mapping, argument binding, and handler invocation.</a>
+                <a href="../spring-lite-tx/src/main/java/lite/spring/tx/support/TransactionManager.java">Open `TransactionManager.java` and inspect begin, commit, rollback, and resource cleanup paths.</a>
+              </div>
+            </div>
+            <div class="rail-card">
+              <div>
+                <strong>Docs First</strong>
+                <p>Start from architectural explanations when you want the big picture before reading class and method details.</p>
+              </div>
+              <div class="rail-links">
+                <a href="../docs/architecture/visual-architecture-guide.md">Read `visual-architecture-guide.md` for module boundaries, request flow, and lifecycle diagrams.</a>
+                <a href="../docs/architecture/runtime-sequence-diagrams.md">Read `runtime-sequence-diagrams.md` for step-by-step sequences across container, MVC, AOP, and transactions.</a>
+                <a href="../docs/architecture/spring-lite-module-code-guide.md">Read `spring-lite-module-code-guide.md` for module-level class diagrams and code-oriented structure maps.</a>
+              </div>
+            </div>
+            <div class="rail-card">
+              <div>
+                <strong>Tests First</strong>
+                <p>Start from assertions when you want to learn the intended behavior, edge cases, and regression boundaries before reading implementation.</p>
+              </div>
+              <div class="rail-links">
+                <a href="../docs/testing/detailed-test-guide.md">Read `detailed-test-guide.md` for what each test suite proves and why those behaviors matter.</a>
+                <a href="../spring-lite-context/src/test/java/lite/spring/context/AnnotationConfigApplicationContextTest.java">Open `AnnotationConfigApplicationContextTest.java` and review container lifecycle and injection scenarios.</a>
+                <a href="../spring-lite-web/src/test/java/lite/spring/web/DispatcherServletTest.java">Open `DispatcherServletTest.java` and verify handler mapping, parameter resolution, and rendering behavior.</a>
+              </div>
+            </div>
           </div>
         </section>
 
