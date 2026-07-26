@@ -53,6 +53,25 @@
 - `spring-lite-test`: JUnit 확장, 컨텍스트 로딩, mock web 테스트 지원
 - `example-app`: JDBC/H2와 설정 기반 정책을 사용하는 주문 예제 애플리케이션
 
+## 빠른 학습 진입
+
+처음 진입할 때는 아래 셋 중 하나를 고르는 것이 가장 빠르다.
+
+1. 브라우저에서 동작을 먼저 보고 싶다면
+   - [Visual Lab Hub](./visual-lab/index.html)
+2. 컨테이너, MVC, 트랜잭션의 구조를 문서로 먼저 잡고 싶다면
+   - [시각적 아키텍처 가이드](./docs/architecture/visual-architecture-guide.md)
+   - [런타임 시퀀스 다이어그램](./docs/architecture/runtime-sequence-diagrams.md)
+3. 테스트로 의도된 동작부터 확인하고 싶다면
+   - [상세 테스트 해설](./docs/testing/detailed-test-guide.md)
+
+질문별 가장 빠른 시작점은 아래와 같다.
+
+- "`@Transactional`이 왜 동작하는지" -> [Spring Lite Playground](./visual-lab/spring-lite-playground.html)
+- "빈이 언제 생성되고 프록시가 되는지" -> [Spring Lite Container Lab](./visual-lab/spring-lite-container-lab.html)
+- "한 요청이 어디서 400/500으로 갈리는지" -> [Spring Lite Example Flow Lab](./visual-lab/spring-lite-example-flow-lab.html)
+- "실제 Spring과 무엇이 같은지 다른지" -> [Spring Lite vs Spring Dashboard](./visual-lab/spring-lite-vs-spring-dashboard.html)
+
 ## 문서 읽기 순서
 
 1. [프로젝트 개요](./docs/codex/project-brief.md)
@@ -103,6 +122,16 @@
 - [Spring Lite Example Flow Lab](./visual-lab/spring-lite-example-flow-lab.html)
 - [Spring Lite vs Spring Dashboard](./visual-lab/spring-lite-vs-spring-dashboard.html)
 
+가장 빠른 실행 방법은 아래 둘 중 하나다.
+
+```bash
+python3 -m http.server 8081
+```
+
+그 뒤 브라우저에서 `http://localhost:8081/visual-lab/index.html`을 열면 된다.
+
+또는 파일을 직접 열어도 된다.
+
 ## 책 초안 문서
 
 - [Part 1 원고 초안](./docs/book/part-1-draft.md)
@@ -128,6 +157,12 @@
 ```bash
 ./gradlew test
 ./gradlew :example-app:run
+```
+
+Visual Lab만 빠르게 확인하려면 아래 명령으로 충분하다.
+
+```bash
+python3 -m http.server 8081
 ```
 
 기본 포트는 `8080`이며, 예제 API는 아래처럼 확인할 수 있다.
