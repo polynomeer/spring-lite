@@ -4,6 +4,9 @@
 
 ## 포함된 페이지
 
+- `index.html`
+  - 전체 visual-lab 허브 페이지
+  - 추천 학습 순서, 각 실험실 성격, 관련 문서 연결
 - `spring-lite-playground.html`
   - `AOP + Transaction` 호출 체인 시뮬레이터
   - `MVC Request` 처리 파이프라인 실험실
@@ -32,6 +35,7 @@
 
 브라우저에서 아래 파일을 직접 열면 된다.
 
+- `visual-lab/index.html`
 - `visual-lab/spring-lite-playground.html`
 - `visual-lab/spring-lite-container-lab.html`
 - `visual-lab/spring-lite-example-flow-lab.html`

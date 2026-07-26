@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spring Lite Visual Lab</title>
+  <style>
+    :root {
+      --bg: #f5efe5;
+      --surface: #fffaf3;
+      --surface-soft: #efe3d2;
+      --text: #1f2732;
+      --muted: #5e6a79;
+      --line: #dbcfc0;
+      --primary: #9a4522;
+      --primary-soft: #f4d0bd;
+      --secondary: #215d53;
+      --secondary-soft: #d0e5de;
+      --accent: #315f93;
+      --accent-soft: #d9e4f5;
+      --warning: #835e16;
+      --warning-soft: #f2e1b5;
+      --shadow: 0 20px 44px rgba(50, 36, 17, 0.12);
+      --radius: 24px;
+      --sans: "Avenir Next", "Segoe UI", sans-serif;
+      --mono: "SFMono-Regular", Consolas, Menlo, monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(154, 69, 34, 0.16), transparent 26%),
+        radial-gradient(circle at top right, rgba(33, 93, 83, 0.15), transparent 24%),
+        linear-gradient(180deg, #fcf8f2 0%, var(--bg) 100%);
+    }
+
+    .page {
+      width: min(1260px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 28px 0 52px;
+    }
+
+    .hero {
+      padding: 32px;
+      border-radius: 32px;
+      background: linear-gradient(135deg, rgba(154, 69, 34, 0.95), rgba(49, 95, 147, 0.95));
+      color: #fff8f2;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -34px;
+      top: -24px;
+      width: 240px;
+      height: 240px;
+      border-radius: 50%;
+      background: rgba(255, 248, 242, 0.1);
+    }
+
+    .hero h1 {
+      margin: 0 0 12px;
+      font-size: clamp(32px, 5vw, 58px);
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 860px;
+      color: rgba(255, 248, 242, 0.88);
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .hero-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .hero-badges span {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      background: rgba(255, 248, 242, 0.15);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 22px;
+      margin-top: 22px;
+    }
+
+    .panel {
+      background: rgba(255, 250, 243, 0.88);
+      border: 1px solid rgba(219, 207, 192, 0.9);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .sidebar {
+      padding: 20px;
+      position: sticky;
+      top: 18px;
+      align-self: start;
+    }
+
+    .section + .section {
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .path-list,
+    .doc-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .path-item,
+    .doc-link {
+      display: block;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: #fffdf8;
+      border: 1px solid var(--line);
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .path-item strong,
+    .doc-link strong {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .path-item span,
+    .doc-link span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .main {
+      padding: 20px;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .metric {
+      padding: 14px;
+      border-radius: 18px;
+      background: #fffdf8;
+      border: 1px solid var(--line);
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    .metric .value {
+      font-size: 28px;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      margin-bottom: 6px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .card {
+      padding: 20px;
+      border-radius: 22px;
+      background: #fffdf8;
+      border: 1px solid var(--line);
+      display: grid;
+      gap: 14px;
+    }
+
+    .card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .card-head h3 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    .card-head p {
+      margin-top: 6px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-family: var(--mono);
+      white-space: nowrap;
+    }
+
+    .tag.core { background: var(--primary-soft); color: #6b2c13; }
+    .tag.flow { background: var(--secondary-soft); color: #18493e; }
+    .tag.compare { background: var(--accent-soft); color: #224983; }
+    .tag.guide { background: var(--warning-soft); color: #6e500d; }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: var(--surface-soft);
+      font-size: 12px;
+      color: var(--text);
+    }
+
+    .bullet-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .bullet {
+      padding: 11px 12px;
+      border-radius: 14px;
+      background: #faf5ec;
+      border: 1px solid var(--line);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: auto;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 11px 14px;
+      border-radius: 14px;
+      text-decoration: none;
+      font-size: 14px;
+      color: #fffdf8;
+      background: var(--accent);
+    }
+
+    .button.secondary {
+      background: #efe5d8;
+      color: var(--text);
+    }
+
+    .reading-path {
+      margin-top: 18px;
+      padding: 18px;
+      border-radius: 22px;
+      background: #fffdf8;
+      border: 1px solid var(--line);
+    }
+
+    .path-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .path-card {
+      padding: 14px;
+      border-radius: 18px;
+      background: #faf5ec;
+      border: 1px solid var(--line);
+    }
+
+    .path-card strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+
+    .path-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: rgba(255, 250, 243, 0.78);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 1040px) {
+      .grid { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+    }
+
+    @media (max-width: 840px) {
+      .metrics,
+      .cards,
+      .path-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <h1>Spring Lite Visual Lab</h1>
+      <p>
+        This is the entry point for every interactive learning page in the repository. Start here when you want
+        to move from static documentation into step-by-step simulations, flow dashboards, and side-by-side Spring
+        comparisons.
+      </p>
+      <div class="hero-badges">
+        <span>Container and lifecycle</span>
+        <span>AOP and transaction chain</span>
+        <span>MVC request path</span>
+        <span>Example app end-to-end flow</span>
+        <span>Spring Boot comparison</span>
+      </div>
+    </section>
+
+    <div class="grid">
+      <aside class="panel sidebar">
+        <div class="section">
+          <h2>Recommended Paths</h2>
+          <p>Choose a learning path based on the kind of question you are trying to answer.</p>
+          <div class="path-list">
+            <div class="path-item">
+              <strong>How does the container start?</strong>
+              <span>Begin with the container lab, then read the architecture guide.</span>
+            </div>
+            <div class="path-item">
+              <strong>Why does @Transactional work?</strong>
+              <span>Start from the playground, then jump to the example flow lab.</span>
+            </div>
+            <div class="path-item">
+              <strong>How does one request travel end to end?</strong>
+              <span>Open the example flow lab first, then compare with the MVC lab.</span>
+            </div>
+            <div class="path-item">
+              <strong>What maps to real Spring?</strong>
+              <span>Use the comparison dashboard after reading one Spring Lite lab.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Companion Docs</h2>
+          <p>Use these documents next to the labs when you want the underlying code and terminology.</p>
+          <div class="doc-list">
+            <a class="doc-link" href="/Users/hammac/Projects/spring-lite/docs/architecture/visual-architecture-guide.md">
+              <strong>Visual Architecture Guide</strong>
+              <span>Static structure and runtime diagrams.</span>
+            </a>
+            <a class="doc-link" href="/Users/hammac/Projects/spring-lite/docs/architecture/runtime-sequence-diagrams.md">
+              <strong>Runtime Sequence Diagrams</strong>
+              <span>Method-level call order reference.</span>
+            </a>
+            <a class="doc-link" href="/Users/hammac/Projects/spring-lite/docs/architecture/example-app-request-flow.md">
+              <strong>Example App Request Flow</strong>
+              <span>The narrative guide behind the end-to-end lab.</span>
+            </a>
+            <a class="doc-link" href="/Users/hammac/Projects/spring-lite/docs/testing/detailed-test-guide.md">
+              <strong>Detailed Test Guide</strong>
+              <span>What each test protects and why it exists.</span>
+            </a>
+          </div>
+        </div>
+      </aside>
+
+      <main class="panel main">
+        <div class="metrics">
+          <div class="metric">
+            <strong>Interactive pages</strong>
+            <div class="value">4</div>
+            <span>Focused labs and dashboards you can open directly in the browser.</span>
+          </div>
+          <div class="metric">
+            <strong>Main topics</strong>
+            <div class="value">5</div>
+            <span>Container, lifecycle, AOP/Tx, MVC, example flow, and Spring comparison.</span>
+          </div>
+          <div class="metric">
+            <strong>Best start</strong>
+            <div class="value">AOP</div>
+            <span>The smallest “magic-feeling” runtime loop for most readers.</span>
+          </div>
+          <div class="metric">
+            <strong>Bridge to Spring</strong>
+            <div class="value">1:1</div>
+            <span>The comparison dashboard keeps the conceptual mapping explicit.</span>
+          </div>
+        </div>
+
+        <div class="cards">
+          <article class="card">
+            <div class="card-head">
+              <div>
+                <h3>Playground</h3>
+                <p>Best for understanding interceptor order and MVC request dispatch at a compact scale.</p>
+              </div>
+              <span class="tag core">core loop</span>
+            </div>
+            <div class="pill-row">
+              <span class="pill">AOP advice chain</span>
+              <span class="pill">Transaction begin/commit/rollback</span>
+              <span class="pill">MVC request pipeline</span>
+            </div>
+            <div class="bullet-list">
+              <div class="bullet">Use this when the framework feels magical and you want to see the smallest runtime loop.</div>
+              <div class="bullet">Maps directly to `AspectBeanPostProcessorTest`, `TransactionManagerTest`, and `DispatcherServletTest`.</div>
+            </div>
+            <div class="actions">
+              <a class="button" href="./spring-lite-playground.html">Open Playground</a>
+              <a class="button secondary" href="/Users/hammac/Projects/spring-lite/visual-lab/spring-lite-playground.html">File Path</a>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-head">
+              <div>
+                <h3>Container Lab</h3>
+                <p>Best for understanding context bootstrap, BeanDefinition registration, and bean lifecycle steps.</p>
+              </div>
+              <span class="tag flow">startup</span>
+            </div>
+            <div class="pill-row">
+              <span class="pill">ApplicationContext refresh</span>
+              <span class="pill">@Value and @PostConstruct</span>
+              <span class="pill">Proxy wrapping and destroy hooks</span>
+            </div>
+            <div class="bullet-list">
+              <div class="bullet">Open this when you need to answer “what happens before my bean even exists?”</div>
+              <div class="bullet">Pairs with `AnnotationConfigApplicationContextTest` and the visual architecture guide.</div>
+            </div>
+            <div class="actions">
+              <a class="button" href="./spring-lite-container-lab.html">Open Container Lab</a>
+              <a class="button secondary" href="/Users/hammac/Projects/spring-lite/visual-lab/spring-lite-container-lab.html">File Path</a>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-head">
+              <div>
+                <h3>Example Flow Lab</h3>
+                <p>Best for tracking one real request from HTTP entry to JDBC and JSON response.</p>
+              </div>
+              <span class="tag compare">end-to-end</span>
+            </div>
+            <div class="pill-row">
+              <span class="pill">POST /orders</span>
+              <span class="pill">Validation failure</span>
+              <span class="pill">Rollback branch</span>
+              <span class="pill">Unknown id path</span>
+            </div>
+            <div class="bullet-list">
+              <div class="bullet">Use this after you understand the smaller loops and want a realistic composed request path.</div>
+              <div class="bullet">Anchored to `example-app` and the matching integration tests.</div>
+            </div>
+            <div class="actions">
+              <a class="button" href="./spring-lite-example-flow-lab.html">Open Example Flow Lab</a>
+              <a class="button secondary" href="/Users/hammac/Projects/spring-lite/visual-lab/spring-lite-example-flow-lab.html">File Path</a>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-head">
+              <div>
+                <h3>Spring Comparison Dashboard</h3>
+                <p>Best for mapping what you learned in Spring Lite onto real Spring Boot concepts and runtime layers.</p>
+              </div>
+              <span class="tag guide">bridge</span>
+            </div>
+            <div class="pill-row">
+              <span class="pill">DI comparison</span>
+              <span class="pill">MVC comparison</span>
+              <span class="pill">Transaction comparison</span>
+            </div>
+            <div class="bullet-list">
+              <div class="bullet">Use this after at least one Spring Lite lab so the abstraction gap is meaningful.</div>
+              <div class="bullet">Connects sample scenarios, comparison apps, and the official Spring study map.</div>
+            </div>
+            <div class="actions">
+              <a class="button" href="./spring-lite-vs-spring-dashboard.html">Open Comparison Dashboard</a>
+              <a class="button secondary" href="/Users/hammac/Projects/spring-lite/visual-lab/spring-lite-vs-spring-dashboard.html">File Path</a>
+            </div>
+          </article>
+        </div>
+
+        <section class="reading-path">
+          <h2>Suggested Study Order</h2>
+          <p>Read the runtime in expanding circles: start with one small moving part, then widen the scope.</p>
+          <div class="path-grid">
+            <div class="path-card">
+              <strong>1. Playground</strong>
+              <span>Learn the smallest dynamic loops first: advice chain and request dispatch.</span>
+            </div>
+            <div class="path-card">
+              <strong>2. Container Lab</strong>
+              <span>Understand where beans come from and how the runtime is assembled before requests happen.</span>
+            </div>
+            <div class="path-card">
+              <strong>3. Example Flow Lab</strong>
+              <span>Trace one realistic user request through web, service, transaction, and JDBC layers.</span>
+            </div>
+            <div class="path-card">
+              <strong>4. Comparison Dashboard</strong>
+              <span>Map the simplified learning model onto real Spring Boot architecture and automation.</span>
+            </div>
+          </div>
+        </section>
+
+        <div class="footer-note">
+          If you open this directory through a local static server, this page works well as the default landing page.
+          If you open files directly, every lab page is still independently usable.
+        </div>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

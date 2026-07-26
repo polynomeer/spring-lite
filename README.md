@@ -97,6 +97,7 @@
 ## Visual Lab
 
 - [Visual Lab 안내](./visual-lab/README.md)
+- [Visual Lab Hub](./visual-lab/index.html)
 - [Spring Lite Playground](./visual-lab/spring-lite-playground.html)
 - [Spring Lite Container Lab](./visual-lab/spring-lite-container-lab.html)
 - [Spring Lite Example Flow Lab](./visual-lab/spring-lite-example-flow-lab.html)
