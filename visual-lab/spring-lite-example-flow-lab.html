@@ -282,6 +282,8 @@
       background: #fffdf8;
       border: 1px solid var(--line);
       overflow: hidden;
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
     }
 
     .step::before {
@@ -328,6 +330,12 @@
     .step strong {
       display: block;
       margin-bottom: 4px;
+    }
+
+    .step.active {
+      transform: translateY(-1px);
+      border-color: var(--primary);
+      box-shadow: 0 12px 28px rgba(154, 69, 34, 0.12);
     }
 
     .step p {
@@ -668,7 +676,7 @@
 
     function renderSteps(steps) {
       document.getElementById("flow-timeline").innerHTML = steps.map((step, index) => `
-        <article class="step ${step.kind}">
+        <article class="step ${step.kind}" data-step-focus="${step.focus || ""}">
           <div class="index">${index + 1}</div>
           <div>
             <strong>${step.title}</strong>
@@ -677,6 +685,19 @@
           <div class="chip">${step.marker}</div>
         </article>
       `).join("");
+      const items = document.querySelectorAll("#flow-timeline .step");
+      items.forEach((item, index) => {
+        item.addEventListener("click", () => {
+          items.forEach((candidate) => candidate.classList.remove("active"));
+          item.classList.add("active");
+          const requestKind = document.getElementById("request-kind").value;
+          const scenario = item.dataset.stepFocus || document.getElementById("flow-scenario").value;
+          updateFlowReferences(requestKind, scenario);
+        });
+        if (index === 0) {
+          item.classList.add("active");
+        }
+      });
     }
 
     function renderLanes(lanes) {
@@ -721,8 +742,8 @@
       let dbEffect = "read";
       let branch = "success";
 
-      function addStep(kind, title, body, marker) {
-        steps.push({ kind, title, body, marker });
+      function addStep(kind, title, body, marker, focus) {
+        steps.push({ kind, title, body, marker, focus });
       }
 
       const routeLabel = requestKind === "create"
@@ -731,16 +752,16 @@
           ? "GET /orders"
           : `GET /orders/${orderId}`;
 
-      addStep("info", "Request enters DispatcherServlet", `The example app receives \`${routeLabel}\` with Accept \`${acceptType}\`.`, "dispatch");
+      addStep("info", "Request enters DispatcherServlet", `The example app receives \`${routeLabel}\` with Accept \`${acceptType}\`.`, "dispatch", requestKind);
       webEvents.push({ text: routeLabel, kind: "success" });
 
       if (requestKind === "create") {
-        addStep("info", "Request body deserialized", "JsonMapper and RequestBodyArgumentResolver convert the body into CreateOrderRequest.", "bind");
+        addStep("info", "Request body deserialized", "JsonMapper and RequestBodyArgumentResolver convert the body into CreateOrderRequest.", "bind", "validation");
         webEvents.push({ text: "body -> CreateOrderRequest", kind: "secondary" });
 
         const parsed = safeParseBody(rawBody);
         if (!parsed.ok) {
-          addStep("error", "Malformed JSON rejected", "Binding fails before the controller runs, so the exception resolver returns 400.", "400");
+          addStep("error", "Malformed JSON rejected", "Binding fails before the controller runs, so the exception resolver returns 400.", "400", "validation");
           status = "400";
           txOutcome = "no-tx";
           dbEffect = "none";
@@ -751,7 +772,7 @@
         }
 
         if (scenario === "validation") {
-          addStep("error", "Validation stops the request", "SimpleValidator rejects the request because product or quantity does not satisfy constraints.", "validation");
+          addStep("error", "Validation stops the request", "SimpleValidator rejects the request because product or quantity does not satisfy constraints.", "validation", "validation");
           webEvents.push({ text: "@Valid failed", kind: "error" });
           status = "400";
           txOutcome = "no-tx";
@@ -762,15 +783,15 @@
           return;
         }
       } else {
-        addStep("info", "Path and query parameters resolved", "Argument resolvers prepare method parameters directly from the URL.", "params");
+        addStep("info", "Path and query parameters resolved", "Argument resolvers prepare method parameters directly from the URL.", "params", requestKind);
         webEvents.push({ text: "path/query args", kind: "secondary" });
       }
 
-      addStep("info", "Controller method selected", `HandlerMapping resolves the example application's controller method for \`${routeLabel}\`.`, "handler");
+      addStep("info", "Controller method selected", `HandlerMapping resolves the example application's controller method for \`${routeLabel}\`.`, "handler", requestKind);
       webEvents.push({ text: "OrderController", kind: "success" });
 
       if (requestKind === "list") {
-        addStep("info", "Controller delegates to service", "The controller asks the service for the full order list.", "list()");
+        addStep("info", "Controller delegates to service", "The controller asks the service for the full order list.", "list()", "list");
         serviceEvents.push({ text: "listOrders()", kind: "success" });
         dbEffect = seededOrder ? "select" : "empty-select";
         if (showSql) {
@@ -783,13 +804,13 @@
       }
 
       if (requestKind === "getById") {
-        addStep("info", "Controller delegates to service", "The controller requests one order by id from the service layer.", "getOrder()");
+        addStep("info", "Controller delegates to service", "The controller requests one order by id from the service layer.", "getOrder()", scenario === "notFound" ? "notFound" : "getById");
         serviceEvents.push({ text: `getOrder(${orderId})`, kind: "success" });
         if (showSql) {
           jdbcEvents.push({ text: `select * from orders where id=${orderId}`, kind: "secondary" });
         }
         if (scenario === "notFound" || !seededOrder || orderId !== 1) {
-          addStep("error", "Service raises unknown-order error", "DefaultOrderService cannot find the order and throws IllegalArgumentException.", "not-found");
+          addStep("error", "Service raises unknown-order error", "DefaultOrderService cannot find the order and throws IllegalArgumentException.", "not-found", "notFound");
           serviceEvents.push({ text: "IllegalArgumentException", kind: "error" });
           status = "400";
           txOutcome = "no-tx";
@@ -799,7 +820,7 @@
           renderFinal();
           return;
         }
-        addStep("info", "Repository returns seeded row", "JdbcOrderRepository maps the existing row into the Order record.", "row-map");
+        addStep("info", "Repository returns seeded row", "JdbcOrderRepository maps the existing row into the Order record.", "row-map", "getById");
         serviceEvents.push({ text: "Order{id=1}", kind: "success" });
         dbEffect = "select-hit";
         branch = "getById";
@@ -808,15 +829,15 @@
         return;
       }
 
-      addStep("info", "Controller enters service proxy", "OrderController calls OrderService, which is exposed through a transactional proxy.", "service-proxy");
+      addStep("info", "Controller enters service proxy", "OrderController calls OrderService, which is exposed through a transactional proxy.", "service-proxy", "create");
       serviceEvents.push({ text: "createOrder(...)", kind: "success" });
 
       if (useTx) {
-        addStep("tx", "Transaction boundary opens", "TransactionInterceptor asks TransactionManager to begin the service invocation boundary.", "begin()");
+        addStep("tx", "Transaction boundary opens", "TransactionInterceptor asks TransactionManager to begin the service invocation boundary.", "begin()", scenario === "rollback" ? "rollback" : "create");
         txEvents.push({ text: "begin depth=1", kind: "success" });
       }
 
-      addStep("info", "Service performs business logic", "DefaultOrderService computes status and delegates persistence to JdbcOrderRepository.", "business");
+      addStep("info", "Service performs business logic", "DefaultOrderService computes status and delegates persistence to JdbcOrderRepository.", "business", "create");
       serviceEvents.push({ text: "status=PENDING_APPROVAL", kind: "secondary" });
 
       if (showSql) {
@@ -825,13 +846,13 @@
       }
 
       if (scenario === "serviceError") {
-        addStep("error", "Service throws domain exception", "Business logic fails before the repository completes, so the invocation returns through the error path.", "throw");
+        addStep("error", "Service throws domain exception", "Business logic fails before the repository completes, so the invocation returns through the error path.", "throw", "serviceError");
         serviceEvents.push({ text: "IllegalStateException", kind: "error" });
         status = "500";
         branch = "service-error";
         dbEffect = "no-insert";
         if (useTx) {
-          addStep("error", "Transaction rolls back", "The transactional interceptor catches the failure and rolls back the outer connection.", "rollback()");
+          addStep("error", "Transaction rolls back", "The transactional interceptor catches the failure and rolls back the outer connection.", "rollback()", "serviceError");
           txEvents.push({ text: "rollback", kind: "error" });
           txOutcome = "rollback";
         } else {
@@ -843,14 +864,14 @@
       }
 
       if (scenario === "rollback") {
-        addStep("warn", "Repository fails after SQL work begins", "The repository starts write work but then throws, forcing the transaction manager to unwind the insert.", "repo-fail");
+        addStep("warn", "Repository fails after SQL work begins", "The repository starts write work but then throws, forcing the transaction manager to unwind the insert.", "repo-fail", "rollback");
         jdbcEvents.push({ text: "constraint/driver error", kind: "error" });
         serviceEvents.push({ text: "repository exception", kind: "error" });
         status = "500";
         branch = "rollback";
         dbEffect = "rolled-back";
         if (useTx) {
-          addStep("error", "Transaction rolls back JDBC work", "The open connection is rolled back, so the attempted order insert does not persist.", "rollback()");
+          addStep("error", "Transaction rolls back JDBC work", "The open connection is rolled back, so the attempted order insert does not persist.", "rollback()", "rollback");
           txEvents.push({ text: "rollback", kind: "error" });
           txOutcome = "rollback";
         } else {
@@ -861,19 +882,19 @@
         return;
       }
 
-      addStep("info", "Repository maps created order", "JdbcTemplate executes the insert/select sequence and JdbcOrderRepository maps the new row.", "jdbc");
+      addStep("info", "Repository maps created order", "JdbcTemplate executes the insert/select sequence and JdbcOrderRepository maps the new row.", "jdbc", "create");
       jdbcEvents.push({ text: "select created row", kind: "success" });
       serviceEvents.push({ text: "Order{id=2}", kind: "success" });
       dbEffect = "insert";
       branch = "create";
 
       if (useTx) {
-        addStep("tx", "Transaction commits", "The outer service invocation completes successfully, so the connection is committed and cleaned up.", "commit()");
+        addStep("tx", "Transaction commits", "The outer service invocation completes successfully, so the connection is committed and cleaned up.", "commit()", "create");
         txEvents.push({ text: "commit", kind: "success" });
         txOutcome = "commit";
       }
 
-      addStep("info", "Response serialized as JSON", "JsonReturnValueHandler turns the Order record into the final HTTP response body.", "json");
+      addStep("info", "Response serialized as JSON", "JsonReturnValueHandler turns the Order record into the final HTTP response body.", "json", "create");
       responseEvents.push({ text: "200 created order", kind: "success" });
 
       renderFinal();

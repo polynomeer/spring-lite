@@ -821,7 +821,7 @@
 
     function stepTemplate(step, index) {
       return `
-        <article class="step ${step.kind}">
+        <article class="step ${step.kind}" data-step-focus="${step.focus || ""}">
           <div class="index">${index + 1}</div>
           <div>
             <strong>${step.title}</strong>
@@ -830,6 +830,23 @@
           <div class="chip">${step.marker}</div>
         </article>
       `;
+    }
+
+    function bindPlaygroundStepSelection(containerId, activeTab) {
+      const container = document.getElementById(containerId);
+      const steps = container.querySelectorAll(".step");
+      steps.forEach((step, index) => {
+        step.addEventListener("click", () => {
+          playgroundSelectedFocus = step.dataset.stepFocus || null;
+          steps.forEach((candidate) => candidate.classList.remove("active"));
+          step.classList.add("active");
+          updateReferenceFocus(activeTab);
+        });
+        if (index === 0) {
+          step.classList.add("active");
+          playgroundSelectedFocus = step.dataset.stepFocus || null;
+        }
+      });
     }
 
     function renderLanes(container, lanes) {
@@ -860,61 +877,61 @@
       let depthPeak = 0;
       let finalStatus = "returned";
 
-      function addStep(kind, title, body, marker) {
-        steps.push({ kind, title, body, marker });
+      function addStep(kind, title, body, marker, focus) {
+        steps.push({ kind, title, body, marker, focus });
       }
 
       if (useBefore) {
-        addStep("info", "@Before advice", "The advice sees the method name before any business logic runs.", "before()");
+        addStep("info", "@Before advice", "The advice sees the method name before any business logic runs.", "before()", "aop");
         proxyEvents.push({ text: "@Before", kind: "secondary" });
       }
 
       if (useAround) {
-        addStep("info", "@Around enters", "Around advice opens the wrapper and decides when to call proceed().", "around-enter");
+        addStep("info", "@Around enters", "Around advice opens the wrapper and decides when to call proceed().", "around-enter", "aop");
         proxyEvents.push({ text: "@Around enter", kind: "secondary" });
       }
 
       if (useTx) {
-        addStep("tx", "Transaction begins", "TransactionManager creates or reuses the root transaction context.", "begin()");
+        addStep("tx", "Transaction begins", "TransactionManager creates or reuses the root transaction context.", "begin()", "aop");
         txEvents.push({ text: "begin depth=1", kind: "success" });
         depthPeak = 1;
       }
 
-      addStep("info", "Target method enters", `The proxy calls the target method \`${method}(...)\`.`, "target()");
+      addStep("info", "Target method enters", `The proxy calls the target method \`${method}(...)\`.`, "target()", "aop");
       targetEvents.push({ text: method, kind: "success" });
 
       if (nestedCall && useTx) {
-        addStep("tx", "Nested REQUIRED join", "An inner service call joins the same transaction and only increases depth.", "depth=2");
+        addStep("tx", "Nested REQUIRED join", "An inner service call joins the same transaction and only increases depth.", "depth=2", "aop");
         txEvents.push({ text: "nested begin depth=2", kind: "success" });
         targetEvents.push({ text: "innerService.save()", kind: "secondary" });
         depthPeak = 2;
       }
 
       if (outcome === "error") {
-        addStep("error", "Target throws exception", "The business method fails and bubbles an exception back into the interceptor chain.", "throw");
+        addStep("error", "Target throws exception", "The business method fails and bubbles an exception back into the interceptor chain.", "throw", "aop");
         targetEvents.push({ text: "IllegalStateException", kind: "error" });
         if (useTx) {
-          addStep("error", "Transaction rolls back", "The interceptor marks the transaction for rollback and closes the boundary with rollback().", "rollback()");
+          addStep("error", "Transaction rolls back", "The interceptor marks the transaction for rollback and closes the boundary with rollback().", "rollback()", "aop");
           txEvents.push({ text: "rollback", kind: "error" });
         }
         finalStatus = "rethrow";
       } else if (outcome === "rollbackOnly") {
-        addStep("tx", "Rollback-only flagged", "The target returned normally but marked the current transaction as rollback-only.", "setRollbackOnly");
+        addStep("tx", "Rollback-only flagged", "The target returned normally but marked the current transaction as rollback-only.", "setRollbackOnly", "aop");
         txEvents.push({ text: "rollbackOnly=true", kind: "error" });
         if (useTx) {
-          addStep("error", "Outer commit becomes rollback", "The outer boundary tries to commit, sees rollback-only, and performs rollback instead.", "commit->rollback");
+          addStep("error", "Outer commit becomes rollback", "The outer boundary tries to commit, sees rollback-only, and performs rollback instead.", "commit->rollback", "aop");
           txEvents.push({ text: "outer commit => rollback", kind: "error" });
         }
         finalStatus = "rolledBack";
       } else {
-        addStep("info", "Target returns value", "The target completes successfully and yields its return value back to the chain.", "return");
+        addStep("info", "Target returns value", "The target completes successfully and yields its return value back to the chain.", "return", "aop");
         targetEvents.push({ text: "Order created", kind: "success" });
         if (useTx) {
-          addStep("tx", "Transaction commits", "The outermost transactional boundary commits the JDBC connection.", "commit()");
+          addStep("tx", "Transaction commits", "The outermost transactional boundary commits the JDBC connection.", "commit()", "aop");
           txEvents.push({ text: "commit", kind: "success" });
         }
         if (useAfter) {
-          addStep("info", "@AfterReturning advice", "AfterReturning sees the successful return value and can record or transform metadata.", "afterReturning()");
+          addStep("info", "@AfterReturning advice", "AfterReturning sees the successful return value and can record or transform metadata.", "afterReturning()", "aop");
           proxyEvents.push({ text: "@AfterReturning", kind: "secondary" });
         }
         finalStatus = "committed";
@@ -922,10 +939,10 @@
 
       if (useAround) {
         if (outcome === "error") {
-          addStep("error", "@Around rethrows", "The around advice does not get a normal return value, so it rethrows the exception.", "around-throw");
+          addStep("error", "@Around rethrows", "The around advice does not get a normal return value, so it rethrows the exception.", "around-throw", "aop");
           proxyEvents.push({ text: "@Around throw", kind: "error" });
         } else {
-          addStep("info", "@Around exits", "Around advice receives the value from proceed() and can decorate the final result.", "around-exit");
+          addStep("info", "@Around exits", "Around advice receives the value from proceed() and can decorate the final result.", "around-exit", "aop");
           proxyEvents.push({ text: "@Around exit", kind: "secondary" });
         }
       }
@@ -939,6 +956,7 @@
       document.getElementById("aop-status").textContent = finalStatus;
       document.getElementById("aop-depth").textContent = String(depthPeak);
       document.getElementById("aop-timeline").innerHTML = steps.map(stepTemplate).join("");
+      bindPlaygroundStepSelection("aop-timeline", "aop");
       renderLanes(document.getElementById("aop-lanes"), [
         { label: "Caller", detail: "What the client sees at the boundary.", events: callerEvents },
         { label: "Proxy / Advice", detail: "MethodInvocation chain and non-transaction advice.", events: proxyEvents.length ? proxyEvents : [{ text: "no extra advice", kind: "secondary" }] },
@@ -986,21 +1004,22 @@ current simulation
       const controllerEvents = [];
       const responseEvents = [];
 
-      function addStep(kind, title, body, marker) {
-        steps.push({ kind, title, body, marker });
+      function addStep(kind, title, body, marker, focus) {
+        steps.push({ kind, title, body, marker, focus });
       }
 
-      addStep("info", "DispatcherServlet receives request", "The HTTP exchange enters the central front controller.", "dispatch");
+      addStep("info", "DispatcherServlet receives request", "The HTTP exchange enters the central front controller.", "dispatch", "mvc");
 
       const routeMissing = scenario === "missing" || path !== "/orders" || (method === "GET" && path !== "/orders");
       if (routeMissing) {
-        addStep("error", "No handler matched", "HandlerMapping cannot find a controller method whose path, HTTP method, and conditions match.", "404");
+        addStep("error", "No handler matched", "HandlerMapping cannot find a controller method whose path, HTTP method, and conditions match.", "404", "mvc");
         routerEvents.push({ text: "route miss", kind: "error" });
         responseEvents.push({ text: "404 Not Found", kind: "error" });
         document.getElementById("mvc-match").textContent = "no";
         document.getElementById("mvc-status").textContent = "404";
         document.getElementById("mvc-validation").textContent = "n/a";
         document.getElementById("mvc-timeline").innerHTML = steps.map(stepTemplate).join("");
+        bindPlaygroundStepSelection("mvc-timeline", "mvc");
         renderLanes(document.getElementById("mvc-lanes"), [
           { label: "Routing", detail: "HandlerMapping phase.", events: routerEvents },
           { label: "Binding", detail: "Argument resolution and validation.", events: [{ text: "skipped", kind: "secondary" }] },
@@ -1022,18 +1041,19 @@ current simulation
       }
 
       routerEvents.push({ text: "OrderController#createOrder", kind: "success" });
-      addStep("info", "Handler method selected", "RequestMappingHandlerMapping resolves the target controller method.", "handler");
+      addStep("info", "Handler method selected", "RequestMappingHandlerMapping resolves the target controller method.", "handler", "mvc");
 
       if (method === "POST") {
         const parsed = parseBody(rawBody);
         if (!parsed.ok) {
-          addStep("error", "JSON parse failed", "RequestBodyArgumentResolver cannot deserialize the incoming JSON body.", "400");
+          addStep("error", "JSON parse failed", "RequestBodyArgumentResolver cannot deserialize the incoming JSON body.", "400", "mvc");
           bindingEvents.push({ text: "invalid JSON", kind: "error" });
           responseEvents.push({ text: "400 malformed body", kind: "error" });
           document.getElementById("mvc-match").textContent = "yes";
           document.getElementById("mvc-status").textContent = "400";
           document.getElementById("mvc-validation").textContent = "failed";
           document.getElementById("mvc-timeline").innerHTML = steps.map(stepTemplate).join("");
+          bindPlaygroundStepSelection("mvc-timeline", "mvc");
           renderLanes(document.getElementById("mvc-lanes"), [
             { label: "Routing", detail: "HandlerMapping phase.", events: routerEvents },
             { label: "Binding", detail: "Argument resolution and validation.", events: bindingEvents },
@@ -1053,39 +1073,39 @@ current simulation
         }
 
         bindingEvents.push({ text: "json -> CreateOrderRequest", kind: "success" });
-        addStep("info", "Request body bound", "JsonMapper deserializes the body and the adapter prepares controller arguments.", "bind");
+        addStep("info", "Request body bound", "JsonMapper deserializes the body and the adapter prepares controller arguments.", "bind", "mvc");
       } else {
         bindingEvents.push({ text: "query params resolved", kind: "success" });
-        addStep("info", "Query parameters resolved", "ArgumentResolver converts string query values into controller method parameters.", "param");
+        addStep("info", "Query parameters resolved", "ArgumentResolver converts string query values into controller method parameters.", "param", "mvc");
       }
 
       if (scenario === "validation") {
-        addStep("error", "Validation failed", "SimpleValidator rejects the request before the controller method is called.", "validation");
+        addStep("error", "Validation failed", "SimpleValidator rejects the request before the controller method is called.", "validation", "mvc");
         bindingEvents.push({ text: "quantity >= 1 failed", kind: "error" });
         responseEvents.push({ text: "400 validation error", kind: "error" });
         document.getElementById("mvc-match").textContent = "yes";
         document.getElementById("mvc-status").textContent = "400";
         document.getElementById("mvc-validation").textContent = "failed";
       } else {
-        addStep("info", "Controller method invoked", "The adapter calls the controller with fully prepared arguments.", "invoke");
+        addStep("info", "Controller method invoked", "The adapter calls the controller with fully prepared arguments.", "invoke", "mvc");
         controllerEvents.push({ text: "controller entered", kind: "success" });
 
         if (scenario === "illegalArgument") {
-          addStep("error", "Controller throws IllegalArgumentException", "DefaultExceptionResolver converts this into a 400 response.", "throw");
+          addStep("error", "Controller throws IllegalArgumentException", "DefaultExceptionResolver converts this into a 400 response.", "throw", "mvc");
           controllerEvents.push({ text: "IllegalArgumentException", kind: "error" });
           responseEvents.push({ text: "400 via resolver", kind: "error" });
           document.getElementById("mvc-match").textContent = "yes";
           document.getElementById("mvc-status").textContent = "400";
           document.getElementById("mvc-validation").textContent = "passed";
         } else if (scenario === "handled") {
-          addStep("info", "@ExceptionHandler handles exception", "The controller-local handler turns the exception into a structured response body.", "handled");
+          addStep("info", "@ExceptionHandler handles exception", "The controller-local handler turns the exception into a structured response body.", "handled", "mvc");
           controllerEvents.push({ text: "@ExceptionHandler", kind: "secondary" });
           responseEvents.push({ text: "400 handled body", kind: "success" });
           document.getElementById("mvc-match").textContent = "yes";
           document.getElementById("mvc-status").textContent = "400";
           document.getElementById("mvc-validation").textContent = "passed";
         } else {
-          addStep("info", "Return value serialized", "JsonReturnValueHandler writes the controller result as JSON with a success status.", "200");
+          addStep("info", "Return value serialized", "JsonReturnValueHandler writes the controller result as JSON with a success status.", "200", "mvc");
           controllerEvents.push({ text: "OrderResponse", kind: "success" });
           responseEvents.push({ text: "200 JSON response", kind: "success" });
           document.getElementById("mvc-match").textContent = "yes";
@@ -1095,6 +1115,7 @@ current simulation
       }
 
       document.getElementById("mvc-timeline").innerHTML = steps.map(stepTemplate).join("");
+      bindPlaygroundStepSelection("mvc-timeline", "mvc");
       renderLanes(document.getElementById("mvc-lanes"), [
         { label: "Routing", detail: "DispatcherServlet + HandlerMapping.", events: routerEvents },
         { label: "Binding", detail: "Argument resolution, conversion, validation.", events: bindingEvents.length ? bindingEvents : [{ text: "none", kind: "secondary" }] },

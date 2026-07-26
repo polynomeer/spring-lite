@@ -325,6 +325,8 @@
       background: #fffdf8;
       border: 1px solid var(--line);
       overflow: hidden;
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
     }
 
     .step::before {
@@ -379,6 +381,12 @@
     .step strong {
       display: block;
       margin-bottom: 4px;
+    }
+
+    .step.active {
+      transform: translateY(-1px);
+      border-color: var(--secondary);
+      box-shadow: 0 12px 28px rgba(29, 93, 91, 0.12);
     }
 
     .step p {
@@ -823,9 +831,9 @@
     tabBootstrap.addEventListener("click", () => setTab("bootstrap"));
     tabLifecycle.addEventListener("click", () => setTab("lifecycle"));
 
-    function renderSteps(containerId, steps) {
+    function renderSteps(containerId, steps, focus) {
       document.getElementById(containerId).innerHTML = steps.map((step, index) => `
-        <article class="step ${step.kind}">
+        <article class="step ${step.kind}" data-step-focus="${step.focus || ""}">
           <div class="index">${index + 1}</div>
           <div>
             <strong>${step.title}</strong>
@@ -834,6 +842,17 @@
           <div class="chip">${step.marker}</div>
         </article>
       `).join("");
+      const items = document.querySelectorAll(`#${containerId} .step`);
+      items.forEach((item, index) => {
+        item.addEventListener("click", () => {
+          items.forEach((candidate) => candidate.classList.remove("active"));
+          item.classList.add("active");
+          updateContainerReferences(item.dataset.stepFocus || focus);
+        });
+        if (index === 0) {
+          item.classList.add("active");
+        }
+      });
     }
 
     function renderLanes(containerId, lanes) {
@@ -864,65 +883,65 @@
       let infraCount = 0;
       let singletonCount = configCount + beanCount;
 
-      function addStep(kind, title, body, marker) {
-        steps.push({ kind, title, body, marker });
+      function addStep(kind, title, body, marker, focus) {
+        steps.push({ kind, title, body, marker, focus });
       }
 
-      addStep("phase", "Application properties prepared", "SpringLiteApplication collects command-line overrides and active profile properties before creating the context.", "properties");
+      addStep("phase", "Application properties prepared", "SpringLiteApplication collects command-line overrides and active profile properties before creating the context.", "properties", "bootstrap");
       bootstrapEvents.push({ text: "application properties", kind: "secondary" });
 
-      addStep("phase", "Configuration classes registered", `${configCount} configuration class definitions are registered as the initial context input.`, `${configCount} configs`);
+      addStep("phase", "Configuration classes registered", `${configCount} configuration class definitions are registered as the initial context input.`, `${configCount} configs`, "bootstrap");
       registryEvents.push({ text: `${configCount} config definitions`, kind: "success" });
 
-      addStep("phase", "Classpath scanning begins", `ClassPathScanner explores the ${scanMode === "jar" ? "JAR archive" : "filesystem packages"} and discovers ${beanCount} candidate components.`, scanMode);
+      addStep("phase", "Classpath scanning begins", `ClassPathScanner explores the ${scanMode === "jar" ? "JAR archive" : "filesystem packages"} and discovers ${beanCount} candidate components.`, scanMode, "bootstrap");
       registryEvents.push({ text: `${beanCount} scanned candidates`, kind: "secondary" });
 
-      addStep("phase", "BeanDefinition registry built", "The context turns configuration beans, @Bean factory methods, and component classes into bean definitions.", "registry");
+      addStep("phase", "BeanDefinition registry built", "The context turns configuration beans, @Bean factory methods, and component classes into bean definitions.", "registry", "bootstrap");
       registryEvents.push({ text: "BeanDefinition map", kind: "success" });
 
       if (useConditional) {
-        addStep("phase", "Conditional beans evaluated", "ConditionalOnBean, ConditionalOnMissingBean, and property/class conditions are checked after definitions are known.", "conditional");
+        addStep("phase", "Conditional beans evaluated", "ConditionalOnBean, ConditionalOnMissingBean, and property/class conditions are checked after definitions are known.", "conditional", "bootstrap");
         registryEvents.push({ text: "conditional filter", kind: "secondary" });
         singletonCount -= 1;
       }
 
-      addStep("phase", "BeanPostProcessors instantiated first", "Infrastructure that can wrap or customize later beans is created ahead of normal singletons.", "bpp-first");
+      addStep("phase", "BeanPostProcessors instantiated first", "Infrastructure that can wrap or customize later beans is created ahead of normal singletons.", "bpp-first", "bootstrap");
       infraEvents.push({ text: "base post-processors", kind: "success" });
       infraCount += 1;
 
       if (useAop) {
-        addStep("phase", "AOP infrastructure added", "AspectBeanPostProcessor is registered so eligible beans can be proxied after initialization.", "aspect-bpp");
+        addStep("phase", "AOP infrastructure added", "AspectBeanPostProcessor is registered so eligible beans can be proxied after initialization.", "aspect-bpp", "bootstrap");
         infraEvents.push({ text: "AspectBeanPostProcessor", kind: "success" });
         infraCount += 1;
       }
 
       if (useJdbc) {
-        addStep("phase", "Transactional infrastructure added", "A DataSource is present, so TransactionManager and TransactionalBeanPostProcessor are registered.", "tx-infra");
+        addStep("phase", "Transactional infrastructure added", "A DataSource is present, so TransactionManager and TransactionalBeanPostProcessor are registered.", "tx-infra", "bootstrap");
         infraEvents.push({ text: "TransactionManager", kind: "success" });
         infraEvents.push({ text: "TransactionalBPP", kind: "success" });
         infraCount += 2;
       }
 
-      addStep("phase", "Configuration beans instantiated", "The context creates configuration beans and invokes @Bean factory methods for early infrastructure objects.", "config-create");
+      addStep("phase", "Configuration beans instantiated", "The context creates configuration beans and invokes @Bean factory methods for early infrastructure objects.", "config-create", "bootstrap");
       singletonEvents.push({ text: "configuration beans", kind: "secondary" });
 
-      addStep("phase", "Remaining singletons created", `${Math.max(singletonCount, 1)} singleton beans are instantiated, initialized, and optionally proxied.`, "singletons");
+      addStep("phase", "Remaining singletons created", `${Math.max(singletonCount, 1)} singleton beans are instantiated, initialized, and optionally proxied.`, "singletons", "bootstrap");
       singletonEvents.push({ text: `${Math.max(singletonCount, 1)} singleton instances`, kind: "success" });
 
       if (useWeb) {
-        addStep("phase", "Web infrastructure assembled", "DispatcherServlet, handler mapping, adapter, return value handler, and WebServerFactory are wired in.", "web");
+        addStep("phase", "Web infrastructure assembled", "DispatcherServlet, handler mapping, adapter, return value handler, and WebServerFactory are wired in.", "web", "bootstrap");
         infraEvents.push({ text: "DispatcherServlet", kind: "secondary" });
         infraEvents.push({ text: "WebServerFactory", kind: "secondary" });
         infraCount += 2;
       }
 
-      addStep("phase", "ContextRefreshedEvent published", "Once singleton creation completes, listeners receive the refreshed signal and the context becomes ready.", "refresh");
+      addStep("phase", "ContextRefreshedEvent published", "Once singleton creation completes, listeners receive the refreshed signal and the context becomes ready.", "refresh", "bootstrap");
       bootstrapEvents.push({ text: "ContextRefreshedEvent", kind: "success" });
 
       document.getElementById("boot-phase-count").textContent = String(steps.length);
       document.getElementById("boot-singletons").textContent = String(Math.max(singletonCount, 1));
       document.getElementById("boot-infra").textContent = String(infraCount);
-      renderSteps("boot-timeline", steps);
+      renderSteps("boot-timeline", steps, "bootstrap");
       renderLanes("boot-lanes", [
         { label: "Bootstrap", detail: "Boot entrypoint and refresh completion.", events: bootstrapEvents },
         { label: "Registry", detail: "Scanning and BeanDefinition registration.", events: registryEvents },
@@ -965,47 +984,47 @@ current simulation
       let finalForm = "target";
       let destroyKind = "none";
 
-      function addStep(kind, title, body, marker) {
-        steps.push({ kind, title, body, marker });
+      function addStep(kind, title, body, marker, focus) {
+        steps.push({ kind, title, body, marker, focus });
       }
 
-      addStep("phase", "Definition lookup", `The context resolves the BeanDefinition for \`${beanName}\` and checks the singleton cache first.`, "lookup");
+      addStep("phase", "Definition lookup", `The context resolves the BeanDefinition for \`${beanName}\` and checks the singleton cache first.`, "lookup", "lifecycle");
       definitionEvents.push({ text: `${beanName} definition`, kind: "secondary" });
 
-      addStep("phase", "beansInCreation marked", "The bean name is tracked to prevent circular dependency re-entry during construction.", "in-creation");
+      addStep("phase", "beansInCreation marked", "The bean name is tracked to prevent circular dependency re-entry during construction.", "in-creation", "lifecycle");
       definitionEvents.push({ text: "beansInCreation", kind: "success" });
 
       if (constructorDeps) {
-        addStep("bean", "Constructor dependencies resolved", "Other beans required by the constructor or factory method are obtained before instantiation.", "deps");
+        addStep("bean", "Constructor dependencies resolved", "Other beans required by the constructor or factory method are obtained before instantiation.", "deps", "lifecycle");
         instanceEvents.push({ text: "constructor deps", kind: "secondary" });
       }
 
       if (useValue) {
-        addStep("bean", "@Value resolved and converted", "PropertyResolver finds the configured value and ConversionService adapts it to the target type.", "@Value");
+        addStep("bean", "@Value resolved and converted", "PropertyResolver finds the configured value and ConversionService adapts it to the target type.", "@Value", "lifecycle");
         instanceEvents.push({ text: "property injection", kind: "success" });
       }
 
       if (origin === "factory") {
-        addStep("bean", "@Bean factory method invoked", "A configuration bean method produces the new instance instead of direct constructor instantiation.", "factory()");
+        addStep("bean", "@Bean factory method invoked", "A configuration bean method produces the new instance instead of direct constructor instantiation.", "factory()", "lifecycle");
       } else {
-        addStep("bean", "Constructor invoked", "The component class constructor is called to create the raw target instance.", "new");
+        addStep("bean", "Constructor invoked", "The component class constructor is called to create the raw target instance.", "new", "lifecycle");
       }
       instanceEvents.push({ text: "target instance", kind: "success" });
 
-      addStep("phase", "postProcessBeforeInitialization", "BeanPostProcessors can inspect or mutate the bean before init callbacks run.", "before-init");
+      addStep("phase", "postProcessBeforeInitialization", "BeanPostProcessors can inspect or mutate the bean before init callbacks run.", "before-init", "lifecycle");
       postProcessEvents.push({ text: "before-init hooks", kind: "secondary" });
 
       if (usePostConstruct) {
-        addStep("bean", "@PostConstruct executed", "The container invokes initialization logic on the raw target instance.", "@PostConstruct");
+        addStep("bean", "@PostConstruct executed", "The container invokes initialization logic on the raw target instance.", "@PostConstruct", "lifecycle");
         instanceEvents.push({ text: "init callback", kind: "success" });
       }
 
-      addStep("phase", "postProcessAfterInitialization", "This is the point where proxy-capable post-processors can replace the exposed bean.", "after-init");
+      addStep("phase", "postProcessAfterInitialization", "This is the point where proxy-capable post-processors can replace the exposed bean.", "after-init", "lifecycle");
       postProcessEvents.push({ text: "after-init hooks", kind: "secondary" });
 
       if (proxy !== "none") {
         finalForm = proxy === "aop" ? "aop-proxy" : proxy === "tx" ? "tx-proxy" : "proxy-chain";
-        addStep("bean", "Proxy wrapped", `The original target is wrapped as a ${finalForm} and that proxy becomes the exposed bean instance.`, finalForm);
+        addStep("bean", "Proxy wrapped", `The original target is wrapped as a ${finalForm} and that proxy becomes the exposed bean instance.`, finalForm, "lifecycle");
         postProcessEvents.push({ text: finalForm, kind: "success" });
       }
 
@@ -1018,26 +1037,26 @@ current simulation
       destroyKind = destroy;
 
       if (destroy !== "none") {
-        addStep("phase", "Destroy callbacks registered", "The context remembers how to close the original target during shutdown.", destroy);
+        addStep("phase", "Destroy callbacks registered", "The context remembers how to close the original target during shutdown.", destroy, "lifecycle");
       } else {
-        addStep("phase", "No destroy callback registered", "The bean does not contribute explicit shutdown work beyond ordinary garbage collection.", "none");
+        addStep("phase", "No destroy callback registered", "The bean does not contribute explicit shutdown work beyond ordinary garbage collection.", "none", "lifecycle");
       }
 
       if (prototype) {
-        addStep("bean", "Prototype exits without cache", "Because the bean scope is prototype, the context returns the instance without caching it as a singleton.", "prototype");
+        addStep("bean", "Prototype exits without cache", "Because the bean scope is prototype, the context returns the instance without caching it as a singleton.", "prototype", "lifecycle");
         instanceEvents.push({ text: "not cached", kind: "error" });
       } else {
-        addStep("bean", "Singleton cached", "The final exposed instance is stored in the singleton registry for future lookups.", "singleton");
+        addStep("bean", "Singleton cached", "The final exposed instance is stored in the singleton registry for future lookups.", "singleton", "lifecycle");
         instanceEvents.push({ text: "singleton cache", kind: "success" });
       }
 
-      addStep("phase", "beansInCreation cleared", "Creation tracking is removed so future lookups see the bean as fully initialized.", "done");
+      addStep("phase", "beansInCreation cleared", "Creation tracking is removed so future lookups see the bean as fully initialized.", "done", "lifecycle");
       definitionEvents.push({ text: "creation cleared", kind: "success" });
 
       document.getElementById("life-stage-count").textContent = String(steps.length);
       document.getElementById("life-final-form").textContent = finalForm;
       document.getElementById("life-destroy-kind").textContent = destroyKind;
-      renderSteps("life-timeline", steps);
+      renderSteps("life-timeline", steps, "lifecycle");
       renderLanes("life-lanes", [
         { label: "Definition", detail: "BeanDefinition lookup and circular dependency guard.", events: definitionEvents },
         { label: "Instance", detail: "Target object creation and init callbacks.", events: instanceEvents },
