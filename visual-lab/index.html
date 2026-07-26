@@ -353,6 +353,43 @@
       margin-top: 14px;
     }
 
+    .recommend-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .recommend-btn {
+      border: 1px solid var(--line);
+      background: #faf5ec;
+      border-radius: 18px;
+      padding: 14px;
+      text-align: left;
+      font: inherit;
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+    }
+
+    .recommend-btn:hover {
+      transform: translateY(-1px);
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .recommend-btn strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+
+    .recommend-btn span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
     .path-card {
       padding: 14px;
       border-radius: 18px;
@@ -616,6 +653,29 @@
         </section>
 
         <section class="reading-path">
+          <h2>Recommended Starting Points</h2>
+          <p>Use these question-shaped shortcuts when you want the hub to choose the most relevant lab for you.</p>
+          <div class="recommend-grid">
+            <button class="recommend-btn" type="button" data-filter-target="intro" data-card-target="Playground">
+              <strong>I am new to Spring internals</strong>
+              <span>Start from the smallest runtime loop and build intuition before reading broader architecture.</span>
+            </button>
+            <button class="recommend-btn" type="button" data-filter-target="code" data-card-target="Container Lab">
+              <strong>I want to understand bean creation</strong>
+              <span>Jump directly to the ApplicationContext and bean lifecycle exploration path.</span>
+            </button>
+            <button class="recommend-btn" type="button" data-filter-target="flow" data-card-target="Example Flow Lab">
+              <strong>I want to trace one real request</strong>
+              <span>Follow one request from HTTP entry through transaction and JDBC execution.</span>
+            </button>
+            <button class="recommend-btn" type="button" data-filter-target="compare" data-card-target="Spring Comparison Dashboard">
+              <strong>I want to compare with real Spring</strong>
+              <span>Go straight to the dashboard that maps Spring Lite concepts to Spring Boot.</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="reading-path">
           <h2>Code and Test Jump Points</h2>
           <p>When you want to leave the visuals and read the actual implementation, these are the best first stops.</p>
           <div class="path-grid">
@@ -648,6 +708,7 @@
   <script>
     const filterButtons = Array.from(document.querySelectorAll(".filter-btn"));
     const labCards = Array.from(document.querySelectorAll(".cards .card"));
+    const recommendButtons = Array.from(document.querySelectorAll(".recommend-btn"));
     const visibleLabCount = document.getElementById("visible-lab-count");
     const activeFilterLabel = document.getElementById("active-filter-label");
 
@@ -672,6 +733,21 @@
 
     filterButtons.forEach((button) => {
       button.addEventListener("click", () => applyFilter(button.dataset.filter));
+    });
+
+    recommendButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const filter = button.dataset.filterTarget;
+        const cardTitle = button.dataset.cardTarget;
+        applyFilter(filter);
+        const targetCard = labCards.find((card) => {
+          const heading = card.querySelector("h3");
+          return heading && heading.textContent.trim() === cardTitle;
+        });
+        if (targetCard) {
+          targetCard.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      });
     });
 
     applyFilter("all");
