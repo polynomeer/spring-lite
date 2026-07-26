@@ -490,11 +490,18 @@
       border-radius: 18px;
       background: #fffdf8;
       border: 1px solid var(--line);
+      transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
     }
 
     .reference-card h3 {
       margin: 0 0 8px;
       font-size: 15px;
+    }
+
+    .reference-card.active {
+      transform: translateY(-2px);
+      border-color: var(--secondary);
+      box-shadow: 0 12px 28px rgba(29, 93, 91, 0.12);
     }
 
     .link-list {
@@ -513,6 +520,13 @@
       color: var(--text);
       font-size: 13px;
       line-height: 1.4;
+      transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+    }
+
+    .resource-link.active {
+      background: var(--secondary-soft);
+      border-color: var(--secondary);
+      transform: translateY(-1px);
     }
 
     @media (max-width: 980px) {
@@ -738,31 +752,31 @@
           `visual-architecture-guide.md`, `runtime-sequence-diagrams.md`, and the context/boot test suites.
         </div>
         <div class="reference-grid">
-          <section class="reference-card">
+          <section class="reference-card" id="container-ref-core">
             <h3>Container Source</h3>
             <p>Core classes for refresh, scanning, bean creation, and lifecycle hooks.</p>
             <div class="link-list">
-              <a class="resource-link" href="../spring-lite-context/src/main/java/lite/spring/context/support/AnnotationConfigApplicationContext.java">AnnotationConfigApplicationContext.java</a>
-              <a class="resource-link" href="../spring-lite-context/src/main/java/lite/spring/context/scan/ClassPathScanner.java">ClassPathScanner.java</a>
-              <a class="resource-link" href="../spring-lite-core/src/main/java/lite/spring/core/convert/DefaultConversionService.java">DefaultConversionService.java</a>
+              <a class="resource-link" data-focus="bootstrap lifecycle" href="../spring-lite-context/src/main/java/lite/spring/context/support/AnnotationConfigApplicationContext.java">AnnotationConfigApplicationContext.java</a>
+              <a class="resource-link" data-focus="bootstrap" href="../spring-lite-context/src/main/java/lite/spring/context/scan/ClassPathScanner.java">ClassPathScanner.java</a>
+              <a class="resource-link" data-focus="lifecycle" href="../spring-lite-core/src/main/java/lite/spring/core/convert/DefaultConversionService.java">DefaultConversionService.java</a>
             </div>
           </section>
-          <section class="reference-card">
+          <section class="reference-card" id="container-ref-boot">
             <h3>Boot Source</h3>
             <p>Entry points and property loading used during application startup.</p>
             <div class="link-list">
-              <a class="resource-link" href="../spring-lite-boot/src/main/java/lite/spring/boot/SpringLiteApplication.java">SpringLiteApplication.java</a>
-              <a class="resource-link" href="../spring-lite-boot/src/main/java/lite/spring/boot/support/ApplicationProperties.java">ApplicationProperties.java</a>
-              <a class="resource-link" href="../spring-lite-web/src/main/java/lite/spring/web/support/DispatcherServlet.java">DispatcherServlet.java</a>
+              <a class="resource-link" data-focus="bootstrap" href="../spring-lite-boot/src/main/java/lite/spring/boot/SpringLiteApplication.java">SpringLiteApplication.java</a>
+              <a class="resource-link" data-focus="bootstrap" href="../spring-lite-boot/src/main/java/lite/spring/boot/support/ApplicationProperties.java">ApplicationProperties.java</a>
+              <a class="resource-link" data-focus="bootstrap" href="../spring-lite-web/src/main/java/lite/spring/web/support/DispatcherServlet.java">DispatcherServlet.java</a>
             </div>
           </section>
-          <section class="reference-card">
+          <section class="reference-card" id="container-ref-tests">
             <h3>Tests and Docs</h3>
             <p>Tests and architecture docs that anchor the same startup phases.</p>
             <div class="link-list">
-              <a class="resource-link" href="../spring-lite-context/src/test/java/lite/spring/context/AnnotationConfigApplicationContextTest.java">AnnotationConfigApplicationContextTest.java</a>
-              <a class="resource-link" href="../spring-lite-boot/src/test/java/lite/spring/boot/SpringLiteApplicationTest.java">SpringLiteApplicationTest.java</a>
-              <a class="resource-link" href="../docs/architecture/visual-architecture-guide.md">visual-architecture-guide.md</a>
+              <a class="resource-link" data-focus="bootstrap lifecycle" href="../spring-lite-context/src/test/java/lite/spring/context/AnnotationConfigApplicationContextTest.java">AnnotationConfigApplicationContextTest.java</a>
+              <a class="resource-link" data-focus="bootstrap" href="../spring-lite-boot/src/test/java/lite/spring/boot/SpringLiteApplicationTest.java">SpringLiteApplicationTest.java</a>
+              <a class="resource-link" data-focus="bootstrap lifecycle" href="../docs/architecture/visual-architecture-guide.md">visual-architecture-guide.md</a>
             </div>
           </section>
         </div>
@@ -777,6 +791,23 @@
     const controlsLifecycle = document.getElementById("controls-lifecycle");
     const labBootstrap = document.getElementById("lab-bootstrap");
     const labLifecycle = document.getElementById("lab-lifecycle");
+    const containerReferenceCards = {
+      core: document.getElementById("container-ref-core"),
+      boot: document.getElementById("container-ref-boot"),
+      tests: document.getElementById("container-ref-tests")
+    };
+
+    function updateContainerReferences(focus) {
+      containerReferenceCards.core.classList.add("active");
+      containerReferenceCards.tests.classList.add("active");
+      containerReferenceCards.boot.classList.toggle("active", focus === "bootstrap");
+      [containerReferenceCards.core, containerReferenceCards.boot, containerReferenceCards.tests].forEach((card) => {
+        card.querySelectorAll(".resource-link").forEach((link) => {
+          const groups = (link.dataset.focus || "").split(" ");
+          link.classList.toggle("active", groups.includes(focus));
+        });
+      });
+    }
 
     function setTab(name) {
       const bootstrap = name === "bootstrap";
@@ -786,6 +817,7 @@
       controlsLifecycle.classList.toggle("hidden", bootstrap);
       labBootstrap.classList.toggle("hidden", !bootstrap);
       labLifecycle.classList.toggle("hidden", bootstrap);
+      updateContainerReferences(name);
     }
 
     tabBootstrap.addEventListener("click", () => setTab("bootstrap"));
@@ -1033,6 +1065,7 @@ current simulation
     document.getElementById("run-bootstrap").addEventListener("click", runBootstrapSimulation);
     document.getElementById("run-lifecycle").addEventListener("click", runLifecycleSimulation);
 
+    updateContainerReferences("bootstrap");
     runBootstrapSimulation();
     runLifecycleSimulation();
   </script>
