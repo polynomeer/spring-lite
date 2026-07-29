@@ -1,3 +1,5 @@
+import { fetchLiveLabTrace } from "./live-api";
+import { liveTraceEndpoint } from "./runtime-config";
 import { staticTraceCatalog } from "./lab-trace-data";
 import type { LabTrace, LabTraceProvider, LabTraceRequest } from "./types";
 
@@ -18,25 +20,29 @@ class LiveLabTraceProvider implements LabTraceProvider {
   readonly kind = "live" as const;
 
   async getTrace(request: LabTraceRequest): Promise<LabTrace> {
+    if (liveTraceEndpoint) {
+      return fetchLiveLabTrace(request);
+    }
+
     return {
       id: `live-placeholder-${request.labId}-${request.scenario}`,
       labId: request.labId,
       mode: "live",
       scenario: request.scenario,
       title: "Live trace placeholder",
-      summary: "Live mode is scaffolded but not yet connected to a backend trace endpoint.",
+      summary: "Live mode is scaffolded, but no backend API base URL is configured yet.",
       metrics: [
         {
           label: "Provider Status",
-          value: "pending",
-          detail: "Waiting for request runner and trace API implementation."
+          value: "missing-config",
+          detail: "Set VITE_LAB_API_BASE_URL to enable real trace fetching."
         }
       ],
       steps: [
         {
           id: "placeholder-step",
-          title: "Backend contract not connected",
-          detail: "The frontend provider layer is ready. The next step is wiring this request to a real lab API.",
+          title: "Live API endpoint not configured",
+          detail: "The frontend provider layer is ready. Add VITE_LAB_API_BASE_URL so this request can call the backend trace endpoint.",
           marker: "todo",
           kind: "warning"
         }
@@ -50,16 +56,16 @@ class LiveLabTraceProvider implements LabTraceProvider {
           events: [
             {
               id: "placeholder-event",
-              text: `Missing live endpoint for ${request.labId}:${request.scenario}`,
+              text: `Configure VITE_LAB_API_BASE_URL for ${request.labId}:${request.scenario}`,
               kind: "warning"
             }
           ]
         }
       ],
       snapshot: {
-        watch: "The provider boundary is now in place, but live mode has no backend trace source yet.",
-        why: "Keeping a placeholder contract lets the same UI render static and live providers without branching the component structure.",
-        next: "Implement `/lab/run/example-flow` and normalize its response into `LabTrace`."
+        watch: "The provider boundary is in place, but live mode cannot call the backend until a base URL is configured.",
+        why: "This keeps the same UI contract for static and live providers while the server-side trace endpoint is still under development.",
+        next: "Set VITE_LAB_API_BASE_URL and implement POST /lab/run/trace so live mode can return a real LabTrace payload."
       },
       references: ["docs/codex/visual-lab-frontend-separation-plan.md"]
     };

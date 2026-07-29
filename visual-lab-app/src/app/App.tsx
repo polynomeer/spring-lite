@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { labCards, roadmapSteps, tracePresetOptions } from "../lib/static-data";
 import { adaptTrace } from "../features/trace-adapters";
 import { useLabTrace } from "../hooks/useLabTrace";
+import { liveApiBaseUrl, liveTraceEndpointPath } from "../lib/runtime-config";
 import type { RuntimeMode } from "../lib/types";
 
 export function App() {
@@ -50,6 +51,13 @@ export function App() {
               ? "Use local scenario providers and preserve the no-server learning path."
               : "Connect trace APIs, request runners, and comparison targets once backend contracts exist."}
           </p>
+          {mode === "live" ? (
+            <p className="mode-subnote">
+              {liveApiBaseUrl
+                ? `Configured API base URL: ${liveApiBaseUrl}${liveTraceEndpointPath}`
+                : "VITE_LAB_API_BASE_URL is not set. Live mode will stay in placeholder mode."}
+            </p>
+          ) : null}
         </div>
       </header>
 

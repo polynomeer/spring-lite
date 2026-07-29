@@ -26,6 +26,14 @@ npm run dev
 
 기본 개발 서버 포트는 `4173`이다.
 
+live mode를 실서버와 연결하려면 환경변수를 지정한다.
+
+```bash
+VITE_LAB_API_BASE_URL=http://127.0.0.1:8080 npm run dev
+```
+
+현재 프론트엔드는 `POST /lab/run/trace` 계약을 기대한다. 백엔드 endpoint가 아직 없으면 live mode는 placeholder trace를 보여준다.
+
 ## 다음 구현 순서
 
 1. 현재 `visual-lab` 정적 페이지 기능을 React 컴포넌트로 옮긴다.
