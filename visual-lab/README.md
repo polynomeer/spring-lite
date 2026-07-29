@@ -217,6 +217,7 @@ http://localhost:8081/visual-lab/index.html
 
 ## 함께 열어두면 좋은 문서
 
+- `docs/codex/visual-lab-frontend-separation-plan.md`
 - `docs/architecture/visual-architecture-guide.md`
 - `docs/architecture/runtime-sequence-diagrams.md`
 - `docs/architecture/example-app-request-flow.md`
