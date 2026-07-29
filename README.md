@@ -118,6 +118,7 @@
 
 - [Visual Lab 안내](./visual-lab/README.md)
 - [Visual Lab 프론트엔드 분리 기획안](./docs/codex/visual-lab-frontend-separation-plan.md)
+- [Visual Lab App 스캐폴드](./visual-lab-app/README.md)
 - [Visual Lab Hub](./visual-lab/index.html)
 - [Spring Lite Playground](./visual-lab/spring-lite-playground.html)
 - [Spring Lite Container Lab](./visual-lab/spring-lite-container-lab.html)

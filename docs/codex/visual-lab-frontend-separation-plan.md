@@ -479,3 +479,7 @@ spring-lite/
 1. `visual-lab-app` 디렉터리와 기술 스택 확정
 2. `LabTrace` 공통 응답 스키마 초안 작성
 3. `example-flow-lab` live mode를 위한 최소 endpoint 설계
+
+현재 저장소에는 1번의 초기 스캐폴드가 이미 추가되어 있다.
+
+- `visual-lab-app/README.md`

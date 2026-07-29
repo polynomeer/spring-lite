@@ -13,6 +13,7 @@
 가장 빠른 진입점은 허브 페이지다.
 
 - `visual-lab/index.html`
+- 분리형 프론트엔드 스캐폴드는 `visual-lab-app/README.md`에서 확인할 수 있다.
 
 허브에서 바로 아래 네 페이지로 이동할 수 있다.
 
@@ -217,6 +218,7 @@ http://localhost:8081/visual-lab/index.html
 
 ## 함께 열어두면 좋은 문서
 
+- `visual-lab-app/README.md`
 - `docs/codex/visual-lab-frontend-separation-plan.md`
 - `docs/architecture/visual-architecture-guide.md`
 - `docs/architecture/runtime-sequence-diagrams.md`
