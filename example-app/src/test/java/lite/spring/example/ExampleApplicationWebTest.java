@@ -31,4 +31,34 @@ class ExampleApplicationWebTest {
         assertThat(response.body()).contains("\"error\":\"Validation failed\"");
         assertThat(response.body()).contains("\"path\":\"request.product\"");
     }
+
+    @Test
+    void returnsLiveLabTraceForExampleFlowCreate(MockMvc mockMvc) {
+        MockHttpResponse response = mockMvc.perform(
+            MockHttpRequest.post("/lab/run/trace")
+                .contentType("application/json")
+                .body("{\"labId\":\"example-flow\",\"scenario\":\"create\",\"mode\":\"live\"}")
+                .build()
+        );
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).contains("\"labId\":\"example-flow\"");
+        assertThat(response.body()).contains("\"scenario\":\"create\"");
+        assertThat(response.body()).contains("\"mode\":\"live\"");
+        assertThat(response.body()).contains("\"Created Order\"");
+        assertThat(response.body()).contains("\"title\":\"Example Flow Trace\"");
+    }
+
+    @Test
+    void rejectsUnsupportedLiveLabScenario(MockMvc mockMvc) {
+        MockHttpResponse response = mockMvc.perform(
+            MockHttpRequest.post("/lab/run/trace")
+                .contentType("application/json")
+                .body("{\"labId\":\"example-flow\",\"scenario\":\"rollback\",\"mode\":\"live\"}")
+                .build()
+        );
+
+        assertThat(response.statusCode()).isEqualTo(400);
+        assertThat(response.body()).contains("\"error\":\"Unsupported example-flow scenario: rollback\"");
+    }
 }
