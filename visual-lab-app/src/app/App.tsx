@@ -1,42 +1,19 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { labCards, roadmapSteps, tracePresetOptions } from "../lib/static-data";
-import { getLabTraceProvider } from "../lib/providers";
-import type { LabTrace, RuntimeMode } from "../lib/types";
+import { adaptTrace } from "../features/trace-adapters";
+import { useLabTrace } from "../hooks/useLabTrace";
+import type { RuntimeMode } from "../lib/types";
 
 export function App() {
   const [mode, setMode] = useState<RuntimeMode>("static");
   const [selectedPreset, setSelectedPreset] = useState(0);
-  const [trace, setTrace] = useState<LabTrace | null>(null);
-  const [traceError, setTraceError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    const preset = tracePresetOptions[selectedPreset];
-    const provider = getLabTraceProvider(mode);
-
-    setTraceError(null);
-    provider
-      .getTrace({
-        labId: preset.labId,
-        scenario: preset.scenario,
-        mode
-      })
-      .then((nextTrace) => {
-        if (!cancelled) {
-          setTrace(nextTrace);
-        }
-      })
-      .catch((error: unknown) => {
-        if (!cancelled) {
-          setTrace(null);
-          setTraceError(error instanceof Error ? error.message : "Unknown trace loading error");
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [mode, selectedPreset]);
+  const preset = tracePresetOptions[selectedPreset];
+  const { trace, error: traceError, loading } = useLabTrace({
+    labId: preset.labId,
+    scenario: preset.scenario,
+    mode
+  });
+  const traceInsight = useMemo(() => (trace ? adaptTrace(trace) : null), [trace]);
 
   return (
     <div className="page-shell">
@@ -165,6 +142,13 @@ export function App() {
             </label>
           </div>
 
+          {loading ? (
+            <div className="info-box">
+              <strong>Loading trace</strong>
+              <p>Resolving provider output for the selected mode and preset.</p>
+            </div>
+          ) : null}
+
           {traceError ? (
             <div className="info-box error-box">
               <strong>Trace loading failed</strong>
@@ -193,6 +177,25 @@ export function App() {
                   ))}
                 </div>
               </article>
+
+              {traceInsight ? (
+                <article className="trace-panel">
+                  <div className="trace-head">
+                    <div>
+                      <p className="eyebrow">Feature Adapter</p>
+                      <h3>{traceInsight.insight.title}</h3>
+                    </div>
+                    <span className="tag">{traceInsight.accent}</span>
+                  </div>
+                  <div className="trace-list">
+                    {traceInsight.insight.bullets.map((bullet) => (
+                      <div className="trace-item info" key={bullet}>
+                        <p>{bullet}</p>
+                      </div>
+                    ))}
+                  </div>
+                </article>
+              ) : null}
 
               <article className="trace-panel">
                 <p className="eyebrow">Snapshot</p>
@@ -257,7 +260,13 @@ export function App() {
   src/
     app/
       App.tsx
+    hooks/
+      useLabTrace.ts
+    features/
+      trace-adapters.ts
     lib/
+      providers.ts
+      lab-trace-data.ts
       static-data.ts
       types.ts
     styles.css

@@ -374,6 +374,10 @@ code {
   line-height: 1.5;
 }
 
+.trace-item p + p {
+  margin-top: 6px;
+}
+
 .trace-item.info {
   border-color: #cbd8ea;
 }
