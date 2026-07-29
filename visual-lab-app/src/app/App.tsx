@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { TracePreview } from "../components/trace/TracePreview";
 import { labCards, roadmapSteps, tracePresetOptions } from "../lib/static-data";
 import { adaptTrace } from "../features/trace-adapters";
 import { useLabTrace } from "../hooks/useLabTrace";
@@ -165,95 +166,7 @@ export function App() {
           ) : null}
 
           {trace ? (
-            <div className="trace-preview-grid">
-              <article className="trace-panel">
-                <div className="trace-head">
-                  <div>
-                    <p className="eyebrow">Loaded Trace</p>
-                    <h3>{trace.title}</h3>
-                  </div>
-                  <span className="tag">{trace.scenario}</span>
-                </div>
-                <p>{trace.summary}</p>
-                <div className="metric-mini-grid">
-                  {trace.metrics.map((metric) => (
-                    <div className="metric-mini" key={metric.label}>
-                      <strong>{metric.label}</strong>
-                      <div className="metric-mini-value">{metric.value}</div>
-                      <span>{metric.detail}</span>
-                    </div>
-                  ))}
-                </div>
-              </article>
-
-              {traceInsight ? (
-                <article className="trace-panel">
-                  <div className="trace-head">
-                    <div>
-                      <p className="eyebrow">Feature Adapter</p>
-                      <h3>{traceInsight.insight.title}</h3>
-                    </div>
-                    <span className="tag">{traceInsight.accent}</span>
-                  </div>
-                  <div className="trace-list">
-                    {traceInsight.insight.bullets.map((bullet) => (
-                      <div className="trace-item info" key={bullet}>
-                        <p>{bullet}</p>
-                      </div>
-                    ))}
-                  </div>
-                </article>
-              ) : null}
-
-              <article className="trace-panel">
-                <p className="eyebrow">Snapshot</p>
-                <div className="detail-list">
-                  <div>
-                    <span>Watch</span>
-                    <p>{trace.snapshot.watch}</p>
-                  </div>
-                  <div>
-                    <span>Why</span>
-                    <p>{trace.snapshot.why}</p>
-                  </div>
-                  <div>
-                    <span>Next</span>
-                    <p>{trace.snapshot.next}</p>
-                  </div>
-                </div>
-              </article>
-
-              <article className="trace-panel">
-                <p className="eyebrow">Steps</p>
-                <div className="trace-list">
-                  {trace.steps.map((step) => (
-                    <div className={`trace-item ${step.kind}`} key={step.id}>
-                      <strong>{step.title}</strong>
-                      <p>{step.detail}</p>
-                    </div>
-                  ))}
-                </div>
-              </article>
-
-              <article className="trace-panel">
-                <p className="eyebrow">Lanes</p>
-                <div className="trace-list">
-                  {trace.lanes.map((lane) => (
-                    <div className="lane-card" key={lane.id}>
-                      <strong>{lane.label}</strong>
-                      <p>{lane.detail}</p>
-                      <div className="chip-row">
-                        {lane.events.map((laneEvent) => (
-                          <span className="chip" key={laneEvent.id}>
-                            {laneEvent.text}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </article>
-            </div>
+            <TracePreview trace={trace} insight={traceInsight} />
           ) : null}
         </section>
 
@@ -270,6 +183,9 @@ export function App() {
       App.tsx
     hooks/
       useLabTrace.ts
+    components/
+      trace/
+        TracePreview.tsx
     features/
       trace-adapters.ts
     lib/
