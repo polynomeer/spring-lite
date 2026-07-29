@@ -56,7 +56,7 @@ export function App() {
             <p className="mode-subnote">
               {liveApiBaseUrl
                 ? `Configured API base URL: ${liveApiBaseUrl}${liveTraceEndpointPath}`
-                : "VITE_LAB_API_BASE_URL is not set. Live mode will stay in placeholder mode."}
+                : `Using relative live endpoint ${liveTraceEndpointPath} (Vite dev proxy expects example-app on :8080).`}
             </p>
           ) : null}
         </div>

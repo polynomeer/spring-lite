@@ -32,7 +32,9 @@ live mode를 실서버와 연결하려면 환경변수를 지정한다.
 VITE_LAB_API_BASE_URL=http://127.0.0.1:8080 npm run dev
 ```
 
-현재 프론트엔드는 `POST /lab/run/trace` 계약을 기대한다. 백엔드 endpoint가 아직 없으면 live mode는 placeholder trace를 보여준다.
+환경변수를 주지 않으면 개발 서버에서 상대경로 `/lab/run/trace`를 사용하고, Vite 프록시가 `http://127.0.0.1:8080`의 `example-app`으로 전달한다.
+
+현재 프론트엔드는 `POST /lab/run/trace` 계약을 기대한다. 백엔드가 꺼져 있거나 응답하지 않으면 live mode는 에러를 설명하는 placeholder trace를 보여준다.
 
 ## 다음 구현 순서
 
