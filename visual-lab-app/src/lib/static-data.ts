@@ -51,3 +51,8 @@ export const roadmapSteps = [
     description: "Promote shared schemas, replay controls, and comparison utilities into common frontend libraries."
   }
 ] as const;
+
+export const tracePresetOptions = [
+  { labId: "example-flow", scenario: "create", label: "Example Flow / Create Order" },
+  { labId: "playground", scenario: "aop-success", label: "Playground / AOP Success" }
+] as const;
