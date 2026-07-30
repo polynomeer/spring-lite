@@ -19,10 +19,12 @@ export function TracePreview({ trace, insight, runSequence, loading }: TracePrev
     <div
       className={loading ? "trace-preview-grid is-loading" : "trace-preview-grid"}
       data-run-sequence={runSequence}
+      data-trace-mode={trace.mode}
+      data-trace-scenario={trace.scenario}
       key={`${trace.id}:${runSequence}`}
     >
       <TraceMetricsPanel trace={trace} />
-      {insight ? <TraceInsightPanel insight={insight} /> : null}
+      {insight ? <TraceInsightPanel insight={insight} trace={trace} /> : null}
       <TraceSnapshotPanel trace={trace} />
       <TraceStepsPanel trace={trace} />
       <TraceLanesPanel trace={trace} />

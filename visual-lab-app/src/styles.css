@@ -384,14 +384,19 @@ code {
   background: var(--accent-soft);
 }
 
+.status-pill.info {
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
 .status-pill.warning {
   color: var(--warning);
   background: var(--warning-soft);
 }
 
-.status-pill.info {
-  color: var(--primary);
-  background: var(--primary-soft);
+.status-pill.error {
+  color: var(--danger);
+  background: var(--danger-soft);
 }
 
 .status-pill.neutral {
@@ -498,6 +503,18 @@ code {
   animation: panelRise 360ms ease both;
 }
 
+.trace-panel.tone-success::before {
+  background: linear-gradient(180deg, var(--accent), rgba(135, 255, 202, 0.22));
+}
+
+.trace-panel.tone-warning::before {
+  background: linear-gradient(180deg, var(--warning), rgba(255, 199, 102, 0.2));
+}
+
+.trace-panel.tone-error::before {
+  background: linear-gradient(180deg, var(--danger), rgba(255, 122, 122, 0.2));
+}
+
 .trace-panel::before {
   content: "";
   position: absolute;
@@ -525,6 +542,18 @@ code {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
+}
+
+.trace-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.trace-status-detail {
+  margin: 0;
+  color: #c8d8e7;
+  line-height: 1.55;
 }
 
 .metric-mini {
