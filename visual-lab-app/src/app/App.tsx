@@ -121,8 +121,10 @@ export function App() {
           <div className="info-box">
             <strong>Suggested next implementation</strong>
             <p>
-              The shared <code>LabTrace</code> schema and provider boundary are now in place. The next step
-              is wiring the first real live endpoint for <code>example-flow-lab</code>.
+              The shared <code>LabTrace</code> schema and provider boundary are in place, and the live
+              <code> example-flow</code> endpoint now serves success, validation, not-found, service-error,
+              and rollback scenarios. The next step is extending the same contract to container and
+              comparison-focused labs.
             </p>
           </div>
         </section>

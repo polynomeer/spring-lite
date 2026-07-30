@@ -54,5 +54,9 @@ export const roadmapSteps = [
 
 export const tracePresetOptions = [
   { labId: "example-flow", scenario: "create", label: "Example Flow / Create Order" },
+  { labId: "example-flow", scenario: "validation", label: "Example Flow / Validation Failure" },
+  { labId: "example-flow", scenario: "not-found", label: "Example Flow / Missing Order" },
+  { labId: "example-flow", scenario: "service-error", label: "Example Flow / Service Error" },
+  { labId: "example-flow", scenario: "rollback", label: "Example Flow / Rollback After Insert" },
   { labId: "playground", scenario: "aop-success", label: "Playground / AOP Success" }
 ] as const;
