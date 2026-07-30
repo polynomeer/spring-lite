@@ -29,6 +29,7 @@ public final class PropertyResolver {
         Map<String, String> merged = new LinkedHashMap<>(baseResolver.values);
         String activeProfiles = resolveActiveProfiles(baseResolver);
         if (activeProfiles == null || activeProfiles.isBlank()) {
+            merged.putAll(RUNTIME_OVERRIDES.get());
             return new PropertyResolver(merged);
         }
         for (String profile : activeProfiles.split(",")) {

@@ -70,6 +70,23 @@ class PropertyResolverTest {
         assertThat(fresh.get("app.name")).isEqualTo("spring-lite");
     }
 
+    @Test
+    void appliesRuntimeOverridesEvenWithoutActiveProfiles() {
+        String previousProfiles = System.getProperty("spring.profiles.active");
+        System.clearProperty("spring.profiles.active");
+        try {
+            PropertyResolver overridden = PropertyResolver.withOverrides(
+                Map.of("server.port", "18080", "app.name", "runtime-no-profile"),
+                PropertyResolver::loadApplicationProperties
+            );
+
+            assertThat(overridden.get("server.port")).isEqualTo("18080");
+            assertThat(overridden.get("app.name")).isEqualTo("runtime-no-profile");
+        } finally {
+            restoreProperty("spring.profiles.active", previousProfiles);
+        }
+    }
+
     private void restoreProperty(String key, String value) {
         if (value == null) {
             System.clearProperty(key);
