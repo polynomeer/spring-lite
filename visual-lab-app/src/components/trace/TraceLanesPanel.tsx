@@ -10,12 +10,15 @@ export function TraceLanesPanel({ trace }: TraceLanesPanelProps) {
       <p className="eyebrow">Lanes</p>
       <div className="trace-list">
         {trace.lanes.map((lane) => (
-          <div className="lane-card" key={lane.id}>
-            <strong>{lane.label}</strong>
+          <div className={`lane-card lane-${lane.kind}`} key={lane.id}>
+            <div className="lane-head">
+              <strong>{lane.label}</strong>
+              <span className="lane-kind">{lane.kind}</span>
+            </div>
             <p>{lane.detail}</p>
-            <div className="chip-row">
+            <div className="lane-events">
               {lane.events.map((laneEvent) => (
-                <span className="chip" key={laneEvent.id}>
+                <span className={`lane-event ${laneEvent.kind}`} key={laneEvent.id}>
                   {laneEvent.text}
                 </span>
               ))}

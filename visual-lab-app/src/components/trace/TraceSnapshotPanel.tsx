@@ -8,16 +8,16 @@ export function TraceSnapshotPanel({ trace }: TraceSnapshotPanelProps) {
   return (
     <article className="trace-panel">
       <p className="eyebrow">Snapshot</p>
-      <div className="detail-list">
-        <div>
+      <div className="snapshot-stack">
+        <div className="snapshot-card">
           <span>Watch</span>
           <p>{trace.snapshot.watch}</p>
         </div>
-        <div>
+        <div className="snapshot-card">
           <span>Why</span>
           <p>{trace.snapshot.why}</p>
         </div>
-        <div>
+        <div className="snapshot-card">
           <span>Next</span>
           <p>{trace.snapshot.next}</p>
         </div>
