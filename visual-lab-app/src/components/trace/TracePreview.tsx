@@ -10,11 +10,17 @@ import { TraceStepsPanel } from "./TraceStepsPanel";
 interface TracePreviewProps {
   trace: LabTrace;
   insight: TraceAdapterResult | null;
+  runSequence: number;
+  loading: boolean;
 }
 
-export function TracePreview({ trace, insight }: TracePreviewProps) {
+export function TracePreview({ trace, insight, runSequence, loading }: TracePreviewProps) {
   return (
-    <div className="trace-preview-grid">
+    <div
+      className={loading ? "trace-preview-grid is-loading" : "trace-preview-grid"}
+      data-run-sequence={runSequence}
+      key={`${trace.id}:${runSequence}`}
+    >
       <TraceMetricsPanel trace={trace} />
       {insight ? <TraceInsightPanel insight={insight} /> : null}
       <TraceSnapshotPanel trace={trace} />

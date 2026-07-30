@@ -53,6 +53,8 @@ export function App() {
   const endpointLabel = liveApiBaseUrl
     ? `${liveApiBaseUrl}${liveTraceEndpointPath}`
     : `${liveTraceEndpointPath} via Vite proxy`;
+  const activeTraceModeLabel = executedRequest.mode === "live" ? "live signal" : "static replay";
+  const activeTraceModeTone = executedRequest.mode === "live" ? "status-pill info" : "status-pill neutral";
 
   function runSelectedTrace() {
     setExecutedRequest(draftRequest);
@@ -264,11 +266,27 @@ export function App() {
                 {isDraftDirty ? "selection changed" : "selection synced"}
               </span>
               <span className="status-pill neutral">last run {lastRunLabel}</span>
+              <span className={activeTraceModeTone}>{activeTraceModeLabel}</span>
               {executedRequest.mode === "live" ? (
                 <span className="status-pill info">{endpointLabel}</span>
               ) : (
                 <span className="status-pill neutral">local static provider</span>
               )}
+            </div>
+            <div className="console-strip">
+              <div className="console-leds" aria-hidden="true">
+                <span className={loading ? "console-led hot" : "console-led ok"}></span>
+                <span className={executedRequest.mode === "live" ? "console-led info" : "console-led idle"}></span>
+                <span className={traceError ? "console-led warn" : "console-led idle"}></span>
+              </div>
+              <div className="console-strip-copy">
+                <strong>{loading ? "Trace pipeline active" : "Trace pipeline ready"}</strong>
+                <p>
+                  {loading
+                    ? `Refreshing ${executedRequest.labId}:${executedRequest.scenario} through the ${executedRequest.mode} provider.`
+                    : `Watching ${executedRequest.labId}:${executedRequest.scenario} from the ${executedRequest.mode} provider.`}
+                </p>
+              </div>
             </div>
             <label className="field">
               <span>Request payload</span>
@@ -296,7 +314,7 @@ export function App() {
           ) : null}
 
           {trace ? (
-            <TracePreview trace={trace} insight={traceInsight} />
+            <TracePreview trace={trace} insight={traceInsight} runSequence={reloadKey} loading={loading} />
           ) : null}
         </section>
 
