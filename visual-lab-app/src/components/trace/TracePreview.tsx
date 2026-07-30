@@ -3,6 +3,7 @@ import type { LabTrace } from "../../lib/types";
 import { TraceInsightPanel } from "./TraceInsightPanel";
 import { TraceLanesPanel } from "./TraceLanesPanel";
 import { TraceMetricsPanel } from "./TraceMetricsPanel";
+import { TraceReferencesPanel } from "./TraceReferencesPanel";
 import { TraceSnapshotPanel } from "./TraceSnapshotPanel";
 import { TraceStepsPanel } from "./TraceStepsPanel";
 
@@ -19,6 +20,7 @@ export function TracePreview({ trace, insight }: TracePreviewProps) {
       <TraceSnapshotPanel trace={trace} />
       <TraceStepsPanel trace={trace} />
       <TraceLanesPanel trace={trace} />
+      <TraceReferencesPanel trace={trace} />
     </div>
   );
 }

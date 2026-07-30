@@ -1,13 +1,17 @@
 import { useMemo, useState } from "react";
 import { TracePreview } from "../components/trace/TracePreview";
-import { labCards, roadmapSteps, tracePresetOptions } from "../lib/static-data";
 import { adaptTrace } from "../features/trace-adapters";
 import { useLabTrace } from "../hooks/useLabTrace";
 import { liveApiBaseUrl, liveTraceEndpointPath } from "../lib/runtime-config";
-import type { LabTraceRequest, RuntimeMode } from "../lib/types";
+import { labCards, roadmapSteps, tracePresetOptions } from "../lib/static-data";
+import type { LabId, LabTraceRequest, RuntimeMode } from "../lib/types";
 
-function buildRequest(presetIndex: number, mode: RuntimeMode): LabTraceRequest {
-  const preset = tracePresetOptions[presetIndex];
+function toPresetKey(labId: LabId, scenario: string): string {
+  return `${labId}:${scenario}`;
+}
+
+function buildRequest(presetKey: string, mode: RuntimeMode): LabTraceRequest {
+  const preset = tracePresetOptions.find((option) => toPresetKey(option.labId, option.scenario) === presetKey) ?? tracePresetOptions[0];
   return {
     labId: preset.labId,
     scenario: preset.scenario,
@@ -16,13 +20,31 @@ function buildRequest(presetIndex: number, mode: RuntimeMode): LabTraceRequest {
 }
 
 export function App() {
+  const firstPreset = tracePresetOptions[0];
   const [mode, setMode] = useState<RuntimeMode>("static");
-  const [selectedPreset, setSelectedPreset] = useState(0);
-  const [executedRequest, setExecutedRequest] = useState<LabTraceRequest>(() => buildRequest(0, "static"));
+  const [selectedLab, setSelectedLab] = useState<LabId | "all">("all");
+  const [selectedPresetKey, setSelectedPresetKey] = useState<string>(toPresetKey(firstPreset.labId, firstPreset.scenario));
+  const [executedRequest, setExecutedRequest] = useState<LabTraceRequest>(() => buildRequest(toPresetKey(firstPreset.labId, firstPreset.scenario), "static"));
   const [reloadKey, setReloadKey] = useState(0);
   const [lastRunLabel, setLastRunLabel] = useState("Not run yet");
-  const preset = tracePresetOptions[selectedPreset];
-  const draftRequest = useMemo(() => buildRequest(selectedPreset, mode), [mode, selectedPreset]);
+
+  const filteredPresets = useMemo(
+    () => selectedLab === "all"
+      ? tracePresetOptions
+      : tracePresetOptions.filter((option) => option.labId === selectedLab),
+    [selectedLab]
+  );
+
+  const activePresetKey = useMemo(() => {
+    const matched = filteredPresets.some((option) => toPresetKey(option.labId, option.scenario) === selectedPresetKey);
+    if (matched) {
+      return selectedPresetKey;
+    }
+    const fallback = filteredPresets[0] ?? firstPreset;
+    return toPresetKey(fallback.labId, fallback.scenario);
+  }, [filteredPresets, firstPreset, selectedPresetKey]);
+
+  const draftRequest = useMemo(() => buildRequest(activePresetKey, mode), [activePresetKey, mode]);
   const isDraftDirty = draftRequest.labId !== executedRequest.labId
     || draftRequest.scenario !== executedRequest.scenario
     || draftRequest.mode !== executedRequest.mode;
@@ -43,16 +65,27 @@ export function App() {
     setLastRunLabel(new Date().toLocaleTimeString());
   }
 
+  function focusLab(labId: LabId | "all") {
+    setSelectedLab(labId);
+    if (labId === "all") {
+      return;
+    }
+    const firstLabPreset = tracePresetOptions.find((option) => option.labId === labId);
+    if (firstLabPreset) {
+      setSelectedPresetKey(toPresetKey(firstLabPreset.labId, firstLabPreset.scenario));
+    }
+  }
+
   return (
     <div className="page-shell">
       <header className="hero">
         <div className="hero-copy">
           <p className="eyebrow">spring-lite / visual-lab-app</p>
-          <h1>Separated frontend scaffold for the next visual lab phase</h1>
+          <h1>Unified visual lab app for all spring-lite study modules</h1>
           <p className="hero-text">
-            This app is the starting point for moving the current static learning pages into a reusable
-            frontend that can support both static simulations and live runtime traces from spring-lite
-            or Spring Boot servers.
+            The separated frontend now covers playground, container, example-flow, and comparison labs
+            through one shared trace model. Static study traces and live runtime traces use the same
+            rendering shell so each module can evolve without UI rewrites.
           </p>
         </div>
         <div className="hero-panel">
@@ -75,8 +108,8 @@ export function App() {
           </div>
           <p className="mode-note">
             {mode === "static"
-              ? "Use local scenario providers and preserve the no-server learning path."
-              : "Connect trace APIs, request runners, and comparison targets once backend contracts exist."}
+              ? "Explore all four labs through normalized study traces with no backend dependency."
+              : "Run example-flow against the live example-app now, and extend the same contract to more labs later."}
           </p>
           {mode === "live" ? (
             <p className="mode-subnote">
@@ -103,11 +136,23 @@ export function App() {
               <p className="eyebrow">Feature Surface</p>
               <h2>Lab Modules</h2>
             </div>
-            <span className="badge">{labCards.length} planned views</span>
+            <span className="badge">{labCards.length} lab families</span>
           </div>
           <div className="card-grid">
             {labCards.map((card) => (
-              <article className="card" key={card.title}>
+              <article
+                className={selectedLab === card.id ? "card selected" : "card"}
+                key={card.id}
+                onClick={() => focusLab(card.id)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    focusLab(card.id);
+                  }
+                }}
+              >
                 <div className="card-top">
                   <div>
                     <h3>{card.title}</h3>
@@ -153,12 +198,12 @@ export function App() {
             ))}
           </ol>
           <div className="info-box">
-            <strong>Suggested next implementation</strong>
+            <strong>Current status</strong>
             <p>
-              The shared <code>LabTrace</code> schema and provider boundary are in place, and the live
-              <code> example-flow</code> endpoint now serves success, validation, not-found, service-error,
-              and rollback scenarios. The next step is extending the same contract to container and
-              comparison-focused labs.
+              The shared <code>LabTrace</code> schema now covers playground, container, example-flow,
+              and comparison scenarios in one app. Live runtime execution is already wired for
+              <code> example-flow</code>, while the remaining labs have static parity through the same
+              renderer and adapter structure.
             </p>
           </div>
         </section>
@@ -172,14 +217,33 @@ export function App() {
             <span className="badge">{mode === "static" ? "static provider" : "live provider"}</span>
           </div>
           <div className="control-stack">
+            <div className="lab-filter-row">
+              <button
+                className={selectedLab === "all" ? "filter-chip active" : "filter-chip"}
+                type="button"
+                onClick={() => focusLab("all")}
+              >
+                All Labs
+              </button>
+              {labCards.map((card) => (
+                <button
+                  className={selectedLab === card.id ? "filter-chip active" : "filter-chip"}
+                  key={card.id}
+                  type="button"
+                  onClick={() => focusLab(card.id)}
+                >
+                  {card.title}
+                </button>
+              ))}
+            </div>
             <label className="field">
               <span>Trace preset</span>
               <select
-                value={selectedPreset}
-                onChange={(event) => setSelectedPreset(Number(event.target.value))}
+                value={activePresetKey}
+                onChange={(event) => setSelectedPresetKey(event.target.value)}
               >
-                {tracePresetOptions.map((option, index) => (
-                  <option key={`${option.labId}:${option.scenario}`} value={index}>
+                {filteredPresets.map((option) => (
+                  <option key={toPresetKey(option.labId, option.scenario)} value={toPresetKey(option.labId, option.scenario)}>
                     {option.label}
                   </option>
                 ))}
@@ -240,7 +304,7 @@ export function App() {
           <div className="section-head">
             <div>
               <p className="eyebrow">Project Layout</p>
-              <h2>Initial Frontend Structure</h2>
+              <h2>Frontend Structure</h2>
             </div>
           </div>
           <pre className="code-block">{`visual-lab-app/
@@ -252,18 +316,23 @@ export function App() {
     components/
       trace/
         TracePreview.tsx
+        TraceReferencesPanel.tsx
     features/
+      example-flow/
+      playground/
+      container/
+      comparison/
       trace-adapters.ts
     lib/
       providers.ts
+      live-api.ts
       lab-trace-data.ts
       static-data.ts
+      runtime-config.ts
       types.ts
     styles.css
   index.html
   package.json
-  tsconfig.app.json
-  tsconfig.node.json
   vite.config.ts`}</pre>
         </section>
       </main>

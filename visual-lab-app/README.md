@@ -11,9 +11,10 @@
 ## 현재 포함 범위
 
 - 최소 실행 가능한 Vite 앱 설정
-- `Runtime Mode` 토글이 있는 초기 랜딩 화면
-- 현재 `visual-lab`의 네 개 핵심 화면을 feature card로 정리한 overview
-- 다음 구현 단계와 목표를 보여주는 roadmap panel
+- `Runtime Mode` 토글과 명시적 trace 실행 버튼
+- playground, container, example-flow, comparison 전체를 고를 수 있는 공통 trace explorer
+- metrics, steps, lanes, snapshot, references를 공통 스키마로 렌더링하는 trace UI
+- `example-flow` live runtime 연동과 나머지 랩의 static parity trace
 
 ## 실행 예정 방법
 
@@ -53,8 +54,28 @@ VITE_LAB_API_BASE_URL=http://127.0.0.1:18080 npm run dev
 
 이 시나리오들은 모두 같은 `LabTrace` 스키마로 내려오며, 일부는 실제 서비스/트랜잭션/JDBC 경로를 실행하고 일부는 컨트롤러 선행 검증 분기를 정규화해서 보여준다.
 
+static mode에서 현재 포함된 랩 범위는 다음과 같다.
+
+- `playground`
+  - `aop-success`
+  - `aop-rollback`
+  - `mvc-validation`
+- `container`
+  - `bootstrap-full`
+  - `lifecycle-proxy`
+- `example-flow`
+  - `create`
+  - `validation`
+  - `not-found`
+  - `service-error`
+  - `rollback`
+- `comparison`
+  - `di`
+  - `mvc`
+  - `tx`
+
 ## 다음 구현 순서
 
-1. 현재 `visual-lab` 정적 페이지 기능을 React 컴포넌트로 옮긴다.
-2. 공통 `LabTrace` 타입과 static/live provider 계층을 추가한다.
-3. `example-flow-lab` 이후 `container`와 `comparison` 계열도 같은 live contract로 확장한다.
+1. `container`와 `comparison`에 대한 live trace contract를 설계한다.
+2. 비교 대시보드를 dual-runtime 실행형 UI로 확장한다.
+3. request form 편집, diff, replay 같은 상호작용을 더 풍부하게 만든다.

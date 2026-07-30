@@ -1,9 +1,16 @@
+import { comparisonTraceAdapter } from "./comparison/trace-adapter";
+import { containerTraceAdapter } from "./container/trace-adapter";
 import { exampleFlowTraceAdapter } from "./example-flow/trace-adapter";
 import { playgroundTraceAdapter } from "./playground/trace-adapter";
 import type { TraceAdapter, TraceAdapterResult } from "./types";
 import type { LabTrace } from "../lib/types";
 
-const adapters: TraceAdapter[] = [exampleFlowTraceAdapter, playgroundTraceAdapter];
+const adapters: TraceAdapter[] = [
+  exampleFlowTraceAdapter,
+  playgroundTraceAdapter,
+  containerTraceAdapter,
+  comparisonTraceAdapter
+];
 
 const fallbackAdapter: TraceAdapter = {
   labId: "comparison",
