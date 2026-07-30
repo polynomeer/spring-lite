@@ -8,7 +8,7 @@ interface UseLabTraceState {
   loading: boolean;
 }
 
-export function useLabTrace(request: LabTraceRequest): UseLabTraceState {
+export function useLabTrace(request: LabTraceRequest, reloadKey = 0): UseLabTraceState {
   const [trace, setTrace] = useState<LabTrace | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -39,7 +39,7 @@ export function useLabTrace(request: LabTraceRequest): UseLabTraceState {
     return () => {
       cancelled = true;
     };
-  }, [request.labId, request.mode, request.scenario]);
+  }, [request.labId, request.mode, request.scenario, reloadKey]);
 
   return { trace, error, loading };
 }

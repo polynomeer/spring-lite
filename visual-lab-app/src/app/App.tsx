@@ -4,18 +4,44 @@ import { labCards, roadmapSteps, tracePresetOptions } from "../lib/static-data";
 import { adaptTrace } from "../features/trace-adapters";
 import { useLabTrace } from "../hooks/useLabTrace";
 import { liveApiBaseUrl, liveTraceEndpointPath } from "../lib/runtime-config";
-import type { RuntimeMode } from "../lib/types";
+import type { LabTraceRequest, RuntimeMode } from "../lib/types";
+
+function buildRequest(presetIndex: number, mode: RuntimeMode): LabTraceRequest {
+  const preset = tracePresetOptions[presetIndex];
+  return {
+    labId: preset.labId,
+    scenario: preset.scenario,
+    mode
+  };
+}
 
 export function App() {
   const [mode, setMode] = useState<RuntimeMode>("static");
   const [selectedPreset, setSelectedPreset] = useState(0);
+  const [executedRequest, setExecutedRequest] = useState<LabTraceRequest>(() => buildRequest(0, "static"));
+  const [reloadKey, setReloadKey] = useState(0);
+  const [lastRunLabel, setLastRunLabel] = useState("Not run yet");
   const preset = tracePresetOptions[selectedPreset];
-  const { trace, error: traceError, loading } = useLabTrace({
-    labId: preset.labId,
-    scenario: preset.scenario,
-    mode
-  });
+  const draftRequest = useMemo(() => buildRequest(selectedPreset, mode), [mode, selectedPreset]);
+  const isDraftDirty = draftRequest.labId !== executedRequest.labId
+    || draftRequest.scenario !== executedRequest.scenario
+    || draftRequest.mode !== executedRequest.mode;
+  const { trace, error: traceError, loading } = useLabTrace(executedRequest, reloadKey);
   const traceInsight = useMemo(() => (trace ? adaptTrace(trace) : null), [trace]);
+  const endpointLabel = liveApiBaseUrl
+    ? `${liveApiBaseUrl}${liveTraceEndpointPath}`
+    : `${liveTraceEndpointPath} via Vite proxy`;
+
+  function runSelectedTrace() {
+    setExecutedRequest(draftRequest);
+    setReloadKey((current) => current + 1);
+    setLastRunLabel(new Date().toLocaleTimeString());
+  }
+
+  function rerunLastTrace() {
+    setReloadKey((current) => current + 1);
+    setLastRunLabel(new Date().toLocaleTimeString());
+  }
 
   return (
     <div className="page-shell">
@@ -59,6 +85,14 @@ export function App() {
                 : `Using relative live endpoint ${liveTraceEndpointPath} (Vite dev proxy expects example-app on :8080).`}
             </p>
           ) : null}
+          <div className="run-actions">
+            <button className="run-button" type="button" onClick={runSelectedTrace} disabled={loading && !isDraftDirty}>
+              {isDraftDirty ? "Run Selected Trace" : "Refresh Trace"}
+            </button>
+            <button className="ghost-button" type="button" onClick={rerunLastTrace} disabled={loading}>
+              Re-run Last
+            </button>
+          </div>
         </div>
       </header>
 
@@ -151,12 +185,42 @@ export function App() {
                 ))}
               </select>
             </label>
+            <div className="request-summary">
+              <div className="request-card">
+                <strong>Selected Request</strong>
+                <p>{draftRequest.labId} / {draftRequest.scenario} / {draftRequest.mode}</p>
+              </div>
+              <div className="request-card">
+                <strong>Last Executed</strong>
+                <p>{executedRequest.labId} / {executedRequest.scenario} / {executedRequest.mode}</p>
+              </div>
+            </div>
+            <div className="runtime-strip">
+              <span className={isDraftDirty ? "status-pill warning" : "status-pill success"}>
+                {isDraftDirty ? "selection changed" : "selection synced"}
+              </span>
+              <span className="status-pill neutral">last run {lastRunLabel}</span>
+              {executedRequest.mode === "live" ? (
+                <span className="status-pill info">{endpointLabel}</span>
+              ) : (
+                <span className="status-pill neutral">local static provider</span>
+              )}
+            </div>
+            <label className="field">
+              <span>Request payload</span>
+              <textarea
+                className="payload-preview"
+                value={JSON.stringify(executedRequest, null, 2)}
+                readOnly
+                rows={6}
+              />
+            </label>
           </div>
 
           {loading ? (
             <div className="info-box">
               <strong>Loading trace</strong>
-              <p>Resolving provider output for the selected mode and preset.</p>
+              <p>Resolving provider output for the last executed request.</p>
             </div>
           ) : null}
 

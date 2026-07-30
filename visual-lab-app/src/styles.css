@@ -130,6 +130,38 @@ code {
   border-color: var(--accent);
 }
 
+.run-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.run-button,
+.ghost-button {
+  border-radius: 999px;
+  padding: 11px 15px;
+  cursor: pointer;
+}
+
+.run-button {
+  border: 1px solid rgba(255, 248, 241, 0.28);
+  background: rgba(30, 40, 50, 0.92);
+  color: #fff8f1;
+}
+
+.ghost-button {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+}
+
+.run-button:disabled,
+.ghost-button:disabled,
+.toggle:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .content-grid {
   margin-top: 22px;
   display: grid;
@@ -274,6 +306,65 @@ code {
   gap: 12px;
 }
 
+.request-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.request-card {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.request-card strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.request-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.runtime-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 7px 10px;
+  font-size: 12px;
+  border: 1px solid transparent;
+}
+
+.status-pill.success {
+  color: var(--secondary);
+  background: var(--secondary-soft);
+}
+
+.status-pill.warning {
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.status-pill.info {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.status-pill.neutral {
+  color: var(--muted);
+  background: #efe5d9;
+}
+
 .field {
   display: grid;
   gap: 8px;
@@ -293,6 +384,15 @@ code {
   padding: 12px 14px;
   background: var(--surface-strong);
   color: var(--text);
+}
+
+.payload-preview {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px;
+  background: #f8f1e7;
+  color: var(--text);
+  resize: vertical;
 }
 
 .trace-preview-grid {
@@ -417,7 +517,8 @@ code {
   .content-grid,
   .card-grid,
   .trace-preview-grid,
-  .metric-mini-grid {
+  .metric-mini-grid,
+  .request-summary {
     grid-template-columns: 1fr;
   }
 }
