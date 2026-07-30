@@ -25,6 +25,19 @@ public class DefaultOrderService implements OrderService {
     }
 
     @Override
+    @Transactional
+    public Order createOrderAndFail(String product, int quantity) {
+        Order created = orderRepository.save(product, quantity, defaultStatus);
+        throw new IllegalStateException("Lab rollback after order " + created.id());
+    }
+
+    @Override
+    @Transactional
+    public void failForLab(String reason) {
+        throw new IllegalStateException(reason);
+    }
+
+    @Override
     public Order getOrder(Long id) {
         return orderRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Order not found: " + id));

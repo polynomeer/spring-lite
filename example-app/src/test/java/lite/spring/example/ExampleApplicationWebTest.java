@@ -50,7 +50,52 @@ class ExampleApplicationWebTest {
     }
 
     @Test
-    void rejectsUnsupportedLiveLabScenario(MockMvc mockMvc) {
+    void returnsLiveLabTraceForValidationScenario(MockMvc mockMvc) {
+        MockHttpResponse response = mockMvc.perform(
+            MockHttpRequest.post("/lab/run/trace")
+                .contentType("application/json")
+                .body("{\"labId\":\"example-flow\",\"scenario\":\"validation\",\"mode\":\"live\"}")
+                .build()
+        );
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).contains("\"scenario\":\"validation\"");
+        assertThat(response.body()).contains("\"Rejected Field\"");
+        assertThat(response.body()).contains("\"Tx Outcome\",\"value\":\"not-started\"");
+    }
+
+    @Test
+    void returnsLiveLabTraceForNotFoundScenario(MockMvc mockMvc) {
+        MockHttpResponse response = mockMvc.perform(
+            MockHttpRequest.post("/lab/run/trace")
+                .contentType("application/json")
+                .body("{\"labId\":\"example-flow\",\"scenario\":\"not-found\",\"mode\":\"live\"}")
+                .build()
+        );
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).contains("\"scenario\":\"not-found\"");
+        assertThat(response.body()).contains("\"Lookup Id\"");
+        assertThat(response.body()).contains("\"IllegalArgumentException\"");
+    }
+
+    @Test
+    void returnsLiveLabTraceForServiceErrorScenario(MockMvc mockMvc) {
+        MockHttpResponse response = mockMvc.perform(
+            MockHttpRequest.post("/lab/run/trace")
+                .contentType("application/json")
+                .body("{\"labId\":\"example-flow\",\"scenario\":\"service-error\",\"mode\":\"live\"}")
+                .build()
+        );
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).contains("\"scenario\":\"service-error\"");
+        assertThat(response.body()).contains("\"Failure Point\"");
+        assertThat(response.body()).contains("\"rollback\"");
+    }
+
+    @Test
+    void returnsLiveLabTraceForRollbackScenario(MockMvc mockMvc) {
         MockHttpResponse response = mockMvc.perform(
             MockHttpRequest.post("/lab/run/trace")
                 .contentType("application/json")
@@ -58,7 +103,22 @@ class ExampleApplicationWebTest {
                 .build()
         );
 
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).contains("\"scenario\":\"rollback\"");
+        assertThat(response.body()).contains("\"Orders Before\"");
+        assertThat(response.body()).contains("\"Orders After\"");
+    }
+
+    @Test
+    void rejectsUnsupportedLiveLabScenario(MockMvc mockMvc) {
+        MockHttpResponse response = mockMvc.perform(
+            MockHttpRequest.post("/lab/run/trace")
+                .contentType("application/json")
+                .body("{\"labId\":\"example-flow\",\"scenario\":\"unknown\",\"mode\":\"live\"}")
+                .build()
+        );
+
         assertThat(response.statusCode()).isEqualTo(400);
-        assertThat(response.body()).contains("\"error\":\"Unsupported example-flow scenario: rollback\"");
+        assertThat(response.body()).contains("\"error\":\"Unsupported example-flow scenario: unknown\"");
     }
 }
