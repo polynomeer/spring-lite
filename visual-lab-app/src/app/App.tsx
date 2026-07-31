@@ -72,6 +72,24 @@ export function App() {
   const activeTraceModeLabel = executedRequest.mode === "live" ? text.liveSignal : text.staticReplay;
   const activeTraceModeTone = executedRequest.mode === "live" ? "status-pill info" : "status-pill neutral";
   const displayError = translateUiError(traceError, locale);
+  const navItems = locale === "ko"
+    ? ["개요", "랩", "트레이스", "문서"]
+    : ["Overview", "Labs", "Trace", "Docs"];
+  const statLabels = locale === "ko"
+    ? {
+        labs: "랩 모듈",
+        presets: "시나리오 프리셋",
+        coverage: "라이브 연결 범위",
+        heroPrimary: "Trace 실행",
+        heroSecondary: "시나리오 보기"
+      }
+    : {
+        labs: "Lab Modules",
+        presets: "Scenario Presets",
+        coverage: "Live Coverage",
+        heroPrimary: "Run Trace",
+        heroSecondary: "Browse Scenarios"
+      };
 
   function runSelectedTrace() {
     setExecutedRequest(draftRequest);
@@ -97,27 +115,64 @@ export function App() {
 
   return (
     <div className="page-shell">
+      <div className="site-header">
+        <div className="brand-mark">
+          <span className="brand-dot"></span>
+          <strong>Spring Lite</strong>
+        </div>
+        <nav className="site-nav" aria-label="Primary">
+          {navItems.map((item) => (
+            <a href="#app-main" key={item}>{item}</a>
+          ))}
+        </nav>
+        <div className="header-actions">
+          <button className={locale === "ko" ? "toggle active" : "toggle"} type="button" onClick={() => setLocale("ko")}>
+            한국어
+          </button>
+          <button className={locale === "en" ? "toggle active" : "toggle"} type="button" onClick={() => setLocale("en")}>
+            English
+          </button>
+        </div>
+      </div>
+
       <header className="hero">
         <div className="hero-copy">
           <p className="eyebrow">{text.appEyebrow}</p>
           <h1>{text.heroTitle}</h1>
           <p className="hero-text">{text.heroText}</p>
+          <div className="hero-cta-row">
+            <button className="run-button hero-cta" type="button" onClick={runSelectedTrace} disabled={loading && !isDraftDirty}>
+              {statLabels.heroPrimary}
+            </button>
+            <button className="ghost-button hero-cta-secondary" type="button" onClick={() => focusLab("all")}>
+              {statLabels.heroSecondary}
+            </button>
+          </div>
+          <div className="hero-stats">
+            <article className="signal-card">
+              <span>01</span>
+              <strong>{localizedCards.length}</strong>
+              <p>{statLabels.labs}</p>
+            </article>
+            <article className="signal-card">
+              <span>02</span>
+              <strong>{tracePresetOptions.length}</strong>
+              <p>{statLabels.presets}</p>
+            </article>
+            <article className="signal-card emphasis">
+              <span>03</span>
+              <strong>example-flow</strong>
+              <p>{statLabels.coverage}</p>
+            </article>
+          </div>
         </div>
         <div className="hero-panel">
           <div className="hero-panel-head">
             <div>
-              <p className="eyebrow">{text.quickRun}</p>
+              <p className="eyebrow">01 · {text.quickRun}</p>
               <strong>{text.runtimeMode}</strong>
             </div>
             <p className="hero-panel-copy">{text.quickRunBody}</p>
-          </div>
-          <div className="toggle-row">
-            <button className={locale === "ko" ? "toggle active" : "toggle"} type="button" onClick={() => setLocale("ko")}>
-              한국어
-            </button>
-            <button className={locale === "en" ? "toggle active" : "toggle"} type="button" onClick={() => setLocale("en")}>
-              English
-            </button>
           </div>
           <div className="toggle-row">
             <button
@@ -156,11 +211,11 @@ export function App() {
         </div>
       </header>
 
-      <main className="workspace-layout">
+      <main className="workspace-layout" id="app-main">
         <aside className="panel control-rail">
           <div className="section-head">
             <div>
-              <p className="eyebrow">{text.quickRun}</p>
+              <p className="eyebrow">02 · {text.quickRun}</p>
               <h2>{text.scenarioLibrary}</h2>
             </div>
             <span className="badge">{filteredPresets.length} presets</span>
@@ -218,7 +273,7 @@ export function App() {
           <section className="panel result-panel">
             <div className="section-head">
               <div>
-                <p className="eyebrow">{text.resultWorkspace}</p>
+                <p className="eyebrow">03 · {text.resultWorkspace}</p>
                 <h2>{text.providerPreview}</h2>
               </div>
               <span className="badge">{mode === "static" ? text.staticProvider : text.liveProvider}</span>
@@ -329,7 +384,7 @@ export function App() {
             <details className="panel details-panel">
               <summary>
                 <div>
-                  <p className="eyebrow">{text.supportingContext}</p>
+                  <p className="eyebrow">04 · {text.supportingContext}</p>
                   <h2>{text.labModules}</h2>
                 </div>
                 <span className="badge">{localizedCards.length} {text.labFamilies}</span>
@@ -382,7 +437,7 @@ export function App() {
             <details className="panel details-panel">
               <summary>
                 <div>
-                  <p className="eyebrow">{text.migrationPlan}</p>
+                  <p className="eyebrow">05 · {text.migrationPlan}</p>
                   <h2>{text.scaffoldGoals}</h2>
                 </div>
               </summary>
@@ -403,7 +458,7 @@ export function App() {
             <details className="panel details-panel">
               <summary>
                 <div>
-                  <p className="eyebrow">{text.projectLayout}</p>
+                  <p className="eyebrow">06 · {text.projectLayout}</p>
                   <h2>{text.frontendStructure}</h2>
                 </div>
               </summary>
