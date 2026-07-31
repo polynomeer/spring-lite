@@ -8,13 +8,12 @@ import {
   localizeLabCards,
   localizeModeLabel,
   localizePresetLabel,
-  localizeRoadmapSteps,
   localizeTrace,
   type Locale,
   translateUiError
 } from "../lib/i18n";
 import { liveApiBaseUrl, liveTraceEndpointPath } from "../lib/runtime-config";
-import { labCards, roadmapSteps, tracePresetOptions } from "../lib/static-data";
+import { labCards, tracePresetOptions } from "../lib/static-data";
 import type { LabId, LabTraceRequest, RuntimeMode } from "../lib/types";
 
 function toPresetKey(labId: LabId, scenario: string): string {
@@ -41,7 +40,6 @@ export function App() {
   const [lastRunLabel, setLastRunLabel] = useState(getUiText("ko").notRunYet);
   const text = getUiText(locale);
   const localizedCards = useMemo(() => localizeLabCards(labCards, locale), [locale]);
-  const localizedRoadmap = useMemo(() => localizeRoadmapSteps(roadmapSteps, locale), [locale]);
 
   const filteredPresets = useMemo(
     () => selectedLab === "all"
@@ -169,8 +167,6 @@ export function App() {
         queryLocked: "// TRACE CONTROLS",
         traceResults: "TRACE RESULTS",
         supportModules: "SUPPORT MODULES",
-        supportRoadmap: "ROADMAP",
-        supportLayout: "LAYOUT",
         ...dynamicConsoleText
       }
     : {
@@ -180,8 +176,6 @@ export function App() {
         queryLocked: "// TRACE CONTROLS",
         traceResults: "TRACE RESULTS",
         supportModules: "SUPPORT MODULES",
-        supportRoadmap: "ROADMAP",
-        supportLayout: "LAYOUT",
         ...dynamicConsoleText
       };
 
@@ -488,63 +482,6 @@ export function App() {
                     </article>
                   ))}
                 </div>
-              </details>
-
-              <details className="panel details-panel">
-                <summary>
-                  <div>
-                    <p className="eyebrow">{consoleText.supportRoadmap}</p>
-                    <h2>{text.scaffoldGoals}</h2>
-                  </div>
-                </summary>
-                <ol className="roadmap-list">
-                  {localizedRoadmap.map((step) => (
-                    <li key={step.title}>
-                      <strong>{step.title}</strong>
-                      <p>{step.description}</p>
-                    </li>
-                  ))}
-                </ol>
-                <div className="info-box">
-                  <strong>{text.currentStatus}</strong>
-                  <p>{text.currentStatusBody}</p>
-                </div>
-              </details>
-
-              <details className="panel details-panel">
-                <summary>
-                  <div>
-                    <p className="eyebrow">{consoleText.supportLayout}</p>
-                    <h2>{text.frontendStructure}</h2>
-                  </div>
-                </summary>
-                <pre className="code-block">{`visual-lab-app/
-  src/
-    app/
-      App.tsx
-    hooks/
-      useLabTrace.ts
-    components/
-      trace/
-        TracePreview.tsx
-        TraceReferencesPanel.tsx
-    features/
-      example-flow/
-      playground/
-      container/
-      comparison/
-      trace-adapters.ts
-    lib/
-      providers.ts
-      live-api.ts
-      lab-trace-data.ts
-      static-data.ts
-      runtime-config.ts
-      types.ts
-    styles.css
-  index.html
-  package.json
-  vite.config.ts`}</pre>
               </details>
             </section>
           </section>

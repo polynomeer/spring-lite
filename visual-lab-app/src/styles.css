@@ -181,7 +181,6 @@ code {
 .section-copy,
 .console-strip-copy p,
 .card p,
-.roadmap-list p,
 .detail-list p,
 .info-box p,
 .request-card p,
@@ -468,7 +467,6 @@ code {
 }
 
 .console-strip-copy strong,
-.roadmap-list strong,
 .info-box strong,
 .request-card strong,
 .metric-mini strong {
@@ -622,17 +620,6 @@ code {
   box-shadow: inset 0 0 0 1px rgba(49, 255, 132, 0.04);
 }
 
-.code-block {
-  margin: 0;
-  padding: 16px;
-  border: 1px solid rgba(37, 197, 97, 0.18);
-  background: rgba(6, 10, 7, 0.98);
-  color: var(--text);
-  overflow: auto;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
 .card-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -653,13 +640,6 @@ code {
   box-shadow: inset 0 0 0 1px rgba(49, 255, 132, 0.22);
 }
 
-.roadmap-list {
-  margin: 0;
-  padding-left: 20px;
-  display: grid;
-  gap: 14px;
-}
-
 .info-box {
   margin-top: 16px;
   padding: 14px;
@@ -667,39 +647,6 @@ code {
 
 .error-box {
   border-color: rgba(255, 122, 122, 0.24);
-}
-
-.details-panel {
-  overflow: hidden;
-}
-
-.details-panel summary {
-  list-style: none;
-  cursor: pointer;
-  padding: 18px 20px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.details-panel summary::-webkit-details-marker {
-  display: none;
-}
-
-.details-panel summary::after {
-  content: "+";
-  color: var(--accent);
-  font-size: 20px;
-  line-height: 1;
-}
-
-.details-panel[open] summary::after {
-  content: "-";
-}
-
-.details-panel > :not(summary) {
-  padding: 0 20px 20px;
 }
 
 @media (max-width: 1200px) {
