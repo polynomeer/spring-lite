@@ -6,6 +6,13 @@ export interface UiText {
   appEyebrow: string;
   heroTitle: string;
   heroText: string;
+  quickRun: string;
+  quickRunBody: string;
+  scenarioLibrary: string;
+  resultWorkspace: string;
+  resultWorkspaceBody: string;
+  supportingContext: string;
+  supportingContextBody: string;
   runtimeMode: string;
   staticSimulation: string;
   liveRuntime: string;
@@ -51,6 +58,9 @@ export interface UiText {
   frontendStructure: string;
   loadedTrace: string;
   featureAdapter: string;
+  overview: string;
+  flowView: string;
+  deepLinks: string;
   steps: string;
   lanes: string;
   snapshot: string;
@@ -68,6 +78,13 @@ const uiTextByLocale: Record<Locale, UiText> = {
     appEyebrow: "spring-lite / visual-lab-app",
     heroTitle: "Unified visual lab app for all spring-lite study modules",
     heroText: "The separated frontend now covers playground, container, example-flow, and comparison labs through one shared trace model. Static study traces and live runtime traces use the same rendering shell so each module can evolve without UI rewrites.",
+    quickRun: "Quick Run",
+    quickRunBody: "Pick a lab, choose a scenario, then run the trace without scanning the entire page.",
+    scenarioLibrary: "Scenario Library",
+    resultWorkspace: "Result Workspace",
+    resultWorkspaceBody: "Keep execution status and rendered trace together so the latest result is visible immediately.",
+    supportingContext: "Supporting Context",
+    supportingContextBody: "Open deeper module notes only when you need structure, roadmap, or file layout details.",
     runtimeMode: "Runtime Mode",
     staticSimulation: "Static Simulation",
     liveRuntime: "Live Runtime",
@@ -113,6 +130,9 @@ const uiTextByLocale: Record<Locale, UiText> = {
     frontendStructure: "Frontend Structure",
     loadedTrace: "Loaded Trace",
     featureAdapter: "Feature Adapter",
+    overview: "Overview",
+    flowView: "Flow",
+    deepLinks: "References",
     steps: "Steps",
     lanes: "Lanes",
     snapshot: "Snapshot",
@@ -128,6 +148,13 @@ const uiTextByLocale: Record<Locale, UiText> = {
     appEyebrow: "spring-lite / visual-lab-app",
     heroTitle: "spring-lite 학습 모듈 전체를 위한 통합 비주얼 랩 앱",
     heroText: "분리된 프런트엔드는 이제 playground, container, example-flow, comparison 랩을 하나의 공통 trace 모델로 다룹니다. 정적 학습 trace와 라이브 런타임 trace가 같은 렌더링 셸을 사용하므로 모듈별로 UI를 다시 만들지 않고 확장할 수 있습니다.",
+    quickRun: "빠른 실행",
+    quickRunBody: "한 화면 전체를 훑지 않고 랩과 시나리오를 고른 뒤 바로 trace를 실행합니다.",
+    scenarioLibrary: "시나리오 라이브러리",
+    resultWorkspace: "결과 워크스페이스",
+    resultWorkspaceBody: "실행 상태와 렌더링 결과를 한곳에 묶어 최신 결과를 바로 읽을 수 있게 합니다.",
+    supportingContext: "보조 컨텍스트",
+    supportingContextBody: "구조, 로드맵, 파일 배치 같은 상세 정보는 필요할 때만 펼쳐 봅니다.",
     runtimeMode: "실행 모드",
     staticSimulation: "정적 시뮬레이션",
     liveRuntime: "라이브 런타임",
@@ -173,6 +200,9 @@ const uiTextByLocale: Record<Locale, UiText> = {
     frontendStructure: "프런트엔드 구조",
     loadedTrace: "로드된 Trace",
     featureAdapter: "Feature Adapter",
+    overview: "개요",
+    flowView: "흐름",
+    deepLinks: "참고",
     steps: "단계",
     lanes: "레인",
     snapshot: "스냅샷",

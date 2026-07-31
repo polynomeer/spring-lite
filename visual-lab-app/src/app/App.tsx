@@ -104,7 +104,13 @@ export function App() {
           <p className="hero-text">{text.heroText}</p>
         </div>
         <div className="hero-panel">
-          <strong>{text.runtimeMode}</strong>
+          <div className="hero-panel-head">
+            <div>
+              <p className="eyebrow">{text.quickRun}</p>
+              <strong>{text.runtimeMode}</strong>
+            </div>
+            <p className="hero-panel-copy">{text.quickRunBody}</p>
+          </div>
           <div className="toggle-row">
             <button className={locale === "ko" ? "toggle active" : "toggle"} type="button" onClick={() => setLocale("ko")}>
               한국어
@@ -150,88 +156,14 @@ export function App() {
         </div>
       </header>
 
-      <main className="content-grid">
-        <section className="panel">
+      <main className="workspace-layout">
+        <aside className="panel control-rail">
           <div className="section-head">
             <div>
-              <p className="eyebrow">{text.featureSurface}</p>
-              <h2>{text.labModules}</h2>
+              <p className="eyebrow">{text.quickRun}</p>
+              <h2>{text.scenarioLibrary}</h2>
             </div>
-            <span className="badge">{localizedCards.length} {text.labFamilies}</span>
-          </div>
-          <div className="card-grid">
-            {localizedCards.map((card) => (
-              <article
-                className={selectedLab === card.id ? "card selected" : "card"}
-                key={card.id}
-                onClick={() => focusLab(card.id)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    focusLab(card.id);
-                  }
-                }}
-              >
-                <div className="card-top">
-                  <div>
-                    <h3>{card.title}</h3>
-                    <p>{card.summary}</p>
-                  </div>
-                  <span className="tag">{card.stage}</span>
-                </div>
-                <div className="chip-row">
-                  {card.capabilities.map((capability) => (
-                    <span className="chip" key={capability}>
-                      {capability}
-                    </span>
-                  ))}
-                </div>
-                <div className="detail-list">
-                  <div>
-                    <span>Now</span>
-                    {locale === "ko" ? <span>{text.now}</span> : null}
-                    <p>{card.now}</p>
-                  </div>
-                  <div>
-                    <span>{text.next}</span>
-                    <p>{card.next}</p>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="panel side-panel">
-          <div className="section-head">
-            <div>
-              <p className="eyebrow">{text.migrationPlan}</p>
-              <h2>{text.scaffoldGoals}</h2>
-            </div>
-          </div>
-          <ol className="roadmap-list">
-            {localizedRoadmap.map((step) => (
-              <li key={step.title}>
-                <strong>{step.title}</strong>
-                <p>{step.description}</p>
-              </li>
-            ))}
-          </ol>
-          <div className="info-box">
-            <strong>{text.currentStatus}</strong>
-            <p>{text.currentStatusBody}</p>
-          </div>
-        </section>
-
-        <section className="panel">
-          <div className="section-head">
-            <div>
-              <p className="eyebrow">{text.traceContract}</p>
-              <h2>{text.providerPreview}</h2>
-            </div>
-            <span className="badge">{mode === "static" ? text.staticProvider : text.liveProvider}</span>
+            <span className="badge">{filteredPresets.length} presets</span>
           </div>
           <div className="control-stack">
             <div className="lab-filter-row">
@@ -253,19 +185,22 @@ export function App() {
                 </button>
               ))}
             </div>
-            <label className="field">
-              <span>{text.tracePreset}</span>
-              <select
-                value={activePresetKey}
-                onChange={(event) => setSelectedPresetKey(event.target.value)}
-              >
-                {filteredPresets.map((option) => (
-                  <option key={toPresetKey(option.labId, option.scenario)} value={toPresetKey(option.labId, option.scenario)}>
-                    {localizePresetLabel(option.label, locale)}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="scenario-list" role="list" aria-label={text.tracePreset}>
+              {filteredPresets.map((option) => {
+                const presetKey = toPresetKey(option.labId, option.scenario);
+                return (
+                  <button
+                    className={presetKey === activePresetKey ? "scenario-card active" : "scenario-card"}
+                    key={presetKey}
+                    type="button"
+                    onClick={() => setSelectedPresetKey(presetKey)}
+                  >
+                    <strong>{localizePresetLabel(option.label, locale)}</strong>
+                    <span>{option.labId} / {option.scenario}</span>
+                  </button>
+                );
+              })}
+            </div>
             <div className="request-summary">
               <div className="request-card">
                 <strong>{text.selectedRequest}</strong>
@@ -276,90 +211,203 @@ export function App() {
                 <p>{executedRequest.labId} / {executedRequest.scenario} / {localizeModeLabel(executedRequest.mode, locale)}</p>
               </div>
             </div>
-            <div className="runtime-strip">
-              <span className={isDraftDirty ? "status-pill warning" : "status-pill success"}>
-                {isDraftDirty ? text.selectionChanged : text.selectionSynced}
-              </span>
-              <span className="status-pill neutral">{text.lastRun} {lastRunLabel}</span>
-              <span className={activeTraceModeTone}>{activeTraceModeLabel}</span>
-              {executedRequest.mode === "live" ? (
-                <span className="status-pill info">{endpointLabel}</span>
-              ) : (
-                <span className="status-pill neutral">{text.localStaticProvider}</span>
-              )}
-            </div>
-            <div className="console-strip">
-              <div className="console-leds" aria-hidden="true">
-                <span className={loading ? "console-led hot" : "console-led ok"}></span>
-                <span className={executedRequest.mode === "live" ? "console-led info" : "console-led idle"}></span>
-                <span className={traceError ? "console-led warn" : "console-led idle"}></span>
+          </div>
+        </aside>
+
+        <section className="result-column">
+          <section className="panel result-panel">
+            <div className="section-head">
+              <div>
+                <p className="eyebrow">{text.resultWorkspace}</p>
+                <h2>{text.providerPreview}</h2>
               </div>
-              <div className="console-strip-copy">
-                <strong>{loading ? text.tracePipelineActive : text.tracePipelineReady}</strong>
-                <p>
-                  {loading
-                    ? text.tracePipelineActiveDetail(executedRequest.labId, executedRequest.scenario, localizeModeLabel(executedRequest.mode, locale))
-                    : text.tracePipelineReadyDetail(executedRequest.labId, executedRequest.scenario, localizeModeLabel(executedRequest.mode, locale))}
-                </p>
-              </div>
+              <span className="badge">{mode === "static" ? text.staticProvider : text.liveProvider}</span>
             </div>
-            <label className="field">
-              <span>{text.requestPayload}</span>
-              <textarea
-                className="payload-preview"
-                value={JSON.stringify(executedRequest, null, 2)}
-                readOnly
-                rows={6}
+            <p className="section-copy">{text.resultWorkspaceBody}</p>
+            <div className="control-stack">
+              <label className="field">
+                <span>{text.tracePreset}</span>
+                <select
+                  value={activePresetKey}
+                  onChange={(event) => setSelectedPresetKey(event.target.value)}
+                >
+                  {filteredPresets.map((option) => (
+                    <option key={toPresetKey(option.labId, option.scenario)} value={toPresetKey(option.labId, option.scenario)}>
+                      {localizePresetLabel(option.label, locale)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="runtime-strip">
+                <span className={isDraftDirty ? "status-pill warning" : "status-pill success"}>
+                  {isDraftDirty ? text.selectionChanged : text.selectionSynced}
+                </span>
+                <span className="status-pill neutral">{text.lastRun} {lastRunLabel}</span>
+                <span className={activeTraceModeTone}>{activeTraceModeLabel}</span>
+                {executedRequest.mode === "live" ? (
+                  <span className="status-pill info">{endpointLabel}</span>
+                ) : (
+                  <span className="status-pill neutral">{text.localStaticProvider}</span>
+                )}
+              </div>
+              <div className="console-strip">
+                <div className="console-leds" aria-hidden="true">
+                  <span className={loading ? "console-led hot" : "console-led ok"}></span>
+                  <span className={executedRequest.mode === "live" ? "console-led info" : "console-led idle"}></span>
+                  <span className={traceError ? "console-led warn" : "console-led idle"}></span>
+                </div>
+                <div className="console-strip-copy">
+                  <strong>{loading ? text.tracePipelineActive : text.tracePipelineReady}</strong>
+                  <p>
+                    {loading
+                      ? text.tracePipelineActiveDetail(executedRequest.labId, executedRequest.scenario, localizeModeLabel(executedRequest.mode, locale))
+                      : text.tracePipelineReadyDetail(executedRequest.labId, executedRequest.scenario, localizeModeLabel(executedRequest.mode, locale))}
+                  </p>
+                </div>
+              </div>
+              <div className="run-actions">
+                <button className="run-button" type="button" onClick={runSelectedTrace} disabled={loading && !isDraftDirty}>
+                  {isDraftDirty ? text.runSelectedTrace : text.refreshTrace}
+                </button>
+                <button className="ghost-button" type="button" onClick={rerunLastTrace} disabled={loading}>
+                  {text.rerunLast}
+                </button>
+              </div>
+              <label className="field">
+                <span>{text.requestPayload}</span>
+                <textarea
+                  className="payload-preview"
+                  value={JSON.stringify(executedRequest, null, 2)}
+                  readOnly
+                  rows={6}
+                />
+              </label>
+            </div>
+
+            {loading ? (
+              <div className="info-box">
+                <strong>{text.loadingTrace}</strong>
+                <p>{text.resolvingTrace}</p>
+              </div>
+            ) : null}
+
+            {displayError ? (
+              <div className="info-box error-box">
+                <strong>{text.traceLoadingFailed}</strong>
+                <p>{displayError}</p>
+              </div>
+            ) : null}
+
+            {localizedTrace ? (
+              <TracePreview
+                trace={localizedTrace}
+                insight={traceInsight}
+                runSequence={reloadKey}
+                loading={loading}
+                locale={locale}
+                labels={{
+                  loadedTrace: text.loadedTrace,
+                  featureAdapter: text.featureAdapter,
+                  overview: text.overview,
+                  flowView: text.flowView,
+                  deepLinks: text.deepLinks,
+                  steps: text.steps,
+                  lanes: text.lanes,
+                  snapshot: text.snapshot,
+                  references: text.references,
+                  relatedFiles: text.relatedFiles,
+                  refs: text.refs,
+                  watch: text.watch,
+                  why: text.why,
+                  nextLabel: text.nextLabel
+                }}
               />
-            </label>
-          </div>
+            ) : null}
+          </section>
 
-          {loading ? (
-            <div className="info-box">
-              <strong>{text.loadingTrace}</strong>
-              <p>{text.resolvingTrace}</p>
-            </div>
-          ) : null}
+          <section className="context-stack">
+            <details className="panel details-panel">
+              <summary>
+                <div>
+                  <p className="eyebrow">{text.supportingContext}</p>
+                  <h2>{text.labModules}</h2>
+                </div>
+                <span className="badge">{localizedCards.length} {text.labFamilies}</span>
+              </summary>
+              <p className="section-copy">{text.supportingContextBody}</p>
+              <div className="card-grid compact">
+                {localizedCards.map((card) => (
+                  <article
+                    className={selectedLab === card.id ? "card selected" : "card"}
+                    key={card.id}
+                    onClick={() => focusLab(card.id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        focusLab(card.id);
+                      }
+                    }}
+                  >
+                    <div className="card-top">
+                      <div>
+                        <h3>{card.title}</h3>
+                        <p>{card.summary}</p>
+                      </div>
+                      <span className="tag">{card.stage}</span>
+                    </div>
+                    <div className="chip-row">
+                      {card.capabilities.map((capability) => (
+                        <span className="chip" key={capability}>
+                          {capability}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="detail-list">
+                      <div>
+                        <span>{text.now}</span>
+                        <p>{card.now}</p>
+                      </div>
+                      <div>
+                        <span>{text.next}</span>
+                        <p>{card.next}</p>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </details>
 
-          {displayError ? (
-            <div className="info-box error-box">
-              <strong>{text.traceLoadingFailed}</strong>
-              <p>{displayError}</p>
-            </div>
-          ) : null}
+            <details className="panel details-panel">
+              <summary>
+                <div>
+                  <p className="eyebrow">{text.migrationPlan}</p>
+                  <h2>{text.scaffoldGoals}</h2>
+                </div>
+              </summary>
+              <ol className="roadmap-list">
+                {localizedRoadmap.map((step) => (
+                  <li key={step.title}>
+                    <strong>{step.title}</strong>
+                    <p>{step.description}</p>
+                  </li>
+                ))}
+              </ol>
+              <div className="info-box">
+                <strong>{text.currentStatus}</strong>
+                <p>{text.currentStatusBody}</p>
+              </div>
+            </details>
 
-          {localizedTrace ? (
-            <TracePreview
-              trace={localizedTrace}
-              insight={traceInsight}
-              runSequence={reloadKey}
-              loading={loading}
-              locale={locale}
-              labels={{
-                loadedTrace: text.loadedTrace,
-                featureAdapter: text.featureAdapter,
-                steps: text.steps,
-                lanes: text.lanes,
-                snapshot: text.snapshot,
-                references: text.references,
-                relatedFiles: text.relatedFiles,
-                refs: text.refs,
-                watch: text.watch,
-                why: text.why,
-                nextLabel: text.nextLabel
-              }}
-            />
-          ) : null}
-        </section>
-
-        <section className="panel">
-          <div className="section-head">
-            <div>
-              <p className="eyebrow">{text.projectLayout}</p>
-              <h2>{text.frontendStructure}</h2>
-            </div>
-          </div>
-          <pre className="code-block">{`visual-lab-app/
+            <details className="panel details-panel">
+              <summary>
+                <div>
+                  <p className="eyebrow">{text.projectLayout}</p>
+                  <h2>{text.frontendStructure}</h2>
+                </div>
+              </summary>
+              <pre className="code-block">{`visual-lab-app/
   src/
     app/
       App.tsx
@@ -386,6 +434,8 @@ export function App() {
   index.html
   package.json
   vite.config.ts`}</pre>
+            </details>
+          </section>
         </section>
       </main>
     </div>
