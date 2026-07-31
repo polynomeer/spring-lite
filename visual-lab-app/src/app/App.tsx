@@ -79,8 +79,7 @@ export function App() {
         command: "lab@spring-lite:~$ inspect trace --sort=scenario",
         title: "SPRING LITE VISUAL LAB",
         subtitle: "Complete through Jul 31, 2026",
-        queryLocked: "// QUERY PARAMETERS - LOCKED",
-        moreFilters: "▸ More filters",
+        queryLocked: "// TRACE CONTROLS",
         traceResults: "TRACE RESULTS",
         traceResultsMeta: "normalized runtime output",
         activeSelection: "ACTIVE SELECTION",
@@ -89,13 +88,7 @@ export function App() {
         supportRoadmap: "ROADMAP",
         supportLayout: "LAYOUT",
         runPrimary: "[ run_trace ]",
-        rerun: "[ rerun_last ]",
-        searchPlaceholder: "$ select lab_or_scenario",
-        categoryLabel: "Labs All",
-        marketLabel: "Modes All",
-        signalLabel: "provider:any",
-        sortLabel: "Scenario",
-        orderLabel: "Descending"
+        rerun: "[ rerun_last ]"
       }
     : {
         statusAction: "[ runtime_live ]",
@@ -103,8 +96,7 @@ export function App() {
         command: "lab@spring-lite:~$ inspect trace --sort=scenario",
         title: "SPRING LITE VISUAL LAB",
         subtitle: "Complete through Jul 31, 2026",
-        queryLocked: "// QUERY PARAMETERS - LOCKED",
-        moreFilters: "▸ More filters",
+        queryLocked: "// TRACE CONTROLS",
         traceResults: "TRACE RESULTS",
         traceResultsMeta: "normalized runtime output",
         activeSelection: "ACTIVE SELECTION",
@@ -113,13 +105,7 @@ export function App() {
         supportRoadmap: "ROADMAP",
         supportLayout: "LAYOUT",
         runPrimary: "[ run_trace ]",
-        rerun: "[ rerun_last ]",
-        searchPlaceholder: "$ select lab_or_scenario",
-        categoryLabel: "Labs All",
-        marketLabel: "Modes All",
-        signalLabel: "provider:any",
-        sortLabel: "Scenario",
-        orderLabel: "Descending"
+        rerun: "[ rerun_last ]"
       };
 
   function runSelectedTrace() {
@@ -191,14 +177,6 @@ export function App() {
         <main className="workspace-layout" id="app-main">
           <section className="panel query-panel">
             <div className="panel-label">{consoleText.queryLocked}</div>
-            <div className="query-search">{consoleText.searchPlaceholder}</div>
-            <div className="query-grid">
-              <div className="query-select">{consoleText.categoryLabel}</div>
-              <div className="query-select">{consoleText.marketLabel}</div>
-              <div className="query-select accent">{consoleText.signalLabel}</div>
-              <div className="query-select strong">{consoleText.sortLabel}</div>
-              <div className="query-select strong">{consoleText.orderLabel}</div>
-            </div>
             <div className="query-mode-row">
               <button
                 className={mode === "static" ? "filter-chip active" : "filter-chip"}
@@ -243,16 +221,13 @@ export function App() {
                 );
               })}
             </div>
-            <div className="query-footer">
-              <span>{consoleText.moreFilters}</span>
-              <div className="run-actions">
-                <button className="run-button" type="button" onClick={runSelectedTrace} disabled={loading && !isDraftDirty}>
-                  {consoleText.runPrimary}
-                </button>
-                <button className="ghost-button" type="button" onClick={rerunLastTrace} disabled={loading}>
-                  {consoleText.rerun}
-                </button>
-              </div>
+            <div className="run-actions query-actions">
+              <button className="run-button" type="button" onClick={runSelectedTrace} disabled={loading && !isDraftDirty}>
+                {consoleText.runPrimary}
+              </button>
+              <button className="ghost-button" type="button" onClick={rerunLastTrace} disabled={loading}>
+                {consoleText.rerun}
+              </button>
             </div>
           </section>
 
