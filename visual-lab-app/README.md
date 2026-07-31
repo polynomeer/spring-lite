@@ -12,6 +12,7 @@
 
 - 최소 실행 가능한 Vite 앱 설정
 - `Runtime Mode` 토글과 명시적 trace 실행 버튼
+- `한국어 / English` UI 전환
 - playground, container, example-flow, comparison 전체를 고를 수 있는 공통 trace explorer
 - metrics, steps, lanes, snapshot, references를 공통 스키마로 렌더링하는 trace UI
 - `example-flow` live runtime 연동과 나머지 랩의 static parity trace
@@ -43,6 +44,7 @@ VITE_LAB_API_BASE_URL=http://127.0.0.1:18080 npm run dev
 - 같은 요청을 다시 보내고 싶으면 `Re-run Last` 사용
 - 마지막 실행 payload와 endpoint 상태를 화면에서 바로 확인
 - live mode에서는 실제 서버 응답 trace 또는 fallback placeholder trace를 같은 패널 구조로 렌더링
+- UI 셸, 주요 상태 메시지, 랩 카드, preset 라벨, trace 메타데이터는 한국어와 영어를 모두 지원
 
 현재 `example-app` 기준 live mode에서 바로 실행 가능한 시나리오는 다음과 같다.
 

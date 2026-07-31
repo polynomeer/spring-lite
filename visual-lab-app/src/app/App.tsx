@@ -2,6 +2,17 @@ import { useMemo, useState } from "react";
 import { TracePreview } from "../components/trace/TracePreview";
 import { adaptTrace } from "../features/trace-adapters";
 import { useLabTrace } from "../hooks/useLabTrace";
+import {
+  formatRunTime,
+  getUiText,
+  localizeLabCards,
+  localizeModeLabel,
+  localizePresetLabel,
+  localizeRoadmapSteps,
+  localizeTrace,
+  type Locale,
+  translateUiError
+} from "../lib/i18n";
 import { liveApiBaseUrl, liveTraceEndpointPath } from "../lib/runtime-config";
 import { labCards, roadmapSteps, tracePresetOptions } from "../lib/static-data";
 import type { LabId, LabTraceRequest, RuntimeMode } from "../lib/types";
@@ -21,12 +32,16 @@ function buildRequest(presetKey: string, mode: RuntimeMode): LabTraceRequest {
 
 export function App() {
   const firstPreset = tracePresetOptions[0];
+  const [locale, setLocale] = useState<Locale>("ko");
   const [mode, setMode] = useState<RuntimeMode>("static");
   const [selectedLab, setSelectedLab] = useState<LabId | "all">("all");
   const [selectedPresetKey, setSelectedPresetKey] = useState<string>(toPresetKey(firstPreset.labId, firstPreset.scenario));
   const [executedRequest, setExecutedRequest] = useState<LabTraceRequest>(() => buildRequest(toPresetKey(firstPreset.labId, firstPreset.scenario), "static"));
   const [reloadKey, setReloadKey] = useState(0);
-  const [lastRunLabel, setLastRunLabel] = useState("Not run yet");
+  const [lastRunLabel, setLastRunLabel] = useState(getUiText("ko").notRunYet);
+  const text = getUiText(locale);
+  const localizedCards = useMemo(() => localizeLabCards(labCards, locale), [locale]);
+  const localizedRoadmap = useMemo(() => localizeRoadmapSteps(roadmapSteps, locale), [locale]);
 
   const filteredPresets = useMemo(
     () => selectedLab === "all"
@@ -49,22 +64,24 @@ export function App() {
     || draftRequest.scenario !== executedRequest.scenario
     || draftRequest.mode !== executedRequest.mode;
   const { trace, error: traceError, loading } = useLabTrace(executedRequest, reloadKey);
-  const traceInsight = useMemo(() => (trace ? adaptTrace(trace) : null), [trace]);
+  const localizedTrace = useMemo(() => (trace ? localizeTrace(trace, locale) : null), [locale, trace]);
+  const traceInsight = useMemo(() => (localizedTrace ? adaptTrace(localizedTrace, locale) : null), [localizedTrace, locale]);
   const endpointLabel = liveApiBaseUrl
     ? `${liveApiBaseUrl}${liveTraceEndpointPath}`
     : `${liveTraceEndpointPath} via Vite proxy`;
-  const activeTraceModeLabel = executedRequest.mode === "live" ? "live signal" : "static replay";
+  const activeTraceModeLabel = executedRequest.mode === "live" ? text.liveSignal : text.staticReplay;
   const activeTraceModeTone = executedRequest.mode === "live" ? "status-pill info" : "status-pill neutral";
+  const displayError = translateUiError(traceError, locale);
 
   function runSelectedTrace() {
     setExecutedRequest(draftRequest);
     setReloadKey((current) => current + 1);
-    setLastRunLabel(new Date().toLocaleTimeString());
+    setLastRunLabel(formatRunTime(new Date(), locale));
   }
 
   function rerunLastTrace() {
     setReloadKey((current) => current + 1);
-    setLastRunLabel(new Date().toLocaleTimeString());
+    setLastRunLabel(formatRunTime(new Date(), locale));
   }
 
   function focusLab(labId: LabId | "all") {
@@ -82,50 +99,52 @@ export function App() {
     <div className="page-shell">
       <header className="hero">
         <div className="hero-copy">
-          <p className="eyebrow">spring-lite / visual-lab-app</p>
-          <h1>Unified visual lab app for all spring-lite study modules</h1>
-          <p className="hero-text">
-            The separated frontend now covers playground, container, example-flow, and comparison labs
-            through one shared trace model. Static study traces and live runtime traces use the same
-            rendering shell so each module can evolve without UI rewrites.
-          </p>
+          <p className="eyebrow">{text.appEyebrow}</p>
+          <h1>{text.heroTitle}</h1>
+          <p className="hero-text">{text.heroText}</p>
         </div>
         <div className="hero-panel">
-          <strong>Runtime Mode</strong>
+          <strong>{text.runtimeMode}</strong>
+          <div className="toggle-row">
+            <button className={locale === "ko" ? "toggle active" : "toggle"} type="button" onClick={() => setLocale("ko")}>
+              한국어
+            </button>
+            <button className={locale === "en" ? "toggle active" : "toggle"} type="button" onClick={() => setLocale("en")}>
+              English
+            </button>
+          </div>
           <div className="toggle-row">
             <button
               className={mode === "static" ? "toggle active" : "toggle"}
               type="button"
               onClick={() => setMode("static")}
             >
-              Static Simulation
+              {text.staticSimulation}
             </button>
             <button
               className={mode === "live" ? "toggle active" : "toggle"}
               type="button"
               onClick={() => setMode("live")}
             >
-              Live Runtime
+              {text.liveRuntime}
             </button>
           </div>
           <p className="mode-note">
-            {mode === "static"
-              ? "Explore all four labs through normalized study traces with no backend dependency."
-              : "Run example-flow against the live example-app now, and extend the same contract to more labs later."}
+            {mode === "static" ? text.staticModeNote : text.liveModeNote}
           </p>
           {mode === "live" ? (
             <p className="mode-subnote">
               {liveApiBaseUrl
-                ? `Configured API base URL: ${liveApiBaseUrl}${liveTraceEndpointPath}`
-                : `Using relative live endpoint ${liveTraceEndpointPath} (Vite dev proxy expects example-app on :8080).`}
+                ? `${text.liveEndpointPrefix} ${liveApiBaseUrl}${liveTraceEndpointPath}`
+                : `${text.liveEndpointProxy} ${liveTraceEndpointPath} (Vite dev proxy expects example-app on :8080).`}
             </p>
           ) : null}
           <div className="run-actions">
             <button className="run-button" type="button" onClick={runSelectedTrace} disabled={loading && !isDraftDirty}>
-              {isDraftDirty ? "Run Selected Trace" : "Refresh Trace"}
+              {isDraftDirty ? text.runSelectedTrace : text.refreshTrace}
             </button>
             <button className="ghost-button" type="button" onClick={rerunLastTrace} disabled={loading}>
-              Re-run Last
+              {text.rerunLast}
             </button>
           </div>
         </div>
@@ -135,13 +154,13 @@ export function App() {
         <section className="panel">
           <div className="section-head">
             <div>
-              <p className="eyebrow">Feature Surface</p>
-              <h2>Lab Modules</h2>
+              <p className="eyebrow">{text.featureSurface}</p>
+              <h2>{text.labModules}</h2>
             </div>
-            <span className="badge">{labCards.length} lab families</span>
+            <span className="badge">{localizedCards.length} {text.labFamilies}</span>
           </div>
           <div className="card-grid">
-            {labCards.map((card) => (
+            {localizedCards.map((card) => (
               <article
                 className={selectedLab === card.id ? "card selected" : "card"}
                 key={card.id}
@@ -172,10 +191,11 @@ export function App() {
                 <div className="detail-list">
                   <div>
                     <span>Now</span>
+                    {locale === "ko" ? <span>{text.now}</span> : null}
                     <p>{card.now}</p>
                   </div>
                   <div>
-                    <span>Next</span>
+                    <span>{text.next}</span>
                     <p>{card.next}</p>
                   </div>
                 </div>
@@ -187,12 +207,12 @@ export function App() {
         <section className="panel side-panel">
           <div className="section-head">
             <div>
-              <p className="eyebrow">Migration Plan</p>
-              <h2>Scaffold Goals</h2>
+              <p className="eyebrow">{text.migrationPlan}</p>
+              <h2>{text.scaffoldGoals}</h2>
             </div>
           </div>
           <ol className="roadmap-list">
-            {roadmapSteps.map((step) => (
+            {localizedRoadmap.map((step) => (
               <li key={step.title}>
                 <strong>{step.title}</strong>
                 <p>{step.description}</p>
@@ -200,23 +220,18 @@ export function App() {
             ))}
           </ol>
           <div className="info-box">
-            <strong>Current status</strong>
-            <p>
-              The shared <code>LabTrace</code> schema now covers playground, container, example-flow,
-              and comparison scenarios in one app. Live runtime execution is already wired for
-              <code> example-flow</code>, while the remaining labs have static parity through the same
-              renderer and adapter structure.
-            </p>
+            <strong>{text.currentStatus}</strong>
+            <p>{text.currentStatusBody}</p>
           </div>
         </section>
 
         <section className="panel">
           <div className="section-head">
             <div>
-              <p className="eyebrow">Trace Contract</p>
-              <h2>Provider Preview</h2>
+              <p className="eyebrow">{text.traceContract}</p>
+              <h2>{text.providerPreview}</h2>
             </div>
-            <span className="badge">{mode === "static" ? "static provider" : "live provider"}</span>
+            <span className="badge">{mode === "static" ? text.staticProvider : text.liveProvider}</span>
           </div>
           <div className="control-stack">
             <div className="lab-filter-row">
@@ -225,9 +240,9 @@ export function App() {
                 type="button"
                 onClick={() => focusLab("all")}
               >
-                All Labs
+                {text.allLabs}
               </button>
-              {labCards.map((card) => (
+              {localizedCards.map((card) => (
                 <button
                   className={selectedLab === card.id ? "filter-chip active" : "filter-chip"}
                   key={card.id}
@@ -239,38 +254,38 @@ export function App() {
               ))}
             </div>
             <label className="field">
-              <span>Trace preset</span>
+              <span>{text.tracePreset}</span>
               <select
                 value={activePresetKey}
                 onChange={(event) => setSelectedPresetKey(event.target.value)}
               >
                 {filteredPresets.map((option) => (
                   <option key={toPresetKey(option.labId, option.scenario)} value={toPresetKey(option.labId, option.scenario)}>
-                    {option.label}
+                    {localizePresetLabel(option.label, locale)}
                   </option>
                 ))}
               </select>
             </label>
             <div className="request-summary">
               <div className="request-card">
-                <strong>Selected Request</strong>
-                <p>{draftRequest.labId} / {draftRequest.scenario} / {draftRequest.mode}</p>
+                <strong>{text.selectedRequest}</strong>
+                <p>{draftRequest.labId} / {draftRequest.scenario} / {localizeModeLabel(draftRequest.mode, locale)}</p>
               </div>
               <div className="request-card">
-                <strong>Last Executed</strong>
-                <p>{executedRequest.labId} / {executedRequest.scenario} / {executedRequest.mode}</p>
+                <strong>{text.lastExecuted}</strong>
+                <p>{executedRequest.labId} / {executedRequest.scenario} / {localizeModeLabel(executedRequest.mode, locale)}</p>
               </div>
             </div>
             <div className="runtime-strip">
               <span className={isDraftDirty ? "status-pill warning" : "status-pill success"}>
-                {isDraftDirty ? "selection changed" : "selection synced"}
+                {isDraftDirty ? text.selectionChanged : text.selectionSynced}
               </span>
-              <span className="status-pill neutral">last run {lastRunLabel}</span>
+              <span className="status-pill neutral">{text.lastRun} {lastRunLabel}</span>
               <span className={activeTraceModeTone}>{activeTraceModeLabel}</span>
               {executedRequest.mode === "live" ? (
                 <span className="status-pill info">{endpointLabel}</span>
               ) : (
-                <span className="status-pill neutral">local static provider</span>
+                <span className="status-pill neutral">{text.localStaticProvider}</span>
               )}
             </div>
             <div className="console-strip">
@@ -280,16 +295,16 @@ export function App() {
                 <span className={traceError ? "console-led warn" : "console-led idle"}></span>
               </div>
               <div className="console-strip-copy">
-                <strong>{loading ? "Trace pipeline active" : "Trace pipeline ready"}</strong>
+                <strong>{loading ? text.tracePipelineActive : text.tracePipelineReady}</strong>
                 <p>
                   {loading
-                    ? `Refreshing ${executedRequest.labId}:${executedRequest.scenario} through the ${executedRequest.mode} provider.`
-                    : `Watching ${executedRequest.labId}:${executedRequest.scenario} from the ${executedRequest.mode} provider.`}
+                    ? text.tracePipelineActiveDetail(executedRequest.labId, executedRequest.scenario, localizeModeLabel(executedRequest.mode, locale))
+                    : text.tracePipelineReadyDetail(executedRequest.labId, executedRequest.scenario, localizeModeLabel(executedRequest.mode, locale))}
                 </p>
               </div>
             </div>
             <label className="field">
-              <span>Request payload</span>
+              <span>{text.requestPayload}</span>
               <textarea
                 className="payload-preview"
                 value={JSON.stringify(executedRequest, null, 2)}
@@ -301,28 +316,47 @@ export function App() {
 
           {loading ? (
             <div className="info-box">
-              <strong>Loading trace</strong>
-              <p>Resolving provider output for the last executed request.</p>
+              <strong>{text.loadingTrace}</strong>
+              <p>{text.resolvingTrace}</p>
             </div>
           ) : null}
 
-          {traceError ? (
+          {displayError ? (
             <div className="info-box error-box">
-              <strong>Trace loading failed</strong>
-              <p>{traceError}</p>
+              <strong>{text.traceLoadingFailed}</strong>
+              <p>{displayError}</p>
             </div>
           ) : null}
 
-          {trace ? (
-            <TracePreview trace={trace} insight={traceInsight} runSequence={reloadKey} loading={loading} />
+          {localizedTrace ? (
+            <TracePreview
+              trace={localizedTrace}
+              insight={traceInsight}
+              runSequence={reloadKey}
+              loading={loading}
+              locale={locale}
+              labels={{
+                loadedTrace: text.loadedTrace,
+                featureAdapter: text.featureAdapter,
+                steps: text.steps,
+                lanes: text.lanes,
+                snapshot: text.snapshot,
+                references: text.references,
+                relatedFiles: text.relatedFiles,
+                refs: text.refs,
+                watch: text.watch,
+                why: text.why,
+                nextLabel: text.nextLabel
+              }}
+            />
           ) : null}
         </section>
 
         <section className="panel">
           <div className="section-head">
             <div>
-              <p className="eyebrow">Project Layout</p>
-              <h2>Frontend Structure</h2>
+              <p className="eyebrow">{text.projectLayout}</p>
+              <h2>{text.frontendStructure}</h2>
             </div>
           </div>
           <pre className="code-block">{`visual-lab-app/

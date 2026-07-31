@@ -1,18 +1,21 @@
+import type { Locale } from "../../lib/i18n";
 import type { LabTrace } from "../../lib/types";
 import { deriveTraceStatusSummary } from "../../lib/trace-presentation";
 
 interface TraceMetricsPanelProps {
+  locale: Locale;
   trace: LabTrace;
+  loadedTraceLabel: string;
 }
 
-export function TraceMetricsPanel({ trace }: TraceMetricsPanelProps) {
-  const status = deriveTraceStatusSummary(trace);
+export function TraceMetricsPanel({ trace, locale, loadedTraceLabel }: TraceMetricsPanelProps) {
+  const status = deriveTraceStatusSummary(trace, locale);
 
   return (
     <article className={`trace-panel tone-${status.tone}`}>
       <div className="trace-head">
         <div>
-          <p className="eyebrow">Loaded Trace</p>
+          <p className="eyebrow">{loadedTraceLabel}</p>
           <h3>{trace.title}</h3>
         </div>
         <span className="tag">{trace.scenario}</span>

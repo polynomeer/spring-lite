@@ -1,20 +1,23 @@
 import type { TraceAdapterResult } from "../../features/types";
+import type { Locale } from "../../lib/i18n";
 import { deriveTraceStatusSummary } from "../../lib/trace-presentation";
 import type { LabTrace } from "../../lib/types";
 
 interface TraceInsightPanelProps {
   insight: TraceAdapterResult;
+  locale: Locale;
   trace: LabTrace;
+  featureAdapterLabel: string;
 }
 
-export function TraceInsightPanel({ insight, trace }: TraceInsightPanelProps) {
-  const status = deriveTraceStatusSummary(trace);
+export function TraceInsightPanel({ insight, trace, locale, featureAdapterLabel }: TraceInsightPanelProps) {
+  const status = deriveTraceStatusSummary(trace, locale);
 
   return (
     <article className={`trace-panel tone-${status.tone}`}>
       <div className="trace-head">
         <div>
-          <p className="eyebrow">Feature Adapter</p>
+          <p className="eyebrow">{featureAdapterLabel}</p>
           <h3>{insight.insight.title}</h3>
         </div>
         <span className="tag">{insight.accent}</span>

@@ -1,24 +1,30 @@
+import type { Locale } from "../../lib/i18n";
 import type { LabTrace } from "../../lib/types";
 
 interface TraceSnapshotPanelProps {
+  locale: Locale;
+  snapshotLabel: string;
+  watchLabel: string;
+  whyLabel: string;
+  nextLabel: string;
   trace: LabTrace;
 }
 
-export function TraceSnapshotPanel({ trace }: TraceSnapshotPanelProps) {
+export function TraceSnapshotPanel({ trace, snapshotLabel, watchLabel, whyLabel, nextLabel }: TraceSnapshotPanelProps) {
   return (
     <article className="trace-panel">
-      <p className="eyebrow">Snapshot</p>
+      <p className="eyebrow">{snapshotLabel}</p>
       <div className="snapshot-stack">
         <div className="snapshot-card">
-          <span>Watch</span>
+          <span>{watchLabel}</span>
           <p>{trace.snapshot.watch}</p>
         </div>
         <div className="snapshot-card">
-          <span>Why</span>
+          <span>{whyLabel}</span>
           <p>{trace.snapshot.why}</p>
         </div>
         <div className="snapshot-card">
-          <span>Next</span>
+          <span>{nextLabel}</span>
           <p>{trace.snapshot.next}</p>
         </div>
       </div>

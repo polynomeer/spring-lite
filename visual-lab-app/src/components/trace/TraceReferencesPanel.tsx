@@ -1,18 +1,23 @@
+import type { Locale } from "../../lib/i18n";
 import type { LabTrace } from "../../lib/types";
 
 interface TraceReferencesPanelProps {
+  locale: Locale;
+  referencesLabel: string;
+  relatedFilesLabel: string;
+  refsLabel: string;
   trace: LabTrace;
 }
 
-export function TraceReferencesPanel({ trace }: TraceReferencesPanelProps) {
+export function TraceReferencesPanel({ trace, referencesLabel, relatedFilesLabel, refsLabel }: TraceReferencesPanelProps) {
   return (
     <article className="trace-panel">
       <div className="trace-head">
         <div>
-          <p className="eyebrow">References</p>
-          <h3>Related Files</h3>
+          <p className="eyebrow">{referencesLabel}</p>
+          <h3>{relatedFilesLabel}</h3>
         </div>
-        <span className="tag">{trace.references.length} refs</span>
+        <span className="tag">{trace.references.length} {refsLabel}</span>
       </div>
       <div className="trace-list">
         {trace.references.map((reference) => (

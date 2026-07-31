@@ -1,13 +1,16 @@
+import type { Locale } from "../../lib/i18n";
 import type { LabTrace } from "../../lib/types";
 
 interface TraceStepsPanelProps {
+  locale: Locale;
+  stepsLabel: string;
   trace: LabTrace;
 }
 
-export function TraceStepsPanel({ trace }: TraceStepsPanelProps) {
+export function TraceStepsPanel({ trace, stepsLabel }: TraceStepsPanelProps) {
   return (
     <article className="trace-panel">
-      <p className="eyebrow">Steps</p>
+      <p className="eyebrow">{stepsLabel}</p>
       <div className="trace-list">
         {trace.steps.map((step, index) => (
           <div className={`trace-item trace-step ${step.kind}`} key={step.id}>
