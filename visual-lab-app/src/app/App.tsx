@@ -346,7 +346,7 @@ export function App() {
               <div className="results-header">
                 <div>
                   <p className="eyebrow">{consoleText.traceResults}</p>
-                  <h2>{consoleText.traceResultsMeta}</h2>
+                  <p className="results-meta">{consoleText.traceResultsMeta}</p>
                 </div>
                 <span className="badge">{mode === "static" ? text.staticProvider : text.liveProvider}</span>
               </div>

@@ -428,6 +428,13 @@ code {
   gap: 12px;
 }
 
+.results-meta {
+  margin: 0;
+  color: #b5e8c0;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
 .results-header h2,
 .section-head h2 {
   margin: 0;
@@ -481,7 +488,7 @@ code {
 }
 
 .table-strip {
-  margin-top: 18px;
+  margin-top: 12px;
   padding: 12px 14px;
   border: 1px solid rgba(37, 197, 97, 0.18);
   background: rgba(6, 10, 7, 0.98);
