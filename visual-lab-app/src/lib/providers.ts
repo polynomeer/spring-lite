@@ -20,7 +20,7 @@ class LiveLabTraceProvider implements LabTraceProvider {
 
   async getTrace(request: LabTraceRequest): Promise<LabTrace> {
     try {
-      return fetchLiveLabTrace(request);
+      return await fetchLiveLabTrace(request);
     } catch (error) {
       return {
         id: `live-placeholder-${request.labId}-${request.scenario}`,
