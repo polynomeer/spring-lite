@@ -255,6 +255,13 @@ code {
   margin-top: 14px;
 }
 
+.lab-tab-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
 .control-block + .control-block,
 .selection-preview {
   margin-top: 18px;
@@ -289,6 +296,7 @@ code {
 .run-button,
 .ghost-button,
 .filter-chip,
+.lab-tab,
 .trace-tab,
 .scenario-card {
   border: 1px solid var(--line);
@@ -303,6 +311,7 @@ code {
 .run-button,
 .ghost-button,
 .filter-chip,
+.lab-tab,
 .trace-tab {
   padding: 10px 14px;
 }
@@ -311,6 +320,7 @@ code {
 .run-button:hover,
 .ghost-button:hover,
 .filter-chip:hover,
+.lab-tab:hover,
 .trace-tab:hover,
 .scenario-card:hover,
 .card:hover {
@@ -320,6 +330,7 @@ code {
 
 .toggle.active,
 .filter-chip.active,
+.lab-tab.active,
 .trace-tab.active,
 .scenario-card.active {
   color: var(--accent);
@@ -337,6 +348,61 @@ code {
 .toggle:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+.lab-tab {
+  text-align: left;
+  display: grid;
+  gap: 6px;
+  min-height: 92px;
+  align-content: start;
+  position: relative;
+}
+
+.lab-tab strong {
+  color: #effff2;
+}
+
+.lab-tab span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.lab-tab.active::after {
+  content: "";
+  position: absolute;
+  inset: auto 12px 8px 12px;
+  height: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 10px rgba(49, 255, 132, 0.35);
+}
+
+.scenario-panel {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid rgba(37, 197, 97, 0.18);
+  background: rgba(6, 10, 7, 0.98);
+}
+
+.scenario-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.scenario-panel-head strong {
+  display: block;
+  color: #effff2;
+  margin-bottom: 4px;
+}
+
+.scenario-panel-head p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
 }
 
 .scenario-list {
@@ -650,6 +716,7 @@ code {
 }
 
 @media (max-width: 1200px) {
+  .lab-tab-row,
   .scenario-list,
   .scenario-list.compact,
   .selection-preview,
@@ -674,6 +741,7 @@ code {
     grid-template-columns: 1fr;
   }
 
+  .lab-tab-row,
   .scenario-list,
   .scenario-list.compact,
   .selection-preview,

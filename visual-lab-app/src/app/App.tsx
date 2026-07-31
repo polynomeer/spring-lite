@@ -56,6 +56,9 @@ export function App() {
     const fallback = filteredPresets[0] ?? firstPreset;
     return toPresetKey(fallback.labId, fallback.scenario);
   }, [filteredPresets, firstPreset, selectedPresetKey]);
+  const activeLabCard = localizedCards.find((card) => card.id === draftRequest.labId)
+    ?? localizedCards.find((card) => card.id === executedRequest.labId)
+    ?? localizedCards[0];
 
   const draftRequest = useMemo(() => buildRequest(activePresetKey, mode), [activePresetKey, mode]);
   const isDraftDirty = draftRequest.labId !== executedRequest.labId
@@ -273,15 +276,18 @@ export function App() {
 
             <div className="control-block">
               <span className="control-step">2. {text.labModules}</span>
-              <div className="lab-filter-row">
+              <div className="lab-tab-row" role="tablist" aria-label={text.labModules}>
                 {localizedCards.map((card) => (
                   <button
-                    className={selectedLab === card.id ? "filter-chip active" : "filter-chip"}
+                    className={selectedLab === card.id ? "lab-tab active" : "lab-tab"}
                     key={card.id}
                     type="button"
+                    role="tab"
+                    aria-selected={selectedLab === card.id}
                     onClick={() => focusLab(card.id)}
                   >
-                    {card.title}
+                    <strong>{card.title}</strong>
+                    <span>{card.summary}</span>
                   </button>
                 ))}
               </div>
@@ -289,21 +295,30 @@ export function App() {
 
             <div className="control-block">
               <span className="control-step">3. {text.tracePreset}</span>
-              <div className="scenario-list compact" role="list" aria-label={text.tracePreset}>
-                {filteredPresets.map((option) => {
-                  const presetKey = toPresetKey(option.labId, option.scenario);
-                  return (
-                    <button
-                      className={presetKey === activePresetKey ? "scenario-card active" : "scenario-card"}
-                      key={presetKey}
-                      type="button"
-                      onClick={() => setSelectedPresetKey(presetKey)}
-                    >
-                      <strong>{localizePresetLabel(option.label, locale)}</strong>
-                      <span>{option.labId} / {option.scenario}</span>
-                    </button>
-                  );
-                })}
+              <div className="scenario-panel">
+                <div className="scenario-panel-head">
+                  <div>
+                    <strong>{activeLabCard?.title}</strong>
+                    <p>{activeLabCard?.summary}</p>
+                  </div>
+                  <span className="status-pill neutral">{filteredPresets.length} presets</span>
+                </div>
+                <div className="scenario-list compact" role="list" aria-label={text.tracePreset}>
+                  {filteredPresets.map((option) => {
+                    const presetKey = toPresetKey(option.labId, option.scenario);
+                    return (
+                      <button
+                        className={presetKey === activePresetKey ? "scenario-card active" : "scenario-card"}
+                        key={presetKey}
+                        type="button"
+                        onClick={() => setSelectedPresetKey(presetKey)}
+                      >
+                        <strong>{localizePresetLabel(option.label, locale)}</strong>
+                        <span>{option.labId} / {option.scenario}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
