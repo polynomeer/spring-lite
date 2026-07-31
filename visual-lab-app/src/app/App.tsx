@@ -245,61 +245,87 @@ export function App() {
                 EN
               </button>
             </div>
-            <button className="ghost-button save-query-button" type="button" onClick={runSelectedTrace} disabled={loading && !isDraftDirty}>
-              {consoleText.saveQuery}
-            </button>
+            <div className="hero-status-stack">
+              <span className={isDraftDirty ? "status-pill warning" : "status-pill success"}>
+                {isDraftDirty ? text.selectionChanged : text.selectionSynced}
+              </span>
+              <span className={activeTraceModeTone}>{activeTraceModeLabel}</span>
+            </div>
           </div>
         </header>
 
         <main className="workspace-layout" id="app-main">
           <section className="panel query-panel">
             <div className="panel-label">{consoleText.queryLocked}</div>
-            <div className="query-mode-row">
-              <button
-                className={mode === "static" ? "filter-chip active" : "filter-chip"}
-                type="button"
-                onClick={() => setMode("static")}
-              >
-                {text.staticSimulation}
-              </button>
-              <button
-                className={mode === "live" ? "filter-chip active" : "filter-chip"}
-                type="button"
-                onClick={() => setMode("live")}
-              >
-                {text.liveRuntime}
-              </button>
-            </div>
-            <div className="lab-filter-row">
-              {localizedCards.map((card) => (
+            <div className="control-block">
+              <span className="control-step">1. {text.runtimeMode}</span>
+              <div className="query-mode-row">
                 <button
-                  className={selectedLab === card.id ? "filter-chip active" : "filter-chip"}
-                  key={card.id}
+                  className={mode === "static" ? "filter-chip active" : "filter-chip"}
                   type="button"
-                  onClick={() => focusLab(card.id)}
+                  onClick={() => setMode("static")}
                 >
-                  {card.title}
+                  {text.staticSimulation}
                 </button>
-              ))}
+                <button
+                  className={mode === "live" ? "filter-chip active" : "filter-chip"}
+                  type="button"
+                  onClick={() => setMode("live")}
+                >
+                  {text.liveRuntime}
+                </button>
+              </div>
             </div>
-            <div className="scenario-list compact" role="list" aria-label={text.tracePreset}>
-              {filteredPresets.map((option) => {
-                const presetKey = toPresetKey(option.labId, option.scenario);
-                return (
+
+            <div className="control-block">
+              <span className="control-step">2. {text.labModules}</span>
+              <div className="lab-filter-row">
+                {localizedCards.map((card) => (
                   <button
-                    className={presetKey === activePresetKey ? "scenario-card active" : "scenario-card"}
-                    key={presetKey}
+                    className={selectedLab === card.id ? "filter-chip active" : "filter-chip"}
+                    key={card.id}
                     type="button"
-                    onClick={() => setSelectedPresetKey(presetKey)}
+                    onClick={() => focusLab(card.id)}
                   >
-                    <strong>{localizePresetLabel(option.label, locale)}</strong>
-                    <span>{option.labId} / {option.scenario}</span>
+                    {card.title}
                   </button>
-                );
-              })}
+                ))}
+              </div>
             </div>
+
+            <div className="control-block">
+              <span className="control-step">3. {text.tracePreset}</span>
+              <div className="scenario-list compact" role="list" aria-label={text.tracePreset}>
+                {filteredPresets.map((option) => {
+                  const presetKey = toPresetKey(option.labId, option.scenario);
+                  return (
+                    <button
+                      className={presetKey === activePresetKey ? "scenario-card active" : "scenario-card"}
+                      key={presetKey}
+                      type="button"
+                      onClick={() => setSelectedPresetKey(presetKey)}
+                    >
+                      <strong>{localizePresetLabel(option.label, locale)}</strong>
+                      <span>{option.labId} / {option.scenario}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="selection-preview">
+              <div className="request-card">
+                <strong>4. {text.selectedRequest}</strong>
+                <p>{draftRequest.labId} / {draftRequest.scenario} / {localizeModeLabel(draftRequest.mode, locale)}</p>
+              </div>
+              <div className="request-card">
+                <strong>{text.lastExecuted}</strong>
+                <p>{executedRequest.labId} / {executedRequest.scenario} / {localizeModeLabel(executedRequest.mode, locale)}</p>
+              </div>
+            </div>
+
             <div className="run-actions query-actions">
-              <button className="run-button" type="button" onClick={runSelectedTrace} disabled={loading && !isDraftDirty}>
+              <button className="run-button primary-run-button" type="button" onClick={runSelectedTrace} disabled={loading && !isDraftDirty}>
                 {consoleText.runPrimary}
               </button>
               <button className="ghost-button" type="button" onClick={rerunLastTrace} disabled={loading}>

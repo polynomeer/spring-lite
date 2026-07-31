@@ -201,6 +201,12 @@ code {
   justify-items: end;
 }
 
+.hero-status-stack {
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+}
+
 .workspace-layout {
   padding: 0 62px 42px;
   display: grid;
@@ -250,10 +256,34 @@ code {
   margin-top: 14px;
 }
 
+.control-block + .control-block,
+.selection-preview {
+  margin-top: 18px;
+}
+
+.control-step {
+  display: block;
+  margin-bottom: 10px;
+  color: #b5e8c0;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.selection-preview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
 .query-actions {
   margin-top: 18px;
   padding-top: 14px;
   border-top: 1px solid rgba(37, 197, 97, 0.18);
+}
+
+.primary-run-button {
+  min-width: 200px;
 }
 
 .toggle,
@@ -675,6 +705,7 @@ code {
 @media (max-width: 1200px) {
   .scenario-list,
   .scenario-list.compact,
+  .selection-preview,
   .request-summary,
   .trace-preview-grid,
   .metric-mini-grid,
@@ -698,6 +729,7 @@ code {
 
   .scenario-list,
   .scenario-list.compact,
+  .selection-preview,
   .request-summary,
   .trace-preview-grid,
   .metric-mini-grid,
