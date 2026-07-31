@@ -47,8 +47,10 @@ export interface UiText {
   staticReplay: string;
   localStaticProvider: string;
   tracePipelineActive: string;
+  tracePipelinePending: string;
   tracePipelineReady: string;
   tracePipelineActiveDetail: (labId: string, scenario: string, mode: string) => string;
+  tracePipelinePendingDetail: (selectedLabId: string, selectedScenario: string, selectedMode: string, executedLabId: string, executedScenario: string, executedMode: string) => string;
   tracePipelineReadyDetail: (labId: string, scenario: string, mode: string) => string;
   requestPayload: string;
   loadingTrace: string;
@@ -119,8 +121,11 @@ const uiTextByLocale: Record<Locale, UiText> = {
     staticReplay: "static replay",
     localStaticProvider: "local static provider",
     tracePipelineActive: "Trace pipeline active",
+    tracePipelinePending: "Trace run pending",
     tracePipelineReady: "Trace pipeline ready",
     tracePipelineActiveDetail: (labId, scenario, mode) => `Refreshing ${labId}:${scenario} through the ${mode} provider.`,
+    tracePipelinePendingDetail: (selectedLabId, selectedScenario, selectedMode, executedLabId, executedScenario, executedMode) =>
+      `Selected ${selectedLabId}:${selectedScenario} (${selectedMode}), but the result pane still shows the last run ${executedLabId}:${executedScenario} (${executedMode}). Run the selected trace to refresh it.`,
     tracePipelineReadyDetail: (labId, scenario, mode) => `Watching ${labId}:${scenario} from the ${mode} provider.`,
     requestPayload: "Request payload",
     loadingTrace: "Loading trace",
@@ -189,8 +194,11 @@ const uiTextByLocale: Record<Locale, UiText> = {
     staticReplay: "정적 리플레이",
     localStaticProvider: "로컬 정적 provider",
     tracePipelineActive: "Trace 파이프라인 실행 중",
+    tracePipelinePending: "선택 변경됨, 실행 대기 중",
     tracePipelineReady: "Trace 파이프라인 대기 중",
     tracePipelineActiveDetail: (labId, scenario, mode) => `${labId}:${scenario} 요청을 ${mode} provider로 새로 불러오는 중입니다.`,
+    tracePipelinePendingDetail: (selectedLabId, selectedScenario, selectedMode, executedLabId, executedScenario, executedMode) =>
+      `선택한 값은 ${selectedLabId}:${selectedScenario} (${selectedMode})이지만, 결과 영역은 아직 마지막 실행 ${executedLabId}:${executedScenario} (${executedMode})를 보여주고 있습니다. 선택한 trace를 실행해야 결과가 갱신됩니다.`,
     tracePipelineReadyDetail: (labId, scenario, mode) => `${labId}:${scenario} 요청을 ${mode} provider 기준으로 관찰 중입니다.`,
     requestPayload: "요청 payload",
     loadingTrace: "Trace 로딩 중",

@@ -72,6 +72,24 @@ export function App() {
   const activeTraceModeLabel = executedRequest.mode === "live" ? text.liveSignal : text.staticReplay;
   const activeTraceModeTone = executedRequest.mode === "live" ? "status-pill info" : "status-pill neutral";
   const displayError = translateUiError(traceError, locale);
+  const requestPreview = isDraftDirty ? draftRequest : executedRequest;
+  const pipelineTitle = loading
+    ? text.tracePipelineActive
+    : isDraftDirty
+      ? text.tracePipelinePending
+      : text.tracePipelineReady;
+  const pipelineDetail = loading
+    ? text.tracePipelineActiveDetail(executedRequest.labId, executedRequest.scenario, localizeModeLabel(executedRequest.mode, locale))
+    : isDraftDirty
+      ? text.tracePipelinePendingDetail(
+          draftRequest.labId,
+          draftRequest.scenario,
+          localizeModeLabel(draftRequest.mode, locale),
+          executedRequest.labId,
+          executedRequest.scenario,
+          localizeModeLabel(executedRequest.mode, locale)
+        )
+      : text.tracePipelineReadyDetail(executedRequest.labId, executedRequest.scenario, localizeModeLabel(executedRequest.mode, locale));
   const consoleText = locale === "ko"
     ? {
         statusAction: "[ runtime_live ]",
@@ -258,12 +276,8 @@ export function App() {
                   <span className={traceError ? "console-led warn" : "console-led idle"}></span>
                 </div>
                 <div className="console-strip-copy">
-                  <strong>{loading ? text.tracePipelineActive : text.tracePipelineReady}</strong>
-                  <p>
-                    {loading
-                      ? text.tracePipelineActiveDetail(executedRequest.labId, executedRequest.scenario, localizeModeLabel(executedRequest.mode, locale))
-                      : text.tracePipelineReadyDetail(executedRequest.labId, executedRequest.scenario, localizeModeLabel(executedRequest.mode, locale))}
-                  </p>
+                  <strong>{pipelineTitle}</strong>
+                  <p>{pipelineDetail}</p>
                 </div>
               </div>
 
@@ -290,7 +304,7 @@ export function App() {
                 <span>{text.requestPayload}</span>
                 <textarea
                   className="payload-preview"
-                  value={JSON.stringify(executedRequest, null, 2)}
+                  value={JSON.stringify(requestPreview, null, 2)}
                   readOnly
                   rows={6}
                 />
