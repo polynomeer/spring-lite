@@ -169,7 +169,6 @@ export function App() {
         subtitle: "Complete through Jul 31, 2026",
         queryLocked: "// TRACE CONTROLS",
         traceResults: "TRACE RESULTS",
-        supportModules: "SUPPORT MODULES",
         ...dynamicConsoleText
       }
     : {
@@ -178,7 +177,6 @@ export function App() {
         subtitle: "Complete through Jul 31, 2026",
         queryLocked: "// TRACE CONTROLS",
         traceResults: "TRACE RESULTS",
-        supportModules: "SUPPORT MODULES",
         ...dynamicConsoleText
       };
 
@@ -443,61 +441,6 @@ export function App() {
                   }}
                 />
               ) : null}
-            </section>
-
-            <section className="context-stack">
-              <details className="panel details-panel">
-                <summary>
-                  <div>
-                    <p className="eyebrow">{consoleText.supportModules}</p>
-                    <h2>{text.labModules}</h2>
-                  </div>
-                  <span className="badge">{localizedCards.length} {text.labFamilies}</span>
-                </summary>
-                <p className="section-copy">{text.supportingContextBody}</p>
-                <div className="card-grid compact">
-                  {localizedCards.map((card) => (
-                    <article
-                      className={selectedLab === card.id ? "card selected" : "card"}
-                      key={card.id}
-                      onClick={() => focusLab(card.id)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                          event.preventDefault();
-                          focusLab(card.id);
-                        }
-                      }}
-                    >
-                      <div className="card-top">
-                        <div>
-                          <h3>{card.title}</h3>
-                          <p>{card.summary}</p>
-                        </div>
-                        <span className="tag">{card.stage}</span>
-                      </div>
-                      <div className="chip-row">
-                        {card.capabilities.map((capability) => (
-                          <span className="chip" key={capability}>
-                            {capability}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="detail-list">
-                        <div>
-                          <span>{text.now}</span>
-                          <p>{card.now}</p>
-                        </div>
-                        <div>
-                          <span>{text.next}</span>
-                          <p>{card.next}</p>
-                        </div>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              </details>
             </section>
           </section>
         </main>
