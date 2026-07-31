@@ -56,11 +56,11 @@ export function App() {
     const fallback = filteredPresets[0] ?? firstPreset;
     return toPresetKey(fallback.labId, fallback.scenario);
   }, [filteredPresets, firstPreset, selectedPresetKey]);
+
+  const draftRequest = useMemo(() => buildRequest(activePresetKey, mode), [activePresetKey, mode]);
   const activeLabCard = localizedCards.find((card) => card.id === draftRequest.labId)
     ?? localizedCards.find((card) => card.id === executedRequest.labId)
     ?? localizedCards[0];
-
-  const draftRequest = useMemo(() => buildRequest(activePresetKey, mode), [activePresetKey, mode]);
   const isDraftDirty = draftRequest.labId !== executedRequest.labId
     || draftRequest.scenario !== executedRequest.scenario
     || draftRequest.mode !== executedRequest.mode;
