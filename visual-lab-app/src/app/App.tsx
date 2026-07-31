@@ -90,40 +90,99 @@ export function App() {
           localizeModeLabel(executedRequest.mode, locale)
         )
       : text.tracePipelineReadyDetail(executedRequest.labId, executedRequest.scenario, localizeModeLabel(executedRequest.mode, locale));
-  const consoleText = locale === "ko"
+  const dynamicConsoleText = locale === "ko"
     ? {
-        statusAction: "[ runtime_live ]",
-        saveQuery: "[ run_trace ]",
-        command: "lab@spring-lite:~$ inspect trace --sort=scenario",
-        title: "SPRING LITE VISUAL LAB",
-        subtitle: "Complete through Jul 31, 2026",
-        queryLocked: "// TRACE CONTROLS",
-        traceResults: "TRACE RESULTS",
-        traceResultsMeta: "normalized runtime output",
-        activeSelection: "ACTIVE SELECTION",
-        telemetry: "TELEMETRY",
-        supportModules: "SUPPORT MODULES",
-        supportRoadmap: "ROADMAP",
-        supportLayout: "LAYOUT",
-        runPrimary: "[ run_trace ]",
-        rerun: "[ rerun_last ]"
+        statusAction: loading
+          ? "[ trace_loading ]"
+          : traceError
+            ? "[ trace_error ]"
+            : executedRequest.mode === "live"
+              ? "[ runtime_live ]"
+              : "[ runtime_static ]",
+        saveQuery: loading
+          ? "[ loading_trace ]"
+          : isDraftDirty
+            ? "[ run_trace ]"
+            : "[ refresh_trace ]",
+        traceResultsMeta: loading
+          ? "provider 응답을 수집하는 중"
+          : isDraftDirty
+            ? "선택은 바뀌었지만 결과는 아직 마지막 실행 기준"
+            : traceError
+              ? "최근 실행에서 오류가 감지됨"
+              : "마지막 실행 결과가 로드됨",
+        activeSelection: isDraftDirty ? "PENDING SELECTION" : "ACTIVE SELECTION",
+        telemetry: loading
+          ? "FETCHING"
+          : traceError
+            ? "DEGRADED"
+            : localizedTrace?.mode === "live"
+              ? "LIVE"
+              : "STATIC",
+        runPrimary: loading
+          ? "[ loading_trace ]"
+          : isDraftDirty
+            ? "[ run_trace ]"
+            : "[ refresh_trace ]",
+        rerun: loading ? "[ loading ]" : "[ rerun_last ]"
       }
     : {
-        statusAction: "[ runtime_live ]",
-        saveQuery: "[ run_trace ]",
+        statusAction: loading
+          ? "[ trace_loading ]"
+          : traceError
+            ? "[ trace_error ]"
+            : executedRequest.mode === "live"
+              ? "[ runtime_live ]"
+              : "[ runtime_static ]",
+        saveQuery: loading
+          ? "[ loading_trace ]"
+          : isDraftDirty
+            ? "[ run_trace ]"
+            : "[ refresh_trace ]",
+        traceResultsMeta: loading
+          ? "collecting provider response"
+          : isDraftDirty
+            ? "selection changed while result pane still shows last execution"
+            : traceError
+              ? "latest execution reported an error"
+              : "last executed trace is loaded",
+        activeSelection: isDraftDirty ? "PENDING SELECTION" : "ACTIVE SELECTION",
+        telemetry: loading
+          ? "FETCHING"
+          : traceError
+            ? "DEGRADED"
+            : localizedTrace?.mode === "live"
+              ? "LIVE"
+              : "STATIC",
+        runPrimary: loading
+          ? "[ loading_trace ]"
+          : isDraftDirty
+            ? "[ run_trace ]"
+            : "[ refresh_trace ]",
+        rerun: loading ? "[ loading ]" : "[ rerun_last ]"
+      };
+  const consoleText = locale === "ko"
+    ? {
         command: "lab@spring-lite:~$ inspect trace --sort=scenario",
         title: "SPRING LITE VISUAL LAB",
         subtitle: "Complete through Jul 31, 2026",
         queryLocked: "// TRACE CONTROLS",
         traceResults: "TRACE RESULTS",
-        traceResultsMeta: "normalized runtime output",
-        activeSelection: "ACTIVE SELECTION",
-        telemetry: "TELEMETRY",
         supportModules: "SUPPORT MODULES",
         supportRoadmap: "ROADMAP",
         supportLayout: "LAYOUT",
-        runPrimary: "[ run_trace ]",
-        rerun: "[ rerun_last ]"
+        ...dynamicConsoleText
+      }
+    : {
+        command: "lab@spring-lite:~$ inspect trace --sort=scenario",
+        title: "SPRING LITE VISUAL LAB",
+        subtitle: "Complete through Jul 31, 2026",
+        queryLocked: "// TRACE CONTROLS",
+        traceResults: "TRACE RESULTS",
+        supportModules: "SUPPORT MODULES",
+        supportRoadmap: "ROADMAP",
+        supportLayout: "LAYOUT",
+        ...dynamicConsoleText
       };
 
   function runSelectedTrace() {
