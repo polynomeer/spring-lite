@@ -74,10 +74,10 @@ export function App() {
   const displayError = translateUiError(traceError, locale);
   const consoleText = locale === "ko"
     ? {
-        signIn: "[ sign_in ]",
-        saveQuery: "[ query_trace ]",
-        command: "analyst@spring-lite:~$ query trace --sort=signal",
-        title: "SPRING LITE RUNTIME DATABASE",
+        statusAction: "[ runtime_live ]",
+        saveQuery: "[ run_trace ]",
+        command: "lab@spring-lite:~$ inspect trace --sort=scenario",
+        title: "SPRING LITE VISUAL LAB",
         subtitle: "Complete through Jul 31, 2026",
         queryLocked: "// QUERY PARAMETERS - LOCKED",
         moreFilters: "▸ More filters",
@@ -90,18 +90,18 @@ export function App() {
         supportLayout: "LAYOUT",
         runPrimary: "[ run_trace ]",
         rerun: "[ rerun_last ]",
-        searchPlaceholder: "$ search trace_or_module",
-        categoryLabel: "Categories All",
-        marketLabel: "Markets All",
-        signalLabel: "signal:any",
-        sortLabel: "Visibility",
+        searchPlaceholder: "$ select lab_or_scenario",
+        categoryLabel: "Labs All",
+        marketLabel: "Modes All",
+        signalLabel: "provider:any",
+        sortLabel: "Scenario",
         orderLabel: "Descending"
       }
     : {
-        signIn: "[ sign_in ]",
-        saveQuery: "[ save_query ]",
-        command: "analyst@spring-lite:~$ query trace --sort=signal",
-        title: "SPRING LITE RUNTIME DATABASE",
+        statusAction: "[ runtime_live ]",
+        saveQuery: "[ run_trace ]",
+        command: "lab@spring-lite:~$ inspect trace --sort=scenario",
+        title: "SPRING LITE VISUAL LAB",
         subtitle: "Complete through Jul 31, 2026",
         queryLocked: "// QUERY PARAMETERS - LOCKED",
         moreFilters: "▸ More filters",
@@ -114,11 +114,11 @@ export function App() {
         supportLayout: "LAYOUT",
         runPrimary: "[ run_trace ]",
         rerun: "[ rerun_last ]",
-        searchPlaceholder: "$ search trace_or_module",
-        categoryLabel: "Categories All",
-        marketLabel: "Markets All",
-        signalLabel: "signal:any",
-        sortLabel: "Visibility",
+        searchPlaceholder: "$ select lab_or_scenario",
+        categoryLabel: "Labs All",
+        marketLabel: "Modes All",
+        signalLabel: "provider:any",
+        sortLabel: "Scenario",
         orderLabel: "Descending"
       };
 
@@ -158,11 +158,11 @@ export function App() {
         <div className="site-header">
           <div className="brand-mark">
             <span className="brand-dot">&gt;_</span>
-            <strong>App Scouter</strong>
+            <strong>Spring Lite</strong>
           </div>
           <div className="header-actions">
             <button className="ghost-button console-auth" type="button">
-              {consoleText.signIn}
+              {consoleText.statusAction}
             </button>
           </div>
         </div>
