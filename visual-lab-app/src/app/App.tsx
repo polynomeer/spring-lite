@@ -72,23 +72,54 @@ export function App() {
   const activeTraceModeLabel = executedRequest.mode === "live" ? text.liveSignal : text.staticReplay;
   const activeTraceModeTone = executedRequest.mode === "live" ? "status-pill info" : "status-pill neutral";
   const displayError = translateUiError(traceError, locale);
-  const navItems = locale === "ko"
-    ? ["개요", "랩", "트레이스", "문서"]
-    : ["Overview", "Labs", "Trace", "Docs"];
-  const statLabels = locale === "ko"
+  const consoleText = locale === "ko"
     ? {
-        labs: "랩 모듈",
-        presets: "시나리오 프리셋",
-        coverage: "라이브 연결 범위",
-        heroPrimary: "Trace 실행",
-        heroSecondary: "시나리오 보기"
+        signIn: "[ sign_in ]",
+        saveQuery: "[ query_trace ]",
+        command: "analyst@spring-lite:~$ query trace --sort=signal",
+        title: "SPRING LITE RUNTIME DATABASE",
+        subtitle: "Complete through Jul 31, 2026",
+        queryLocked: "// QUERY PARAMETERS - LOCKED",
+        moreFilters: "▸ More filters",
+        traceResults: "TRACE RESULTS",
+        traceResultsMeta: "normalized runtime output",
+        activeSelection: "ACTIVE SELECTION",
+        telemetry: "TELEMETRY",
+        supportModules: "SUPPORT MODULES",
+        supportRoadmap: "ROADMAP",
+        supportLayout: "LAYOUT",
+        runPrimary: "[ run_trace ]",
+        rerun: "[ rerun_last ]",
+        searchPlaceholder: "$ search trace_or_module",
+        categoryLabel: "Categories All",
+        marketLabel: "Markets All",
+        signalLabel: "signal:any",
+        sortLabel: "Visibility",
+        orderLabel: "Descending"
       }
     : {
-        labs: "Lab Modules",
-        presets: "Scenario Presets",
-        coverage: "Live Coverage",
-        heroPrimary: "Run Trace",
-        heroSecondary: "Browse Scenarios"
+        signIn: "[ sign_in ]",
+        saveQuery: "[ save_query ]",
+        command: "analyst@spring-lite:~$ query trace --sort=signal",
+        title: "SPRING LITE RUNTIME DATABASE",
+        subtitle: "Complete through Jul 31, 2026",
+        queryLocked: "// QUERY PARAMETERS - LOCKED",
+        moreFilters: "▸ More filters",
+        traceResults: "TRACE RESULTS",
+        traceResultsMeta: "normalized runtime output",
+        activeSelection: "ACTIVE SELECTION",
+        telemetry: "TELEMETRY",
+        supportModules: "SUPPORT MODULES",
+        supportRoadmap: "ROADMAP",
+        supportLayout: "LAYOUT",
+        runPrimary: "[ run_trace ]",
+        rerun: "[ rerun_last ]",
+        searchPlaceholder: "$ search trace_or_module",
+        categoryLabel: "Categories All",
+        marketLabel: "Markets All",
+        signalLabel: "signal:any",
+        sortLabel: "Visibility",
+        orderLabel: "Descending"
       };
 
   function runSelectedTrace() {
@@ -115,120 +146,76 @@ export function App() {
 
   return (
     <div className="page-shell">
-      <div className="site-header">
-        <div className="brand-mark">
-          <span className="brand-dot"></span>
-          <strong>Spring Lite</strong>
+      <div className="console-frame">
+        <div className="console-topbar">
+          <div className="window-dots" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
         </div>
-        <nav className="site-nav" aria-label="Primary">
-          {navItems.map((item) => (
-            <a href="#app-main" key={item}>{item}</a>
-          ))}
-        </nav>
-        <div className="header-actions">
-          <button className={locale === "ko" ? "toggle active" : "toggle"} type="button" onClick={() => setLocale("ko")}>
-            한국어
-          </button>
-          <button className={locale === "en" ? "toggle active" : "toggle"} type="button" onClick={() => setLocale("en")}>
-            English
-          </button>
-        </div>
-      </div>
 
-      <header className="hero">
-        <div className="hero-copy">
-          <p className="eyebrow">{text.appEyebrow}</p>
-          <h1>{text.heroTitle}</h1>
-          <p className="hero-text">{text.heroText}</p>
-          <div className="hero-cta-row">
-            <button className="run-button hero-cta" type="button" onClick={runSelectedTrace} disabled={loading && !isDraftDirty}>
-              {statLabels.heroPrimary}
-            </button>
-            <button className="ghost-button hero-cta-secondary" type="button" onClick={() => focusLab("all")}>
-              {statLabels.heroSecondary}
-            </button>
+        <div className="site-header">
+          <div className="brand-mark">
+            <span className="brand-dot">&gt;_</span>
+            <strong>App Scouter</strong>
           </div>
-          <div className="hero-stats">
-            <article className="signal-card">
-              <span>01</span>
-              <strong>{localizedCards.length}</strong>
-              <p>{statLabels.labs}</p>
-            </article>
-            <article className="signal-card">
-              <span>02</span>
-              <strong>{tracePresetOptions.length}</strong>
-              <p>{statLabels.presets}</p>
-            </article>
-            <article className="signal-card emphasis">
-              <span>03</span>
-              <strong>example-flow</strong>
-              <p>{statLabels.coverage}</p>
-            </article>
-          </div>
-        </div>
-        <div className="hero-panel">
-          <div className="hero-panel-head">
-            <div>
-              <p className="eyebrow">01 · {text.quickRun}</p>
-              <strong>{text.runtimeMode}</strong>
-            </div>
-            <p className="hero-panel-copy">{text.quickRunBody}</p>
-          </div>
-          <div className="toggle-row">
-            <button
-              className={mode === "static" ? "toggle active" : "toggle"}
-              type="button"
-              onClick={() => setMode("static")}
-            >
-              {text.staticSimulation}
-            </button>
-            <button
-              className={mode === "live" ? "toggle active" : "toggle"}
-              type="button"
-              onClick={() => setMode("live")}
-            >
-              {text.liveRuntime}
-            </button>
-          </div>
-          <p className="mode-note">
-            {mode === "static" ? text.staticModeNote : text.liveModeNote}
-          </p>
-          {mode === "live" ? (
-            <p className="mode-subnote">
-              {liveApiBaseUrl
-                ? `${text.liveEndpointPrefix} ${liveApiBaseUrl}${liveTraceEndpointPath}`
-                : `${text.liveEndpointProxy} ${liveTraceEndpointPath} (Vite dev proxy expects example-app on :8080).`}
-            </p>
-          ) : null}
-          <div className="run-actions">
-            <button className="run-button" type="button" onClick={runSelectedTrace} disabled={loading && !isDraftDirty}>
-              {isDraftDirty ? text.runSelectedTrace : text.refreshTrace}
-            </button>
-            <button className="ghost-button" type="button" onClick={rerunLastTrace} disabled={loading}>
-              {text.rerunLast}
+          <div className="header-actions">
+            <button className="ghost-button console-auth" type="button">
+              {consoleText.signIn}
             </button>
           </div>
         </div>
-      </header>
 
-      <main className="workspace-layout" id="app-main">
-        <aside className="panel control-rail">
-          <div className="section-head">
-            <div>
-              <p className="eyebrow">02 · {text.quickRun}</p>
-              <h2>{text.scenarioLibrary}</h2>
-            </div>
-            <span className="badge">{filteredPresets.length} presets</span>
+        <header className="hero">
+          <div className="hero-copy">
+            <p className="command-line">{consoleText.command}</p>
+            <h1>{consoleText.title}</h1>
+            <p className="hero-text">{consoleText.subtitle}</p>
           </div>
-          <div className="control-stack">
-            <div className="lab-filter-row">
-              <button
-                className={selectedLab === "all" ? "filter-chip active" : "filter-chip"}
-                type="button"
-                onClick={() => focusLab("all")}
-              >
-                {text.allLabs}
+          <div className="hero-actions">
+            <div className="locale-switch">
+              <button className={locale === "ko" ? "toggle active" : "toggle"} type="button" onClick={() => setLocale("ko")}>
+                KO
               </button>
+              <button className={locale === "en" ? "toggle active" : "toggle"} type="button" onClick={() => setLocale("en")}>
+                EN
+              </button>
+            </div>
+            <button className="ghost-button save-query-button" type="button" onClick={runSelectedTrace} disabled={loading && !isDraftDirty}>
+              {consoleText.saveQuery}
+            </button>
+          </div>
+        </header>
+
+        <main className="workspace-layout" id="app-main">
+          <section className="panel query-panel">
+            <div className="panel-label">{consoleText.queryLocked}</div>
+            <div className="query-search">{consoleText.searchPlaceholder}</div>
+            <div className="query-grid">
+              <div className="query-select">{consoleText.categoryLabel}</div>
+              <div className="query-select">{consoleText.marketLabel}</div>
+              <div className="query-select accent">{consoleText.signalLabel}</div>
+              <div className="query-select strong">{consoleText.sortLabel}</div>
+              <div className="query-select strong">{consoleText.orderLabel}</div>
+            </div>
+            <div className="query-mode-row">
+              <button
+                className={mode === "static" ? "filter-chip active" : "filter-chip"}
+                type="button"
+                onClick={() => setMode("static")}
+              >
+                {text.staticSimulation}
+              </button>
+              <button
+                className={mode === "live" ? "filter-chip active" : "filter-chip"}
+                type="button"
+                onClick={() => setMode("live")}
+              >
+                {text.liveRuntime}
+              </button>
+            </div>
+            <div className="lab-filter-row">
               {localizedCards.map((card) => (
                 <button
                   className={selectedLab === card.id ? "filter-chip active" : "filter-chip"}
@@ -240,7 +227,7 @@ export function App() {
                 </button>
               ))}
             </div>
-            <div className="scenario-list" role="list" aria-label={text.tracePreset}>
+            <div className="scenario-list compact" role="list" aria-label={text.tracePreset}>
               {filteredPresets.map((option) => {
                 const presetKey = toPresetKey(option.labId, option.scenario);
                 return (
@@ -256,55 +243,39 @@ export function App() {
                 );
               })}
             </div>
-            <div className="request-summary">
-              <div className="request-card">
-                <strong>{text.selectedRequest}</strong>
-                <p>{draftRequest.labId} / {draftRequest.scenario} / {localizeModeLabel(draftRequest.mode, locale)}</p>
-              </div>
-              <div className="request-card">
-                <strong>{text.lastExecuted}</strong>
-                <p>{executedRequest.labId} / {executedRequest.scenario} / {localizeModeLabel(executedRequest.mode, locale)}</p>
+            <div className="query-footer">
+              <span>{consoleText.moreFilters}</span>
+              <div className="run-actions">
+                <button className="run-button" type="button" onClick={runSelectedTrace} disabled={loading && !isDraftDirty}>
+                  {consoleText.runPrimary}
+                </button>
+                <button className="ghost-button" type="button" onClick={rerunLastTrace} disabled={loading}>
+                  {consoleText.rerun}
+                </button>
               </div>
             </div>
-          </div>
-        </aside>
+          </section>
 
-        <section className="result-column">
-          <section className="panel result-panel">
-            <div className="section-head">
-              <div>
-                <p className="eyebrow">03 · {text.resultWorkspace}</p>
-                <h2>{text.providerPreview}</h2>
+          <section className="result-column">
+            <section className="panel result-panel">
+              <div className="results-header">
+                <div>
+                  <p className="eyebrow">{consoleText.traceResults}</p>
+                  <h2>{consoleText.traceResultsMeta}</h2>
+                </div>
+                <span className="badge">{mode === "static" ? text.staticProvider : text.liveProvider}</span>
               </div>
-              <span className="badge">{mode === "static" ? text.staticProvider : text.liveProvider}</span>
-            </div>
-            <p className="section-copy">{text.resultWorkspaceBody}</p>
-            <div className="control-stack">
-              <label className="field">
-                <span>{text.tracePreset}</span>
-                <select
-                  value={activePresetKey}
-                  onChange={(event) => setSelectedPresetKey(event.target.value)}
-                >
-                  {filteredPresets.map((option) => (
-                    <option key={toPresetKey(option.labId, option.scenario)} value={toPresetKey(option.labId, option.scenario)}>
-                      {localizePresetLabel(option.label, locale)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <div className="runtime-strip">
+
+              <div className="runtime-strip table-strip">
+                <span className="table-head-cell">{consoleText.activeSelection}</span>
                 <span className={isDraftDirty ? "status-pill warning" : "status-pill success"}>
-                  {isDraftDirty ? text.selectionChanged : text.selectionSynced}
+                  {draftRequest.labId}:{draftRequest.scenario}
                 </span>
-                <span className="status-pill neutral">{text.lastRun} {lastRunLabel}</span>
                 <span className={activeTraceModeTone}>{activeTraceModeLabel}</span>
-                {executedRequest.mode === "live" ? (
-                  <span className="status-pill info">{endpointLabel}</span>
-                ) : (
-                  <span className="status-pill neutral">{text.localStaticProvider}</span>
-                )}
+                <span className="status-pill neutral">{text.lastRun} {lastRunLabel}</span>
+                <span className="status-pill neutral">{consoleText.telemetry}</span>
               </div>
+
               <div className="console-strip">
                 <div className="console-leds" aria-hidden="true">
                   <span className={loading ? "console-led hot" : "console-led ok"}></span>
@@ -320,14 +291,26 @@ export function App() {
                   </p>
                 </div>
               </div>
-              <div className="run-actions">
-                <button className="run-button" type="button" onClick={runSelectedTrace} disabled={loading && !isDraftDirty}>
-                  {isDraftDirty ? text.runSelectedTrace : text.refreshTrace}
-                </button>
-                <button className="ghost-button" type="button" onClick={rerunLastTrace} disabled={loading}>
-                  {text.rerunLast}
-                </button>
+
+              <div className="request-summary">
+                <div className="request-card">
+                  <strong>{text.selectedRequest}</strong>
+                  <p>{draftRequest.labId} / {draftRequest.scenario} / {localizeModeLabel(draftRequest.mode, locale)}</p>
+                </div>
+                <div className="request-card">
+                  <strong>{text.lastExecuted}</strong>
+                  <p>{executedRequest.labId} / {executedRequest.scenario} / {localizeModeLabel(executedRequest.mode, locale)}</p>
+                </div>
+                <div className="request-card">
+                  <strong>{text.runtimeMode}</strong>
+                  <p>{mode === "static" ? text.staticModeNote : text.liveModeNote}</p>
+                </div>
+                <div className="request-card">
+                  <strong>endpoint</strong>
+                  <p>{executedRequest.mode === "live" ? endpointLabel : text.localStaticProvider}</p>
+                </div>
               </div>
+
               <label className="field">
                 <span>{text.requestPayload}</span>
                 <textarea
@@ -337,132 +320,131 @@ export function App() {
                   rows={6}
                 />
               </label>
-            </div>
 
-            {loading ? (
-              <div className="info-box">
-                <strong>{text.loadingTrace}</strong>
-                <p>{text.resolvingTrace}</p>
-              </div>
-            ) : null}
-
-            {displayError ? (
-              <div className="info-box error-box">
-                <strong>{text.traceLoadingFailed}</strong>
-                <p>{displayError}</p>
-              </div>
-            ) : null}
-
-            {localizedTrace ? (
-              <TracePreview
-                trace={localizedTrace}
-                insight={traceInsight}
-                runSequence={reloadKey}
-                loading={loading}
-                locale={locale}
-                labels={{
-                  loadedTrace: text.loadedTrace,
-                  featureAdapter: text.featureAdapter,
-                  overview: text.overview,
-                  flowView: text.flowView,
-                  deepLinks: text.deepLinks,
-                  steps: text.steps,
-                  lanes: text.lanes,
-                  snapshot: text.snapshot,
-                  references: text.references,
-                  relatedFiles: text.relatedFiles,
-                  refs: text.refs,
-                  watch: text.watch,
-                  why: text.why,
-                  nextLabel: text.nextLabel
-                }}
-              />
-            ) : null}
-          </section>
-
-          <section className="context-stack">
-            <details className="panel details-panel">
-              <summary>
-                <div>
-                  <p className="eyebrow">04 · {text.supportingContext}</p>
-                  <h2>{text.labModules}</h2>
+              {loading ? (
+                <div className="info-box">
+                  <strong>{text.loadingTrace}</strong>
+                  <p>{text.resolvingTrace}</p>
                 </div>
-                <span className="badge">{localizedCards.length} {text.labFamilies}</span>
-              </summary>
-              <p className="section-copy">{text.supportingContextBody}</p>
-              <div className="card-grid compact">
-                {localizedCards.map((card) => (
-                  <article
-                    className={selectedLab === card.id ? "card selected" : "card"}
-                    key={card.id}
-                    onClick={() => focusLab(card.id)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        focusLab(card.id);
-                      }
-                    }}
-                  >
-                    <div className="card-top">
-                      <div>
-                        <h3>{card.title}</h3>
-                        <p>{card.summary}</p>
-                      </div>
-                      <span className="tag">{card.stage}</span>
-                    </div>
-                    <div className="chip-row">
-                      {card.capabilities.map((capability) => (
-                        <span className="chip" key={capability}>
-                          {capability}
-                        </span>
-                      ))}
-                    </div>
-                    <div className="detail-list">
-                      <div>
-                        <span>{text.now}</span>
-                        <p>{card.now}</p>
-                      </div>
-                      <div>
-                        <span>{text.next}</span>
-                        <p>{card.next}</p>
-                      </div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </details>
+              ) : null}
 
-            <details className="panel details-panel">
-              <summary>
-                <div>
-                  <p className="eyebrow">05 · {text.migrationPlan}</p>
-                  <h2>{text.scaffoldGoals}</h2>
+              {displayError ? (
+                <div className="info-box error-box">
+                  <strong>{text.traceLoadingFailed}</strong>
+                  <p>{displayError}</p>
                 </div>
-              </summary>
-              <ol className="roadmap-list">
-                {localizedRoadmap.map((step) => (
-                  <li key={step.title}>
-                    <strong>{step.title}</strong>
-                    <p>{step.description}</p>
-                  </li>
-                ))}
-              </ol>
-              <div className="info-box">
-                <strong>{text.currentStatus}</strong>
-                <p>{text.currentStatusBody}</p>
-              </div>
-            </details>
+              ) : null}
 
-            <details className="panel details-panel">
-              <summary>
-                <div>
-                  <p className="eyebrow">06 · {text.projectLayout}</p>
-                  <h2>{text.frontendStructure}</h2>
+              {localizedTrace ? (
+                <TracePreview
+                  trace={localizedTrace}
+                  insight={traceInsight}
+                  runSequence={reloadKey}
+                  loading={loading}
+                  locale={locale}
+                  labels={{
+                    loadedTrace: text.loadedTrace,
+                    featureAdapter: text.featureAdapter,
+                    overview: text.overview,
+                    flowView: text.flowView,
+                    deepLinks: text.deepLinks,
+                    steps: text.steps,
+                    lanes: text.lanes,
+                    snapshot: text.snapshot,
+                    references: text.references,
+                    relatedFiles: text.relatedFiles,
+                    refs: text.refs,
+                    watch: text.watch,
+                    why: text.why,
+                    nextLabel: text.nextLabel
+                  }}
+                />
+              ) : null}
+            </section>
+
+            <section className="context-stack">
+              <details className="panel details-panel">
+                <summary>
+                  <div>
+                    <p className="eyebrow">{consoleText.supportModules}</p>
+                    <h2>{text.labModules}</h2>
+                  </div>
+                  <span className="badge">{localizedCards.length} {text.labFamilies}</span>
+                </summary>
+                <p className="section-copy">{text.supportingContextBody}</p>
+                <div className="card-grid compact">
+                  {localizedCards.map((card) => (
+                    <article
+                      className={selectedLab === card.id ? "card selected" : "card"}
+                      key={card.id}
+                      onClick={() => focusLab(card.id)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          focusLab(card.id);
+                        }
+                      }}
+                    >
+                      <div className="card-top">
+                        <div>
+                          <h3>{card.title}</h3>
+                          <p>{card.summary}</p>
+                        </div>
+                        <span className="tag">{card.stage}</span>
+                      </div>
+                      <div className="chip-row">
+                        {card.capabilities.map((capability) => (
+                          <span className="chip" key={capability}>
+                            {capability}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="detail-list">
+                        <div>
+                          <span>{text.now}</span>
+                          <p>{card.now}</p>
+                        </div>
+                        <div>
+                          <span>{text.next}</span>
+                          <p>{card.next}</p>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
                 </div>
-              </summary>
-              <pre className="code-block">{`visual-lab-app/
+              </details>
+
+              <details className="panel details-panel">
+                <summary>
+                  <div>
+                    <p className="eyebrow">{consoleText.supportRoadmap}</p>
+                    <h2>{text.scaffoldGoals}</h2>
+                  </div>
+                </summary>
+                <ol className="roadmap-list">
+                  {localizedRoadmap.map((step) => (
+                    <li key={step.title}>
+                      <strong>{step.title}</strong>
+                      <p>{step.description}</p>
+                    </li>
+                  ))}
+                </ol>
+                <div className="info-box">
+                  <strong>{text.currentStatus}</strong>
+                  <p>{text.currentStatusBody}</p>
+                </div>
+              </details>
+
+              <details className="panel details-panel">
+                <summary>
+                  <div>
+                    <p className="eyebrow">{consoleText.supportLayout}</p>
+                    <h2>{text.frontendStructure}</h2>
+                  </div>
+                </summary>
+                <pre className="code-block">{`visual-lab-app/
   src/
     app/
       App.tsx
@@ -489,10 +471,11 @@ export function App() {
   index.html
   package.json
   vite.config.ts`}</pre>
-            </details>
+              </details>
+            </section>
           </section>
-        </section>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }
