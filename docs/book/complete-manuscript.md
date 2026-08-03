@@ -968,6 +968,8 @@ Spring이 객체 대신 프록시를 반환하는 이유는 단순한 우회가 
 
 또한 프록시 전략의 선택은 단순 구현 디테일이 아니다. 인터페이스 기반 프록시는 가볍고 표준적이지만, 인터페이스가 없으면 적용할 수 없다. 클래스 기반 프록시는 더 넓게 적용되지만, final 메서드나 생성자 처리, 서브클래싱 제약 같은 별도 고려사항이 생긴다. 실제 Spring이 JDK 프록시와 CGLIB 기반 프록시를 모두 제공해 온 이유도 바로 이 현실적인 제약들 때문이다.
 
+아래 코드는 프록시 생성 지점에서 독자가 꼭 봐야 하는 두 가지를 한 번에 보여 준다. 첫째, 인터페이스 유무에 따라 프록시 전략이 갈린다는 점이다. 둘째, 인터셉터 체인은 타깃 객체 바깥에서 조립된다는 점이다.
+
 ```java
 public interface MethodInterceptor {
     Object invoke(MethodInvocation invocation) throws Throwable;
@@ -999,6 +1001,8 @@ flowchart LR
 
 직접 구현하기 관점에서 이 장의 첫 테스트는 인터페이스 기반 프록시가 호출을 실제로 가로채는지를 검증하는 것이다.
 
+이 테스트의 목적은 단순히 문자열이 바뀌는지 보는 것이 아니다. 클라이언트가 타깃 객체가 아니라 프록시를 통해 호출하고 있다는 사실을 가장 작은 증거로 고정하는 데 있다.
+
 ```java
 @Test
 void wrapsInterfaceBasedTargetWithJdkProxy() {
@@ -1010,6 +1014,8 @@ void wrapsInterfaceBasedTargetWithJdkProxy() {
 ```
 
 그리고 본문에는 호출 체인의 핵심인 `proceed()` 구현도 함께 실어야 한다. 독자가 이 메서드를 손으로 구현해 보면 프록시 기반 AOP의 본질이 "메서드 호출을 객체로 다룬다"는 데 있다는 사실을 가장 빨리 이해하게 된다.
+
+이 블록에서는 `proceed()`가 단순 재귀 호출이 아니라 "다음 인터셉터로 넘길지, 실제 타깃 메서드를 실행할지"를 결정하는 분기점이라는 점을 보아야 한다.
 
 ```java
 private static final class SimpleMethodInvocation implements MethodInvocation {
@@ -1079,6 +1085,8 @@ sequenceDiagram
 
 build-along 방식으로는 이 장에서 먼저 수동 인터셉터 하나를 만드는 편이 좋다. 그래야 체인이 무엇을 감싸는지 감각이 생긴다.
 
+이 짧은 예제에서 볼 포인트는 before/after라는 친숙한 표현 뒤에 사실상 `proceed()`를 중심으로 한 감싸기 구조가 숨어 있다는 점이다.
+
 ```java
 MethodInterceptor logging = invocation -> {
     events.add("before");
@@ -1089,6 +1097,8 @@ MethodInterceptor logging = invocation -> {
 ```
 
 그 다음 정렬 가능한 체인을 위해 인터셉터 병합 코드를 붙인다.
+
+이 코드는 구현량은 작지만 의미는 크다. 독립적으로 추가된 여러 공통 관심사를 하나의 실행 순서로 정렬하는 규칙이 여기서 결정되기 때문이다.
 
 ```java
 private static List<MethodInterceptor> mergeInterceptors(List<MethodInterceptor> existing, List<MethodInterceptor> additional) {
@@ -1116,6 +1126,8 @@ private static List<MethodInterceptor> mergeInterceptors(List<MethodInterceptor>
 
 이 장을 실제로 구현한다면 다음 테스트부터 시작하는 편이 좋다.
 
+이 테스트는 advice 문법을 검증하는 동시에, 선언형 메타데이터가 실제 실행 결과를 바꾼다는 점을 가장 작게 증명한다.
+
 ```java
 @Test
 void appliesBeforeAroundAndAfterReturningAdvice() {
@@ -1127,6 +1139,8 @@ void appliesBeforeAroundAndAfterReturningAdvice() {
 ```
 
 그리고 후처리기의 진입점은 가능한 한 빨리 본문에 보여주는 편이 좋다.
+
+이 블록에서 독자가 봐야 하는 핵심은 의외로 단순하다. aspect 해석은 복잡해 보여도, 최종적으로는 "인터셉터가 없으면 원본 반환, 있으면 프록시 반환"이라는 후처리기 분기로 귀결된다.
 
 ```java
 public class AspectBeanPostProcessor implements BeanPostProcessor {
@@ -1197,6 +1211,8 @@ sequenceDiagram
 
 이 도식의 핵심은 비즈니스 메서드가 트랜잭션을 직접 제어하지 않는다는 점이다. 타깃 서비스는 자신의 일만 하고, 경계 개시와 종료는 주변 인프라가 맡는다. 이것이 선언형 모델의 생산성이며, 동시에 호출 구조를 모르면 놓치기 쉬운 함정이기도 하다.
 
+바로 아래 코드는 그 도식을 코드 수준으로 대응시킨다. 앞부분은 왜 이 빈이 프록시 대상인지 결정하고, 뒷부분은 실제 호출 경계에서 begin/commit/rollback을 수행한다.
+
 ```java
 @Override
 public Object postProcessAfterInitialization(String beanName, Object bean) {
@@ -1231,6 +1247,8 @@ public Object invoke(MethodInvocation invocation) throws Throwable {
 
 build-along 책에서는 이 장의 첫 검증을 "트랜잭션 대상 빈이 실제로 프록시로 감싸지는가"로 두는 편이 좋다.
 
+이 테스트는 데이터베이스 결과보다 더 앞선 층을 검증한다. 선언형 트랜잭션의 전제가 프록시 생성이라는 사실을 먼저 잠그는 것이다.
+
 ```java
 @Test
 void wrapsTransactionalBeanWithProxy() {
@@ -1258,6 +1276,8 @@ sequenceDiagram
 ```
 
 여기서 더 나아가 `TransactionManager` 자체도 별도 구현 대상으로 끌어올리는 편이 좋다. 직접 구현하는 독자에게는 스레드 로컬 문맥이 핵심이라는 점을 코드로 보여줘야 하기 때문이다.
+
+이 블록에서는 트랜잭션 매니저가 거대한 추상화처럼 보이더라도 실제 핵심은 현재 스레드 문맥을 어떻게 열고 중첩 깊이를 어떻게 관리하느냐에 있다는 점을 읽어야 한다.
 
 ```java
 public class TransactionManager {
@@ -1468,6 +1488,8 @@ HTTP 요청을 자바 메서드 호출로 바꾸는 과정은 생각보다 많�
 
 인자 해석 계층을 따로 두면 프레임워크가 HTTP의 세부를 애플리케이션에 덜 새게 만들 수 있다는 장점도 생긴다. 컨트롤러 메서드는 `int quantity`, `CreateOrderRequest request`, `HttpExchange exchange`처럼 이미 해석된 입력을 받는다. 반대로 이 계층이 없다면 URL 디코딩, JSON 파싱, 숫자 변환, 누락 값 처리 같은 저수준 작업이 컨트롤러로 흘러 들어온다. 결국 resolver는 단순 편의 기능이 아니라, 웹 프로토콜과 애플리케이션 타입 시스템 사이의 완충 장치다.
 
+아래 코드는 request parameter 해석기의 최소 형태다. 여기서 볼 포인트는 query string 파싱 자체보다, HTTP 입력을 자바 타입으로 끌어올리는 책임이 컨트롤러 밖에 있다는 사실이다.
+
 ```java
 @Override
 public Object resolveArgument(Parameter parameter, HandlerMethodMatch handlerMethodMatch, HttpExchange exchange) {
@@ -1489,6 +1511,8 @@ private Map<String, String> parseQuery(String rawQuery) {
 ```
 
 직접 구현하는 독자라면 이 장에서도 작은 테스트 세트를 먼저 통과시키는 편이 좋다. 예를 들어 `@RequestParam`, `@PathVariable`, `@RequestBody`를 각각 하나씩 검증하면 인자 해석기가 독립된 전략 객체라는 사실을 자연스럽게 이해하게 된다.
+
+이 테스트는 `RequestParamArgumentResolver` 하나만 검증하지만, 실제로는 "각 인자 모델마다 별도 전략이 존재한다"는 더 큰 설계를 함께 고정한다.
 
 ```java
 @Test
@@ -1541,6 +1565,8 @@ flowchart LR
 실제 운영 환경에서는 이 차이가 클라이언트 경험과 장애 분석 품질을 크게 바꾼다. 오류 응답 형식이 일관되지 않으면 프런트엔드나 다른 서비스는 실패 케이스마다 별도 분기 처리를 추가해야 하고, 로그와 모니터링 시스템도 오류를 그룹화하기 어렵다. 반대로 예외가 구조화된 응답 모델로 변환되면, 애플리케이션 안팎에서 실패를 더 안정적으로 다룰 수 있다. 즉, 예외 처리 계층은 단순 마감 처리기가 아니라 시스템 간 계약을 정리하는 인터페이스다.
 
 예외 처리 계층의 또 다른 가치는 "실패를 늦게 처리하되 한곳에서 처리한다"는 점이다. 컨트롤러나 서비스 안에서 예외를 즉시 HTTP 응답으로 바꾸기 시작하면, 도메인 로직과 전송 계층이 섞인다. 반면 예외를 한 번 던지고, 마지막에 resolver가 그것을 HTTP 의미로 번역하게 하면, 도메인 계층은 예외의 업무 의미만 표현하고 웹 계층은 그 의미를 응답 계약으로 정리할 수 있다. 이 분리는 코드를 더 깨끗하게 만들 뿐 아니라, 같은 예외를 다른 입구에서도 재사용하기 쉽게 만든다.
+
+이 블록을 읽을 때는 세 단계로 나눠 보는 편이 좋다. 로컬 `@ExceptionHandler`를 먼저 찾는지, 전역 `@ControllerAdvice`로 넘어가는지, 끝내 아무 핸들러가 없으면 기본 오류 응답을 만드는지를 차례대로 보자.
 
 ```java
 @Override
@@ -1606,6 +1632,8 @@ flowchart TD
 | 예외 처리 | 실행 중 예외 | 로컬/전역 정책 적용 | 4xx/5xx |
 
 직접 구현하는 독자에게는 여기서 `RequestMappingHandlerMapping.matchesConditions(...)`와 `RequestMappingHandlerAdapter`의 검증 호출 지점을 함께 보여주는 편이 좋다. 그래야 조건 매핑과 검증이 각각 어디서 일어나는지를 코드 경계로 정확히 기억할 수 있다.
+
+첫 번째 코드는 "어떤 핸들러를 고를지"를 결정하고, 두 번째 코드는 "그 핸들러에 들어갈 자격이 있는 입력인지"를 결정한다. 둘의 책임이 다르다는 점을 코드로 분리해서 보는 것이 중요하다.
 
 ```java
 private boolean matchesConditions(HandlerMethod handler, HttpExchange exchange) {
@@ -1801,6 +1829,8 @@ sequenceDiagram
     DS-->>Client: JSON response
 ```
 
+이 코드 조각은 위 시퀀스 다이어그램에서 가장 중요한 접점만 남긴 것이다. 컨트롤러가 웹 경계 역할을 하고, 서비스가 트랜잭션 경계를 선언하며, 저장소가 실제 영속화 책임을 진다는 점에 집중해서 읽으면 된다.
+
 ```java
 @RestController
 @RequestMapping("/orders")
@@ -1868,6 +1898,8 @@ Spring Boot 공식 문서가 auto-configuration을 설명할 때 반복해서 �
 
 이 관점을 익혀 두면 실제 Spring Boot의 자동 설정도 훨씬 덜 불투명해진다. 어떤 starter가 추가되었는지, 어떤 조건이 만족되었는지, 사용자 빈이 왜 기본 설정을 밀어냈는지 같은 질문이 가능해지기 때문이다. 자동 설정은 복잡하지만, 질문의 형태는 단순하다. "이 기본값은 왜 지금 적용되었는가?" Boot 장은 독자가 그 질문을 할 수 있게 만드는 장이다.
 
+아래 `run()` 코드는 Boot 장 전체의 축약판이라고 생각하면 좋다. 설정 입력을 모으고, 기본 인프라를 등록하고, 컨텍스트를 띄우고, 마지막에 웹 서버를 시작하는 순서가 한 메서드에 모여 있다.
+
 ```java
 public static AnnotationConfigApplicationContext run(Class<?> applicationClass, String... args) {
     AnnotationConfigApplicationContext context = PropertyResolver.withOverrides(parseCommandLineArgs(args), () -> {
@@ -1887,6 +1919,8 @@ public static AnnotationConfigApplicationContext run(Class<?> applicationClass, 
 ```
 
 그리고 바로 이어서 기본 자동 설정 등록 코드도 함께 보여주는 편이 좋다. 이 두 코드가 나란히 있어야 독자가 Boot를 거대한 별도 세계가 아니라 "기존 모듈을 한 줄 시작점으로 묶는 조립 계층"으로 이해하기 쉽다.
+
+이 블록에서 볼 포인트는 auto-configuration이 추상 개념이 아니라 구체적인 설정 클래스 등록이라는 점이다. 복잡한 조건 모델도 결국은 "무엇을 기본으로 등록할 것인가"라는 질문에서 출발한다.
 
 ```java
 public final class BootInfrastructureRegistrar {
@@ -1930,6 +1964,8 @@ flowchart TB
 대표적인 Spring 입문서와 실무서들이 공통으로 강조하는 부분도 테스트다. 프레임워크를 이해하는 가장 빠른 길 중 하나는 "이 기능이 언제 실패해야 하는가"를 테스트로 고정해 보는 것이기 때문이다. 김영한의 강의 시리즈가 핵심 원리를 설명할 때도 테스트를 통해 DI, 빈 조회, MVC 흐름을 검증하는 리듬을 반복하고, *Spring Start Here* 역시 개념 설명과 단위 통합 테스트를 촘촘히 왕복한다. 이 책이 테스트 장을 뒤쪽의 부록이 아니라 핵심 본문에 포함시키는 이유는, 테스트가 프레임워크 사용법 검증을 넘어 프레임워크 원리 이해 자체를 돕기 때문이다.
 
 테스트 확장은 그 자체로도 일종의 부트스트랩 계층이다. 테스트 클래스가 시작되기 전에 컨텍스트를 만들고, 테스트 인스턴스에 의존성을 주입하고, 각 테스트 메서드 전후에 트랜잭션을 열고 닫는 과정은 작은 실행 프레임워크와 다르지 않다. 따라서 `SpringLiteTestExtension`을 읽는 일은 단순 편의 기능을 보는 것이 아니라, "프레임워크가 다른 프레임워크를 어떻게 지원하는가"를 보는 일이기도 하다.
+
+아래 코드는 테스트 지원 장에서 가장 중요한 실행 경계를 보여 준다. 테스트 메서드 전에는 트랜잭션을 열고, 후에는 항상 롤백한다는 계약이 어디서 보장되는지 이 두 메서드가 드러낸다.
 
 ```java
 @Override
