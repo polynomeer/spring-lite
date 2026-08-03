@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Container Metadata And Lifecycle</title>
+  <desc id="desc">Bean definition registration and bean creation lifecycle in Spring Lite.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#f7f5ef"/>
+      <stop offset="100%" stop-color="#ece6d9"/>
+    </linearGradient>
+    <style>
+      .title { font: 700 34px 'Helvetica Neue', Arial, sans-serif; fill: #1f2933; }
+      .subtitle { font: 500 18px 'Helvetica Neue', Arial, sans-serif; fill: #52606d; }
+      .box { fill: #fffdf8; stroke: #1f2933; stroke-width: 2.5; rx: 20; ry: 20; }
+      .soft { fill: #fdf8ef; stroke: #7c5f3f; stroke-width: 2; rx: 18; ry: 18; }
+      .label { font: 700 21px 'Helvetica Neue', Arial, sans-serif; fill: #102a43; }
+      .body { font: 500 17px 'Helvetica Neue', Arial, sans-serif; fill: #334e68; }
+      .small { font: 600 15px 'Helvetica Neue', Arial, sans-serif; fill: #486581; }
+      .arrow { stroke: #1f2933; stroke-width: 3; fill: none; marker-end: url(#arrowHead); }
+      .pill { fill: #e9f2ff; stroke: #2f6fed; stroke-width: 2; rx: 12; ry: 12; }
+      .pill2 { fill: #eef9f0; stroke: #2d8a4d; stroke-width: 2; rx: 12; ry: 12; }
+    </style>
+    <marker id="arrowHead" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1f2933"/>
+    </marker>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <text x="72" y="82" class="title">Container Metadata Before Objects</text>
+  <text x="72" y="116" class="subtitle">Spring Lite first collects definitions, then resolves dependencies, then creates managed beans.</text>
+
+  <rect x="72" y="180" width="220" height="112" class="soft"/>
+  <text x="102" y="225" class="label">Classpath Scan</text>
+  <text x="102" y="257" class="body">@Component</text>
+  <text x="102" y="284" class="body">@Configuration</text>
+
+  <rect x="72" y="338" width="220" height="112" class="soft"/>
+  <text x="102" y="383" class="label">Bean Methods</text>
+  <text x="102" y="415" class="body">@Bean factory methods</text>
+  <text x="102" y="442" class="body">external infrastructure</text>
+
+  <rect x="364" y="220" width="258" height="240" class="box"/>
+  <text x="395" y="270" class="label">BeanDefinition Registry</text>
+  <text x="395" y="312" class="body">name</text>
+  <text x="395" y="344" class="body">beanType</text>
+  <text x="395" y="376" class="body">kind</text>
+  <text x="395" y="408" class="body">singleton / qualifier</text>
+  <text x="395" y="440" class="body">factoryMethod metadata</text>
+
+  <rect x="706" y="200" width="238" height="120" class="pill"/>
+  <text x="736" y="245" class="label">Constructor Select</text>
+  <text x="736" y="277" class="body">@Autowired? single ctor?</text>
+
+  <rect x="706" y="364" width="238" height="120" class="pill"/>
+  <text x="736" y="409" class="label">Dependency Resolve</text>
+  <text x="736" y="441" class="body">type, qualifier, failure</text>
+
+  <rect x="1018" y="170" width="190" height="120" class="pill2"/>
+  <text x="1044" y="218" class="label">Bean Create</text>
+  <text x="1044" y="250" class="body">constructor or</text>
+  <text x="1044" y="276" class="body">factory method</text>
+
+  <rect x="1018" y="336" width="190" height="120" class="pill2"/>
+  <text x="1044" y="384" class="label">Initialize</text>
+  <text x="1044" y="416" class="body">field values</text>
+  <text x="1044" y="442" class="body">post-processors</text>
+
+  <rect x="1018" y="502" width="190" height="120" class="pill2"/>
+  <text x="1044" y="550" class="label">Singleton Cache</text>
+  <text x="1044" y="582" class="body">managed instance</text>
+
+  <path d="M292 236 L364 280" class="arrow"/>
+  <path d="M292 394 L364 394" class="arrow"/>
+  <path d="M622 280 L706 260" class="arrow"/>
+  <path d="M622 395 L706 425" class="arrow"/>
+  <path d="M944 260 L1018 230" class="arrow"/>
+  <path d="M944 424 L1018 396" class="arrow"/>
+  <path d="M1113 290 L1113 336" class="arrow"/>
+  <path d="M1113 456 L1113 502" class="arrow"/>
+
+  <rect x="364" y="520" width="580" height="110" class="soft"/>
+  <text x="394" y="565" class="label">Why this matters</text>
+  <text x="394" y="598" class="body">Metadata exists before instances, so Spring Lite can explain what will be created,</text>
+  <text x="394" y="624" class="body">delay creation, fail cleanly, and later attach lifecycle hooks and proxies.</text>
+</svg>

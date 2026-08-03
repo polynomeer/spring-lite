@@ -209,6 +209,8 @@ Part 2부터는 이 큰 그림의 바닥인 IoC 컨테이너부터 직접 구현
 
 따라서 `BeanDefinition`은 작은 클래스처럼 보여도, 사실상 이후 전체 구조를 받아내는 기초 좌표계다. 이름은 조회 기준이 되고, 타입은 의존성 해석 기준이 되며, kind는 생성 전략 분기점이 되고, singleton 여부는 캐시와 수명 정책으로 이어진다. 독자가 이 클래스의 필드 하나하나를 "왜 필요한가"까지 설명할 수 있다면, 컨테이너의 핵심 원리는 이미 상당 부분 손에 들어온 셈이다.
 
+![Container metadata and lifecycle](./figures/container-metadata-lifecycle.svg)
+
 ```java
 public final class BeanDefinition {
     public enum Kind {
@@ -1211,6 +1213,8 @@ sequenceDiagram
 
 이 도식의 핵심은 비즈니스 메서드가 트랜잭션을 직접 제어하지 않는다는 점이다. 타깃 서비스는 자신의 일만 하고, 경계 개시와 종료는 주변 인프라가 맡는다. 이것이 선언형 모델의 생산성이며, 동시에 호출 구조를 모르면 놓치기 쉬운 함정이기도 하다.
 
+![Transactional boundary](./figures/transaction-boundary.svg)
+
 바로 아래 코드는 그 도식을 코드 수준으로 대응시킨다. 앞부분은 왜 이 빈이 프록시 대상인지 결정하고, 뒷부분은 실제 호출 경계에서 begin/commit/rollback을 수행한다.
 
 ```java
@@ -1402,6 +1406,8 @@ flowchart LR
 ```
 
 이 구조를 머릿속에 두면 404, 400, 500의 의미도 더 정확해진다. 404는 대개 `HandlerMapping` 이전 또는 그 내부에서 핸들러를 찾지 못한 결과이고, 400은 인자 해석이나 검증 단계에서의 실패이며, 500은 컨트롤러 본문이나 예외 처리 정책에서 제어되지 않은 실패일 가능성이 높다. 즉, HTTP 상태 코드는 단순 숫자가 아니라 파이프라인 어느 계층에서 실패했는지 알려 주는 구조적 신호다.
+
+![Dispatcher pipeline](./figures/dispatcher-pipeline.svg)
 
 ```java
 public DispatcherServlet(ApplicationContext applicationContext, JsonMapper jsonMapper) {
@@ -1742,6 +1748,8 @@ flowchart TD
 
 이 흐름에서 중요한 분기는 `currentConnection` 존재 여부다. 트랜잭션이 이미 열려 있다면 JDBC 계층은 새 커넥션을 열어서는 안 된다. 같은 논리 작업 안에서 다른 커넥션을 열어 버리면, 호출자는 하나의 트랜잭션이라고 생각하지만 실제 DB 입장에서는 서로 다른 문맥으로 실행될 수 있다. `SingleConnectionProxy`는 이 오해를 막기 위해 등장한다. 닫기 호출을 가로채면서도 현재 트랜잭션 커넥션을 계속 재사용하게 만드는 장치다.
 
+![JdbcTemplate skeleton](./figures/jdbc-template-skeleton.svg)
+
 ```java
 public int update(String sql, Object... args) {
     try (
@@ -1898,6 +1906,8 @@ Spring Boot 공식 문서가 auto-configuration을 설명할 때 반복해서 �
 
 이 관점을 익혀 두면 실제 Spring Boot의 자동 설정도 훨씬 덜 불투명해진다. 어떤 starter가 추가되었는지, 어떤 조건이 만족되었는지, 사용자 빈이 왜 기본 설정을 밀어냈는지 같은 질문이 가능해지기 때문이다. 자동 설정은 복잡하지만, 질문의 형태는 단순하다. "이 기본값은 왜 지금 적용되었는가?" Boot 장은 독자가 그 질문을 할 수 있게 만드는 장이다.
 
+![Boot orchestration](./figures/boot-orchestration.svg)
+
 아래 `run()` 코드는 Boot 장 전체의 축약판이라고 생각하면 좋다. 설정 입력을 모으고, 기본 인프라를 등록하고, 컨텍스트를 띄우고, 마지막에 웹 서버를 시작하는 순서가 한 메서드에 모여 있다.
 
 ```java
@@ -1964,6 +1974,8 @@ flowchart TB
 대표적인 Spring 입문서와 실무서들이 공통으로 강조하는 부분도 테스트다. 프레임워크를 이해하는 가장 빠른 길 중 하나는 "이 기능이 언제 실패해야 하는가"를 테스트로 고정해 보는 것이기 때문이다. 김영한의 강의 시리즈가 핵심 원리를 설명할 때도 테스트를 통해 DI, 빈 조회, MVC 흐름을 검증하는 리듬을 반복하고, *Spring Start Here* 역시 개념 설명과 단위 통합 테스트를 촘촘히 왕복한다. 이 책이 테스트 장을 뒤쪽의 부록이 아니라 핵심 본문에 포함시키는 이유는, 테스트가 프레임워크 사용법 검증을 넘어 프레임워크 원리 이해 자체를 돕기 때문이다.
 
 테스트 확장은 그 자체로도 일종의 부트스트랩 계층이다. 테스트 클래스가 시작되기 전에 컨텍스트를 만들고, 테스트 인스턴스에 의존성을 주입하고, 각 테스트 메서드 전후에 트랜잭션을 열고 닫는 과정은 작은 실행 프레임워크와 다르지 않다. 따라서 `SpringLiteTestExtension`을 읽는 일은 단순 편의 기능을 보는 것이 아니라, "프레임워크가 다른 프레임워크를 어떻게 지원하는가"를 보는 일이기도 하다.
+
+![Test extension lifecycle](./figures/test-extension-lifecycle.svg)
 
 아래 코드는 테스트 지원 장에서 가장 중요한 실행 경계를 보여 준다. 테스트 메서드 전에는 트랜잭션을 열고, 후에는 항상 롤백한다는 계약이 어디서 보장되는지 이 두 메서드가 드러낸다.
 

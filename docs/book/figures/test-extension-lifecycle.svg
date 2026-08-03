@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Test Extension Lifecycle</title>
+  <desc id="desc">Lifecycle of the Spring Lite JUnit extension with context reuse and transactional rollback.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#f1fbfb"/>
+      <stop offset="100%" stop-color="#def1f3"/>
+    </linearGradient>
+    <style>
+      .title { font: 700 34px 'Helvetica Neue', Arial, sans-serif; fill: #1d4d55; }
+      .subtitle { font: 500 18px 'Helvetica Neue', Arial, sans-serif; fill: #4f7c83; }
+      .lane { fill: #fbffff; stroke: #1d4d55; stroke-width: 2.5; rx: 18; ry: 18; }
+      .label { font: 700 21px 'Helvetica Neue', Arial, sans-serif; fill: #1d4d55; }
+      .body { font: 500 17px 'Helvetica Neue', Arial, sans-serif; fill: #3e666d; }
+      .arrow { stroke: #1d4d55; stroke-width: 3; fill: none; marker-end: url(#arrowHead); }
+    </style>
+    <marker id="arrowHead" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1d4d55"/>
+    </marker>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <text x="72" y="82" class="title">Testing Support Is Also A Runtime</text>
+  <text x="72" y="116" class="subtitle">The JUnit extension builds context, injects dependencies, and brackets test execution with rollback.</text>
+
+  <rect x="86" y="190" width="190" height="380" class="lane"/>
+  <text x="145" y="236" class="label">JUnit</text>
+  <rect x="326" y="190" width="270" height="380" class="lane"/>
+  <text x="362" y="236" class="label">SpringLiteTestExtension</text>
+  <rect x="646" y="190" width="250" height="380" class="lane"/>
+  <text x="704" y="236" class="label">ApplicationContext</text>
+  <rect x="946" y="190" width="210" height="380" class="lane"/>
+  <text x="987" y="236" class="label">TransactionManager</text>
+
+  <path d="M276 280 L326 280" class="arrow"/>
+  <text x="122" y="271" class="body">beforeAll /</text>
+  <text x="122" y="294" class="body">postProcessTestInstance</text>
+  <path d="M596 280 L646 280" class="arrow"/>
+  <text x="376" y="304" class="body">create or reuse context</text>
+
+  <path d="M276 390 L326 390" class="arrow"/>
+  <text x="144" y="396" class="body">beforeEach</text>
+  <path d="M596 390 L946 390" class="arrow"/>
+  <text x="388" y="414" class="body">begin transaction if test is transactional</text>
+
+  <path d="M276 490 L326 490" class="arrow"/>
+  <text x="145" y="496" class="body">afterEach</text>
+  <path d="M596 490 L946 490" class="arrow"/>
+  <text x="404" y="514" class="body">rollback for isolation</text>
+
+  <rect x="160" y="618" width="980" height="54" class="lane"/>
+  <text x="208" y="651" class="body">Read this like a mini-bootstrapping pipeline: test support is an execution framework around the tests.</text>
+</svg>

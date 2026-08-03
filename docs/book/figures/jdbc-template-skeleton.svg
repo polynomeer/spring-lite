@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">JdbcTemplate Skeleton</title>
+  <desc id="desc">JdbcTemplate controls the invariant execution skeleton while the application supplies SQL and mapping.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#f6f1ff"/>
+      <stop offset="100%" stop-color="#ece3ff"/>
+    </linearGradient>
+    <style>
+      .title { font: 700 34px 'Helvetica Neue', Arial, sans-serif; fill: #3f2b6d; }
+      .subtitle { font: 500 18px 'Helvetica Neue', Arial, sans-serif; fill: #6c56a0; }
+      .box { fill: #fffcff; stroke: #3f2b6d; stroke-width: 2.5; rx: 18; ry: 18; }
+      .accent { fill: #f5efff; stroke: #7c5df3; stroke-width: 2.5; rx: 16; ry: 16; }
+      .label { font: 700 21px 'Helvetica Neue', Arial, sans-serif; fill: #3f2b6d; }
+      .body { font: 500 17px 'Helvetica Neue', Arial, sans-serif; fill: #56417e; }
+      .arrow { stroke: #3f2b6d; stroke-width: 3; fill: none; marker-end: url(#arrowHead); }
+    </style>
+    <marker id="arrowHead" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3f2b6d"/>
+    </marker>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <text x="72" y="82" class="title">JdbcTemplate Owns The Skeleton</text>
+  <text x="72" y="116" class="subtitle">The framework controls connection, statement, exception, and cleanup; the application supplies SQL and mapping.</text>
+
+  <rect x="84" y="210" width="252" height="300" class="box"/>
+  <text x="124" y="260" class="label">Application supplies</text>
+  <text x="124" y="304" class="body">SQL string</text>
+  <text x="124" y="338" class="body">arguments</text>
+  <text x="124" y="372" class="body">RowMapper</text>
+  <text x="124" y="406" class="body">expected semantics</text>
+
+  <rect x="410" y="150" width="436" height="420" class="accent"/>
+  <text x="448" y="204" class="label">JdbcTemplate invariant skeleton</text>
+  <text x="448" y="254" class="body">1. obtain connection</text>
+  <text x="448" y="296" class="body">2. join tx connection if one exists</text>
+  <text x="448" y="338" class="body">3. prepare statement</text>
+  <text x="448" y="380" class="body">4. bind parameters</text>
+  <text x="448" y="422" class="body">5. execute SQL</text>
+  <text x="448" y="464" class="body">6. wrap SQLExceptions</text>
+  <text x="448" y="506" class="body">7. close statement / standalone connection</text>
+
+  <rect x="920" y="210" width="260" height="120" class="box"/>
+  <text x="960" y="260" class="label">TransactionContext</text>
+  <text x="960" y="294" class="body">reuse current connection</text>
+
+  <rect x="920" y="390" width="260" height="120" class="box"/>
+  <text x="994" y="440" class="label">Database</text>
+  <text x="960" y="474" class="body">actual SQL execution happens here</text>
+
+  <path d="M336 360 L410 360" class="arrow"/>
+  <path d="M846 282 L920 282" class="arrow"/>
+  <path d="M846 450 L920 450" class="arrow"/>
+
+  <rect x="84" y="580" width="1096" height="74" class="box"/>
+  <text x="120" y="627" class="body">Key reading point: JdbcTemplate does not replace SQL; it standardizes the unsafe repetitive control flow around SQL.</text>
+</svg>
