@@ -964,6 +964,10 @@ Spring이 객체 대신 프록시를 반환하는 이유는 단순한 우회가 
 
 `spring-lite`는 JDK 동적 프록시와 클래스 기반 프록시를 모두 보여준다. 인터페이스가 있으면 표준 동적 프록시가 가능하고, 인터페이스가 없으면 ByteBuddy 기반 프록시를 생성한다. 여기서 독자가 얻어야 할 핵심은 프록시 전략이 곧 프레임워크의 제약과 확장성을 결정한다는 점이다. 또한 `MethodInvocation`이 왜 중요한지도 이 장에서 분명해진다. 호출 대상, 메서드, 인자, `proceed()`를 하나의 객체로 묶으면 호출 자체를 데이터처럼 다룰 수 있고, 인터셉터 체인은 이 호출 객체를 순차적으로 감싼다.
 
+프록시를 이해할 때 가장 중요한 사고 전환은 "객체 호출"을 "호출 경계"로 다시 보는 일이다. 비즈니스 코드를 작성할 때는 `service.placeOrder()`처럼 평범한 메서드 호출로 보이지만, 프레임워크는 바로 그 경계에 관심을 가진다. 호출 직전에 무엇을 검사할지, 호출 도중 예외가 나면 무엇을 기록할지, 호출이 끝난 뒤 어떤 정리 작업을 할지를 결정하는 지점이기 때문이다. 프록시는 이 경계를 구조적으로 드러내는 도구다.
+
+또한 프록시 전략의 선택은 단순 구현 디테일이 아니다. 인터페이스 기반 프록시는 가볍고 표준적이지만, 인터페이스가 없으면 적용할 수 없다. 클래스 기반 프록시는 더 넓게 적용되지만, final 메서드나 생성자 처리, 서브클래싱 제약 같은 별도 고려사항이 생긴다. 실제 Spring이 JDK 프록시와 CGLIB 기반 프록시를 모두 제공해 온 이유도 바로 이 현실적인 제약들 때문이다.
+
 ```java
 public interface MethodInterceptor {
     Object invoke(MethodInvocation invocation) throws Throwable;
@@ -980,6 +984,17 @@ public static Object createProxy(Object target, List<MethodInterceptor> intercep
     SpringLiteInvocationHandler invocationHandler = new SpringLiteInvocationHandler(proxyTarget, mergedInterceptors);
     return Proxy.newProxyInstance(proxyTarget.getClass().getClassLoader(), interfaces, invocationHandler);
 }
+```
+
+```mermaid
+flowchart LR
+    A["client"] --> B["proxy instance"]
+    B --> C["interceptor chain"]
+    C --> D["MethodInvocation.proceed()"]
+    D --> E["target method"]
+    E --> F["return value / exception"]
+    F --> C
+    C --> A
 ```
 
 직접 구현하기 관점에서 이 장의 첫 테스트는 인터페이스 기반 프록시가 호출을 실제로 가로채는지를 검증하는 것이다.
@@ -1025,6 +1040,8 @@ AOP를 추상 문구로만 이해하면 실무에서 거의 도움이 되지 않
 
 이 책의 현재 구현은 `Advisor`라는 이름의 완전한 추상화 대신, `@Order` 기반 인터셉터 체인과 프록시 합성으로 같은 문제를 더 얇게 풀었다. 이미 프록시된 빈에 다른 인터셉터를 다시 합성할 수 있고, `@Order`를 통해 실행 순서를 예측 가능하게 만들었다. 즉, 트랜잭션 인터셉터와 AOP advice가 한 체인 안에서 함께 정렬된다. 이것이 바로 실제 Spring AOP가 더 많은 추상화와 규칙으로 확장되는 출발점이다.
 
+이 구조가 중요한 이유는 공통 관심사가 서로 독립적으로 추가되더라도 하나의 호출 체인 안에서 협력할 수 있기 때문이다. 예를 들어 성능 측정 인터셉터, 보안 검사 인터셉터, 트랜잭션 인터셉터가 있다고 해 보자. 각각은 자신의 책임만 알면 되지만, 실제 실행 시에는 누가 먼저 들어가고 누가 나중에 빠질지를 프레임워크가 조정해야 한다. 인터셉터 체인과 정렬 규칙이 없으면 이런 조합은 금방 예측 불가능해진다.
+
 이 지점에서 가장 중요한 학습 포인트는 "AOP는 결국 함수 합성의 객체지향 버전"이라는 사실이다. 인터셉터 체인은 목표 메서드를 중심에 두고, 그 바깥에 전처리와 후처리를 층층이 두는 구조다. 로깅, 성능 측정, 보안 검사, 트랜잭션 경계, 재시도 정책 모두 같은 틀 안에서 설명된다. 각각이 서로 다른 기능처럼 보이더라도, 호출 경계를 감싼다는 구조만 놓고 보면 완전히 동일한 문제다.
 
 `spring-lite-aop` 코드를 읽을 때는 체인의 조립 시점과 실행 시점을 구분해서 봐야 한다. 조립 시점에는 어떤 빈에 어떤 인터셉터를 붙일지 결정한다. 실행 시점에는 이미 만들어진 체인을 따라 `proceed()`가 재귀적으로 호출된다. 이 둘을 구분하면, 왜 어떤 문제는 애플리케이션 시작 시점에 드러나고 어떤 문제는 실제 요청이 들어왔을 때만 드러나는지 이해하기 쉬워진다. 포인트컷 매칭 실패, 프록시 대상 선택 실패는 조립 시점 문제이고, 롤백 정책이나 before/after advice 순서는 실행 시점 문제다.
@@ -1040,6 +1057,24 @@ flowchart LR
     C --> D["Interceptor (@Order=10)"]
     D --> E["Transaction Interceptor"]
     E --> F["Target Method"]
+```
+
+```mermaid
+sequenceDiagram
+    participant Client as Client
+    participant P as Proxy
+    participant I1 as Interceptor 1
+    participant I2 as Interceptor 2
+    participant T as Target
+
+    Client->>P: call()
+    P->>I1: invoke()
+    I1->>I2: proceed()
+    I2->>T: proceed()
+    T-->>I2: return
+    I2-->>I1: return
+    I1-->>P: return
+    P-->>Client: return
 ```
 
 build-along 방식으로는 이 장에서 먼저 수동 인터셉터 하나를 만드는 편이 좋다. 그래야 체인이 무엇을 감싸는지 감각이 생긴다.
@@ -1070,6 +1105,8 @@ private static List<MethodInterceptor> mergeInterceptors(List<MethodInterceptor>
 프록시와 인터셉터만 있으면 기능은 동작할 수 있지만, 사용성은 좋지 않다. 개발자는 매번 인터셉터 객체를 직접 등록하고 싶어하지 않는다. 대신 "이 클래스는 aspect이고, 이 메서드는 before advice이며, 저 메서드는 around advice다"처럼 선언하고 싶어한다. `@Aspect`, `@Before`, `@Around`, `@AfterReturning`은 그 선언 모델이다.
 
 `spring-lite`의 `AspectBeanPostProcessor`는 이 선언을 읽어 내부적으로 순서가 있는 인터셉터를 만든다. 메서드명과 특정 애너테이션 기준의 최소 포인트컷 모델을 사용하지만, 핵심 구조는 충분히 드러난다. 선언형 AOP는 별도 마법이 아니라 "애너테이션을 읽어 인터셉터로 바꾸는 해석 계층"이다. 실제 Spring이 `@AspectJ`, 더 풍부한 포인트컷 표현식, advisor 추상화까지 발전한 이유도 같은 구조 위에서 더 많은 경우를 감당해야 했기 때문이다.
+
+즉, 선언형 AOP는 실행 모델을 감추는 것이 아니라 실행 모델 위에 친숙한 표면 문법을 얹는 일이다. 개발자는 `@Before`나 `@Around`를 선언하지만, 프레임워크는 그것을 결국 `MethodInterceptor`와 유사한 실행 계약으로 바꿔야 한다. 이 번역 과정이 보이면 AOP는 더 이상 낯선 전용 마법이 아니라, 메타데이터 해석과 체인 조립의 조합으로 읽힌다.
 
 이 장을 읽을 때는 선언 모델과 실행 모델을 계속 대응시켜 보는 것이 좋다. 예를 들어 `@Before`는 문법적으로는 간단한 애너테이션이지만, 런타임에서는 "타깃 메서드 호출 직전의 인터셉터"로 변환된다. `@Around`는 더 강력하다. 호출을 감쌀 뿐 아니라 `proceed()`를 언제 호출할지, 여러 번 호출할지, 아예 호출하지 않을지까지 결정할 수 있다. 다시 말해 선언형 문법은 친숙한 표면일 뿐이고, 실제 힘은 여전히 인터셉터 체인에 있다.
 
@@ -1102,6 +1139,15 @@ public class AspectBeanPostProcessor implements BeanPostProcessor {
         return ProxyFactory.createProxy(bean, interceptors);
     }
 }
+```
+
+```mermaid
+flowchart TD
+    A["@Aspect bean discovered"] --> B["inspect advice methods"]
+    B --> C["build interceptor metadata"]
+    C --> D["find matching target methods"]
+    D --> E["sort by @Order"]
+    E --> F["create proxy with interceptors"]
 ```
 
 ### Chapter 15. `@Transactional`
@@ -1250,6 +1296,22 @@ public class TransactionManager {
 롤백 규칙 역시 예외 처리 설계와 맞물린다. 모든 예외를 무조건 롤백할 것인지, 비즈니스적으로 허용 가능한 예외는 커밋할 것인지 판단해야 한다. 예를 들어 알림 발송 실패가 주문 저장 자체를 취소해야 하는지, 아니면 주문은 저장하고 후속 재시도 대상으로 남겨야 하는지는 비즈니스 규칙이다. `rollbackFor`와 `noRollbackFor`는 프레임워크 차원의 문법이지만, 그 선택은 어디까지나 업무 의미를 반영해야 한다. 이 지점을 이해하지 못하면 선언형 트랜잭션은 편리한 도구가 아니라 의도를 숨기는 장치가 된다.
 
 `spring-lite` 테스트를 책과 함께 읽으면 이 정책 엔진 성격이 잘 드러난다. 정상 흐름, 체크 예외, 런타임 예외, 중첩 호출, rollback-only 전파를 각각 별도 시나리오로 분리해 보면, 트랜잭션은 더 이상 추상 개념이 아니라 상태 전이 모델로 보인다. 이 감각을 익혀 두면 실제 Spring의 복잡한 전파 옵션 문서도 훨씬 읽기 쉬워진다.
+
+전파 정책을 이해하는 가장 좋은 방법은 "현재 트랜잭션 문맥이 있느냐 없느냐"를 먼저 묻는 것이다. 문맥이 없으면 새로 열어야 하고, 문맥이 있으면 참여할지 새로 분리할지 정책이 결정해야 한다. `spring-lite`는 우선 `REQUIRED`만 구현하지만, 바로 그 단순한 정책만으로도 서비스 계층의 호출 구조가 트랜잭션 의미를 어떻게 바꾸는지 충분히 보여 준다.
+
+```mermaid
+flowchart TD
+    A["method invocation"] --> B{"transaction exists?"}
+    B -- no --> C["begin new transaction"]
+    B -- yes --> D["join existing transaction (REQUIRED)"]
+    C --> E["invoke target"]
+    D --> E
+    E --> F{"exception?"}
+    F -- no --> G["commit or defer to outer tx"]
+    F -- yes --> H{"rollback rule matches?"}
+    H -- yes --> I["rollback / mark rollback-only"]
+    H -- no --> J["commit despite exception"]
+```
 
 ### Part 4 정리
 
@@ -1404,6 +1466,8 @@ HTTP 요청을 자바 메서드 호출로 바꾸는 과정은 생각보다 많�
 
 이 원칙은 책 전체의 중요한 테마와도 연결된다. 좋은 프레임워크는 애플리케이션 코드에서 반복될 수밖에 없는 경계 처리 로직을 공통 인프라로 끌어올린다. 컨테이너가 객체 생성 책임을 끌어올렸다면, MVC는 입력 해석 책임을 끌어올린다. 이 시각으로 보면 `HandlerMethodArgumentResolver` 같은 전략 객체는 단지 구현 디테일이 아니라, 웹 경계의 반복 문제를 흡수하는 아키텍처 장치다.
 
+인자 해석 계층을 따로 두면 프레임워크가 HTTP의 세부를 애플리케이션에 덜 새게 만들 수 있다는 장점도 생긴다. 컨트롤러 메서드는 `int quantity`, `CreateOrderRequest request`, `HttpExchange exchange`처럼 이미 해석된 입력을 받는다. 반대로 이 계층이 없다면 URL 디코딩, JSON 파싱, 숫자 변환, 누락 값 처리 같은 저수준 작업이 컨트롤러로 흘러 들어온다. 결국 resolver는 단순 편의 기능이 아니라, 웹 프로토콜과 애플리케이션 타입 시스템 사이의 완충 장치다.
+
 ```java
 @Override
 public Object resolveArgument(Parameter parameter, HandlerMethodMatch handlerMethodMatch, HttpExchange exchange) {
@@ -1448,6 +1512,20 @@ public interface HandlerMethodArgumentResolver {
 }
 ```
 
+```mermaid
+flowchart LR
+    A["Parameter list"] --> B["supportsParameter?"]
+    B --> C["PathVariableResolver"]
+    B --> D["RequestParamResolver"]
+    B --> E["RequestBodyResolver"]
+    B --> F["HttpExchangeResolver"]
+    C --> G["resolved argument values"]
+    D --> G
+    E --> G
+    F --> G
+    G --> H["invoke controller method"]
+```
+
 ### Chapter 19. JSON, 응답 모델, 예외 처리
 
 컨트롤러 메서드가 값을 반환해도 요청 처리는 끝나지 않는다. 값을 JSON으로 직렬화해야 할 수도 있고, 상태 코드와 헤더를 함께 제어해야 할 수도 있으며, 예외가 발생했다면 이를 HTTP 응답으로 바꿔야 할 수도 있다. `JsonMapper`, `ResponseEntity`, `JsonReturnValueHandler`, `DefaultExceptionResolver`는 이 후반부 파이프라인을 담당한다.
@@ -1461,6 +1539,8 @@ public interface HandlerMethodArgumentResolver {
 이 장을 읽으며 독자는 "성공 응답"보다 "실패 응답" 설계가 종종 더 중요하다는 사실도 함께 배워야 한다. 실무 API는 항상 실패를 동반한다. 잘못된 입력, 제약 조건 위반, 비즈니스 충돌, 인프라 장애가 반드시 발생한다. 프레임워크를 설계하거나 활용하는 개발자라면, 실패를 예외적인 주변 현상이 아니라 응답 모델의 일부로 취급해야 한다.
 
 실제 운영 환경에서는 이 차이가 클라이언트 경험과 장애 분석 품질을 크게 바꾼다. 오류 응답 형식이 일관되지 않으면 프런트엔드나 다른 서비스는 실패 케이스마다 별도 분기 처리를 추가해야 하고, 로그와 모니터링 시스템도 오류를 그룹화하기 어렵다. 반대로 예외가 구조화된 응답 모델로 변환되면, 애플리케이션 안팎에서 실패를 더 안정적으로 다룰 수 있다. 즉, 예외 처리 계층은 단순 마감 처리기가 아니라 시스템 간 계약을 정리하는 인터페이스다.
+
+예외 처리 계층의 또 다른 가치는 "실패를 늦게 처리하되 한곳에서 처리한다"는 점이다. 컨트롤러나 서비스 안에서 예외를 즉시 HTTP 응답으로 바꾸기 시작하면, 도메인 로직과 전송 계층이 섞인다. 반면 예외를 한 번 던지고, 마지막에 resolver가 그것을 HTTP 의미로 번역하게 하면, 도메인 계층은 예외의 업무 의미만 표현하고 웹 계층은 그 의미를 응답 계약으로 정리할 수 있다. 이 분리는 코드를 더 깨끗하게 만들 뿐 아니라, 같은 예외를 다른 입구에서도 재사용하기 쉽게 만든다.
 
 ```java
 @Override
@@ -1489,6 +1569,21 @@ public ExceptionHandlingResult resolve(Exception exception, HandlerMethodMatch h
 
 build-along 형식에서는 이 장에서 `JsonMapper`와 `DefaultExceptionResolver`를 함께 구현하는 편이 자연스럽다. 하나는 성공 결과를 직렬화하고, 다른 하나는 실패를 응답 모델로 바꾸기 때문이다. 독자는 이 두 클래스를 함께 구현하면서 "성공 경로와 실패 경로도 결국 같은 출력 파이프라인 위에서 정리된다"는 사실을 코드 수준에서 이해하게 된다.
 
+```mermaid
+flowchart TD
+    A["controller return / exception"] --> B{"normal return?"}
+    B -- yes --> C["ReturnValueHandler"]
+    C --> D["JsonMapper / ResponseEntity"]
+    D --> E["HTTP response"]
+    B -- no --> F["ExceptionResolver"]
+    F --> G["local @ExceptionHandler?"]
+    G --> E
+    F --> H["global @ControllerAdvice?"]
+    H --> E
+    F --> I["default error payload"]
+    I --> E
+```
+
 ### Chapter 20. 조건 매핑과 검증
 
 실제 웹 프레임워크는 URL 경로만 보고 핸들러를 선택하지 않는다. `consumes`, `produces`, `headers`, `params` 같은 요청 조건을 함께 본다. 같은 경로라도 콘텐츠 타입이나 파라미터 값이 다르면 다른 의미가 될 수 있기 때문이다. 따라서 매핑은 단순 path lookup이 아니라 정책 평가에 가깝다.
@@ -1500,6 +1595,8 @@ build-along 형식에서는 이 장에서 `JsonMapper`와 `DefaultExceptionResol
 검증은 더더욱 애플리케이션 경계에서 다뤄야 한다. 잘못된 입력이 도메인 서비스 안쪽까지 들어오게 두면, 서비스는 자신의 본래 책임 외에 방어적 프로그래밍까지 떠안게 된다. `spring-lite`의 검증 계층은 최소 기능만 제공하지만, 이 기본 방향은 실제 Spring과 완전히 같다. "입력은 경계에서 정리하고, 도메인 안쪽에는 더 정제된 데이터만 흘려보낸다"는 원칙이다.
 
 독자가 실무에 바로 적용할 수 있는 포인트도 여기 있다. 검증 규칙이 컨트롤러마다 제각각이면 API 일관성이 무너진다. 반대로 프레임워크의 검증/예외 처리 파이프라인을 잘 활용하면, 입력 오류는 언제나 비슷한 방식으로 보고되고, 서비스 로직은 더 간결해진다. 프레임워크를 잘 쓴다는 것은 결국 이런 경계 책임을 제대로 위임하는 것이다.
+
+조건 매핑과 검증을 함께 다루는 것이 중요한 이유도 여기에 있다. 하나는 "이 요청이 어떤 핸들러로 가야 하는가"를 정하고, 다른 하나는 "그 핸들러에 들어가기 전에 입력이 유효한가"를 정한다. 둘 다 컨트롤러 바깥에서 실행되어야 컨트롤러가 순수한 도메인 진입점으로 남을 수 있다. 요청을 받을 자격이 있는지와, 받은 입력이 유효한지는 서로 다른 질문이지만 둘 다 웹 경계의 책임이다.
 
 | 단계 | 입력 | 책임 | 실패 시 결과 |
 | --- | --- | --- | --- |
@@ -1532,6 +1629,20 @@ private void validateIfNecessary(Parameter parameter, Object argument) {
 ```
 
 이 두 코드를 함께 보면, 독자는 "핸들러를 고르는 규칙"과 "핸들러에 들어가기 전 입력을 정리하는 규칙"이 서로 다른 계층이라는 사실을 분명하게 기억하게 된다.
+
+```mermaid
+flowchart LR
+    A["request path/method/headers/params"] --> B["mapping conditions"]
+    B --> C{"matched handler?"}
+    C -- no --> D["404"]
+    C -- yes --> E["bind method arguments"]
+    E --> F{"binding ok?"}
+    F -- no --> G["400"]
+    F -- yes --> H["validate @Valid arguments"]
+    H --> I{"violations?"}
+    I -- yes --> G
+    I -- no --> J["invoke controller"]
+```
 
 ### Part 5 정리
 
@@ -1659,6 +1770,8 @@ void reusesCurrentTransactionConnection() {
 
 예제 앱 장을 더 풍부하게 읽으려면, 각 계층을 "기능 구현"이 아니라 "앞 장의 구조가 실제로 만나는 접점"으로 보는 편이 좋다. 컨트롤러는 MVC 장의 산물이고, 서비스 프록시는 AOP/트랜잭션 장의 산물이며, 저장소는 JDBC 장의 산물이다. 예제 앱이 중요한 이유는 이 산물들이 하나의 요청 경로 안에서 충돌 없이 이어질 수 있음을 증명하기 때문이다. 설명만으로는 분리되어 있던 지식이, 주문 생성이라는 하나의 구체적 사건 안에서 비로소 런타임 이야기로 합쳐진다.
 
+이 장이 책 전체에서 주는 교육적 효과는 매우 크다. 앞선 장들에서는 각 모듈을 "부분 문제의 해법"으로 배웠다. 하지만 독자는 종종 부분 해법을 배운 뒤에도 전체 그림을 머릿속에서 다시 조립하는 데 어려움을 겪는다. 예제 앱은 바로 그 마지막 조립을 대신 보여 준다. 요청 하나가 들어왔을 때 어떤 인프라가 어떤 순서로 개입하는지가 한 번의 서사로 합쳐지기 때문이다.
+
 ```mermaid
 sequenceDiagram
     participant Client as Client
@@ -1753,6 +1866,8 @@ flowchart TD
 
 Spring Boot 공식 문서가 auto-configuration을 설명할 때 반복해서 강조하는 것도 바로 "non-invasive"라는 성격이다. Boot는 사용자가 아무것도 모르게 모든 것을 숨기기 위해 존재하는 것이 아니라, 클래스패스와 사용자 정의 빈, 조건 애너테이션을 바탕으로 기본 구성을 제공하되 필요하면 언제든 사용자가 교체할 수 있게 하기 위해 존재한다. `spring-lite-boot`의 `BootInfrastructureRegistrar`와 `@ConditionalOnMissingBean`, `@ConditionalOnClass`, `@ConditionalOnProperty` 모델은 이 철학을 축소판으로 드러낸다. 학습용 구현이므로 기능 폭은 좁지만, "자동 설정은 미리 짜인 조립 규칙의 집합"이라는 본질은 충분히 전달한다.
 
+이 관점을 익혀 두면 실제 Spring Boot의 자동 설정도 훨씬 덜 불투명해진다. 어떤 starter가 추가되었는지, 어떤 조건이 만족되었는지, 사용자 빈이 왜 기본 설정을 밀어냈는지 같은 질문이 가능해지기 때문이다. 자동 설정은 복잡하지만, 질문의 형태는 단순하다. "이 기본값은 왜 지금 적용되었는가?" Boot 장은 독자가 그 질문을 할 수 있게 만드는 장이다.
+
 ```java
 public static AnnotationConfigApplicationContext run(Class<?> applicationClass, String... args) {
     AnnotationConfigApplicationContext context = PropertyResolver.withOverrides(parseCommandLineArgs(args), () -> {
@@ -1814,6 +1929,8 @@ flowchart TB
 
 대표적인 Spring 입문서와 실무서들이 공통으로 강조하는 부분도 테스트다. 프레임워크를 이해하는 가장 빠른 길 중 하나는 "이 기능이 언제 실패해야 하는가"를 테스트로 고정해 보는 것이기 때문이다. 김영한의 강의 시리즈가 핵심 원리를 설명할 때도 테스트를 통해 DI, 빈 조회, MVC 흐름을 검증하는 리듬을 반복하고, *Spring Start Here* 역시 개념 설명과 단위 통합 테스트를 촘촘히 왕복한다. 이 책이 테스트 장을 뒤쪽의 부록이 아니라 핵심 본문에 포함시키는 이유는, 테스트가 프레임워크 사용법 검증을 넘어 프레임워크 원리 이해 자체를 돕기 때문이다.
 
+테스트 확장은 그 자체로도 일종의 부트스트랩 계층이다. 테스트 클래스가 시작되기 전에 컨텍스트를 만들고, 테스트 인스턴스에 의존성을 주입하고, 각 테스트 메서드 전후에 트랜잭션을 열고 닫는 과정은 작은 실행 프레임워크와 다르지 않다. 따라서 `SpringLiteTestExtension`을 읽는 일은 단순 편의 기능을 보는 것이 아니라, "프레임워크가 다른 프레임워크를 어떻게 지원하는가"를 보는 일이기도 하다.
+
 ```java
 @Override
 public void beforeEach(ExtensionContext extensionContext) {
@@ -1835,6 +1952,23 @@ public void afterEach(ExtensionContext extensionContext) {
     AnnotationConfigApplicationContext context = getOrCreateContext(extensionContext);
     context.getBean(TransactionManager.class).rollback();
 }
+```
+
+```mermaid
+sequenceDiagram
+    participant J as JUnit
+    participant E as SpringLiteTestExtension
+    participant C as ApplicationContext
+    participant TM as TransactionManager
+    participant T as Test Method
+
+    J->>E: beforeAll / postProcessTestInstance
+    E->>C: create or reuse context
+    J->>E: beforeEach
+    E->>TM: begin() if transactional
+    J->>T: invoke test method
+    J->>E: afterEach
+    E->>TM: rollback() if transactional
 ```
 
 직접 구현하는 책이라면 테스트 지원도 마지막에 실제로 만들어 보게 해야 한다. 그래서 이 장에서는 `SpringLiteTestExtension`의 `beforeAll`, `postProcessTestInstance`, `beforeEach`, `afterEach`, `resolveParameter`를 거의 빠짐없이 따라가게 하는 편이 좋다. 프레임워크를 만든다는 것은 실행 코드만이 아니라, 그 코드를 검증하는 진입점까지 함께 설계하는 일이라는 사실을 이 장에서 마무리할 수 있다.
