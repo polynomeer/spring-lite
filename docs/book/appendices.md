@@ -251,6 +251,7 @@
 
 | 그림 번호 | 파일 | 설명 |
 | --- | --- | --- |
+| 그림 1-1 | `docs/book/figures/part-1-orientation-map.svg` | 구현 전에 고정해야 할 학습 관점과 독서 리듬 |
 | 그림 2-1 | `docs/book/figures/part-2-container-map.svg` | Part 2 전체의 IoC 컨테이너 확장 순서 |
 | 그림 3-1 | `docs/book/figures/container-metadata-lifecycle.svg` | 빈 정의 수집, 생성 전략 선택, 초기화, 싱글톤 캐시까지의 컨테이너 기본 흐름 |
 | 그림 4-1 | `docs/book/figures/part-4-aop-tx-map.svg` | 프록시, 인터셉터, AOP, 트랜잭션 정책으로 이어지는 호출 경계 로드맵 |
@@ -261,6 +262,7 @@
 | 그림 21-1 | `docs/book/figures/jdbc-template-skeleton.svg` | `JdbcTemplate`의 불변 실행 골격과 트랜잭션 커넥션 재사용 |
 | 그림 23-1 | `docs/book/figures/boot-orchestration.svg` | `SpringLiteApplication.run()`의 부트스트랩 조립 순서 |
 | 그림 24-1 | `docs/book/figures/test-extension-lifecycle.svg` | `SpringLiteTestExtension`의 컨텍스트/트랜잭션 라이프사이클 |
+| 그림 7-1 | `docs/book/figures/part-7-real-spring-map.svg` | `spring-lite`를 실제 Spring 소스 읽기와 실무 판단으로 연결하는 학습 루프 |
 
 ## Appendix G. 용어집
 

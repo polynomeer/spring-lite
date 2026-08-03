@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Part 1 Orientation Map</title>
+  <desc id="desc">Orientation map for why building Spring Lite helps understand Spring.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#f4f7fb"/>
+      <stop offset="100%" stop-color="#e6edf8"/>
+    </linearGradient>
+    <style>
+      .title{font:700 34px Arial,sans-serif;fill:#22324d}.sub{font:500 18px Arial,sans-serif;fill:#5b6e91}
+      .box{fill:#fbfdff;stroke:#22324d;stroke-width:2.5;rx:18;ry:18}.label{font:700 21px Arial,sans-serif;fill:#22324d}
+      .body{font:500 17px Arial,sans-serif;fill:#465976}.arrow{stroke:#22324d;stroke-width:3;fill:none;marker-end:url(#a)}
+    </style>
+    <marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#22324d"/></marker>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <text x="70" y="84" class="title">Part 1. Orientation Before Implementation</text>
+  <text x="70" y="116" class="sub">The book first fixes the learning lens: runtime structure, not annotation memorization.</text>
+  <rect x="110" y="228" width="260" height="118" class="box"/>
+  <text x="150" y="282" class="label">Why build it?</text>
+  <text x="150" y="316" class="body">move from usage to explanation</text>
+  <rect x="510" y="228" width="260" height="118" class="box"/>
+  <text x="546" y="282" class="label">What to watch?</text>
+  <text x="546" y="316" class="body">registration, lifecycle, boundary, dispatch</text>
+  <rect x="910" y="228" width="260" height="118" class="box"/>
+  <text x="946" y="282" class="label">How to read?</text>
+  <text x="946" y="316" class="body">problem, implementation, failure, extension</text>
+  <path d="M370 287 L510 287" class="arrow"/>
+  <path d="M770 287 L910 287" class="arrow"/>
+  <rect x="246" y="472" width="788" height="118" class="box"/>
+  <text x="280" y="524" class="label">Outcome of Part 1</text>
+  <text x="280" y="560" class="body">The reader enters Part 2 already thinking in execution stages, responsibility boundaries, and debugging order.</text>
+</svg>
