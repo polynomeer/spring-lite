@@ -239,7 +239,20 @@
   - `BootInfrastructureRegistrar.registerDefaults(...)`
   - `isBeanEligible(...)`
 
-## Appendix F. 용어집
+## Appendix F. 도판 인덱스
+
+출간 편집본에서 반복해서 참조할 핵심 도판 목록이다. 본문을 다시 펼치지 않고도 어떤 그림이 어떤 책임을 설명하는지 빠르게 찾을 수 있다.
+
+| 그림 번호 | 파일 | 설명 |
+| --- | --- | --- |
+| 그림 3-1 | `docs/book/figures/container-metadata-lifecycle.svg` | 빈 정의 수집, 생성 전략 선택, 초기화, 싱글톤 캐시까지의 컨테이너 기본 흐름 |
+| 그림 15-1 | `docs/book/figures/transaction-boundary.svg` | 프록시 기반 선언형 트랜잭션 호출 경계 |
+| 그림 17-1 | `docs/book/figures/dispatcher-pipeline.svg` | `DispatcherServlet` 중심 MVC 파이프라인과 404/400/500 분기 |
+| 그림 21-1 | `docs/book/figures/jdbc-template-skeleton.svg` | `JdbcTemplate`의 불변 실행 골격과 트랜잭션 커넥션 재사용 |
+| 그림 23-1 | `docs/book/figures/boot-orchestration.svg` | `SpringLiteApplication.run()`의 부트스트랩 조립 순서 |
+| 그림 24-1 | `docs/book/figures/test-extension-lifecycle.svg` | `SpringLiteTestExtension`의 컨텍스트/트랜잭션 라이프사이클 |
+
+## Appendix G. 용어집
 
 이 부록은 책 전체에서 반복되는 핵심 용어를 같은 의미로 읽도록 돕기 위한 최소 용어집이다.
 
@@ -287,7 +300,7 @@ HTTP 요청을 컨트롤러 메서드 실행으로 번역하는 조정자다. �
 
 사용자 설정과 클래스패스 상태를 보고 적절한 기본 빈을 자동으로 조립하는 부트스트랩 계층이다.
 
-## Appendix G. 실제 Spring 공식 문서와 병행 읽기
+## Appendix H. 실제 Spring 공식 문서와 병행 읽기
 
 이 책은 `spring-lite` 구현을 중심에 두지만, 실제 Spring 학습 효과를 높이려면 공식 문서를 Part 단위로 병행하는 편이 좋다.
 
