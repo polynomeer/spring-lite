@@ -205,6 +205,10 @@ Part 2부터는 이 큰 그림의 바닥인 IoC 컨테이너부터 직접 구현
 
 실제 Spring 문서가 빈을 "객체"보다 먼저 "정의"로 설명하는 이유도 여기에 있다. 공식 문서의 Bean Overview는 이름, 생성 방식, 스코프, 런타임 타입, 팩토리 메서드 같은 메타데이터를 먼저 다룬다. 그 순서를 따라가다 보면 컨테이너가 단순 메모리 캐시가 아니라 메타데이터 해석기라는 사실이 드러난다. `spring-lite`에서 `BeanDefinition`을 일찍 도입한 이유도 그 관점을 독자에게 가장 먼저 체득시키기 위해서다. 일단 이 축이 잡히면 이후의 `@Configuration`, 조건부 등록, Boot 자동 설정도 모두 같은 언어로 설명할 수 있다.
 
+이 장을 더 천천히 읽어 보면, 프레임워크 설계의 무게중심이 어디에 놓여야 하는지도 보이기 시작한다. 많은 초보 구현은 객체를 곧바로 생성하는 데서 출발한다. 하지만 그렇게 시작하면 나중에 설정 클래스, 조건부 등록, 지연 초기화, 후처리기 같은 개념이 들어올 자리가 없다. 반대로 메타데이터를 먼저 세우면 아직 생성되지 않은 객체에 대해서도 "무엇이 생길 예정인가"를 말할 수 있다. 프레임워크는 바로 그 선행 설명 능력을 바탕으로 확장된다.
+
+따라서 `BeanDefinition`은 작은 클래스처럼 보여도, 사실상 이후 전체 구조를 받아내는 기초 좌표계다. 이름은 조회 기준이 되고, 타입은 의존성 해석 기준이 되며, kind는 생성 전략 분기점이 되고, singleton 여부는 캐시와 수명 정책으로 이어진다. 독자가 이 클래스의 필드 하나하나를 "왜 필요한가"까지 설명할 수 있다면, 컨테이너의 핵심 원리는 이미 상당 부분 손에 들어온 셈이다.
+
 ```java
 public final class BeanDefinition {
     public enum Kind {
@@ -231,6 +235,20 @@ flowchart TB
     C --> D["Dependency Resolution"]
     D --> E["Bean Instance"]
     E --> F["Singleton Cache"]
+```
+
+```mermaid
+flowchart LR
+    A["BeanDefinition"] --> B["name"]
+    A --> C["beanType"]
+    A --> D["kind"]
+    A --> E["singleton"]
+    A --> F["qualifier"]
+    B --> G["lookup key"]
+    C --> H["dependency matching"]
+    D --> I["constructor vs factory method"]
+    E --> J["cache policy"]
+    F --> K["candidate narrowing"]
 ```
 
 이 장을 build-along 방식으로 따라간다면, 먼저 "정의가 인스턴스보다 먼저 등록된다"는 사실을 테스트로 고정하는 편이 좋다.
@@ -280,6 +298,8 @@ DI를 "외부에서 주입한다"는 문장으로만 이해하면 핵심을 놓�
 
 실무에서도 생성자 주입이 널리 권장되는 이유는 테스트 편의성이나 불변성만이 아니다. 의존성을 계약으로 드러내고, 구조적 문제를 조기에 노출하며, 컨테이너의 판단 규칙을 더 분명하게 만든다는 점이 함께 중요하다. 책을 읽는 동안 독자는 생성자 주입을 단순 취향 문제가 아니라 프레임워크와 애플리케이션 사이의 명확한 합의로 이해하게 될 것이다.
 
+생성자 주입을 해석 알고리즘으로 보는 시선은 이후 많은 논의를 단단하게 만든다. 예를 들어 `@Primary`, `ObjectProvider`, 컬렉션 주입, 지연 주입, optional 의존성 같은 확장은 모두 같은 질문에서 출발한다. "하나의 파라미터를 실제 런타임 객체로 바꾸기 위해 컨테이너는 어떤 규칙을 적용해야 하는가?" 지금은 최소 규칙만 다루지만, 실제 Spring이 거대한 이유는 이 질문의 변종이 매우 많기 때문이다.
+
 ```java
 private Constructor<?> selectConstructor(Class<?> beanType) {
     Constructor<?>[] constructors = beanType.getDeclaredConstructors();
@@ -316,6 +336,20 @@ private Object resolveDependency(Parameter parameter) {
     }
     return candidates.values().iterator().next();
 }
+```
+
+```mermaid
+flowchart TD
+    A["constructor parameter"] --> B["find beans by type"]
+    B --> C{"candidate count"}
+    C -- 0 --> D["NoSuchBeanException"]
+    C -- 1 --> E["use the only candidate"]
+    C -- many --> F{"@Qualifier present?"}
+    F -- no --> G["NoUniqueBeanException"]
+    F -- yes --> H["match qualifier"]
+    H --> I{"matched exactly one?"}
+    I -- yes --> J["inject matched bean"]
+    I -- no --> G
 ```
 
 이 장은 반드시 테스트 먼저 가는 편이 좋다. 가장 먼저 통과시킬 테스트는 보통 아래와 같이 작성할 수 있다.
@@ -372,6 +406,8 @@ private Object createBean(String beanName, BeanDefinition beanDefinition) {
 학습 관점에서도 이 장은 흥미롭다. 많은 사람이 애너테이션을 정적인 표식처럼 여기지만, 스캔을 구현해 보면 애너테이션은 런타임 메타데이터 해석의 입력값일 뿐이라는 점이 드러난다. `@Component` 계열의 스테레오타입은 결국 "이 타입을 빈 후보로 등록하라"는 의도를 표현하는 작은 DSL이다. 실제 Spring이 수많은 메타 애너테이션 조합을 지원하는 이유도, 바로 이 DSL을 풍부하게 확장해 왔기 때문이다.
 
 실무에서 스캔 문제는 의외로 자주 발목을 잡는다. 패키지 기준이 어긋나 빈이 누락되거나, 의도치 않게 테스트 더블이 함께 스캔되거나, 이름 충돌로 등록이 실패하는 사례가 반복된다. 이런 상황에서 스캔을 "잘 모르지만 돌아가는 자동 기능"으로 보면 문제 해결이 어렵다. 반대로 스캔이 클래스패스 메타데이터 수집기라는 사실을 이해하면, 어디를 확인해야 할지가 훨씬 분명해진다.
+
+또 하나 중요한 점은, 스캔이 "소스 코드 읽기"가 아니라 "컴파일된 클래스 메타데이터 읽기"라는 사실이다. 이것은 프레임워크가 개발자가 작성한 자바 문장을 직접 해석하는 것이 아니라, 런타임에서 관찰 가능한 클래스 구조와 애너테이션만을 바탕으로 판단한다는 뜻이다. 그래서 패키지 경계, 클래스 로더, JAR 구성, 메타 애너테이션 보존 정책이 모두 결과에 영향을 준다. 스캔은 생각보다 훨씬 런타임 친화적인 메커니즘이다.
 
 ```java
 public List<Class<?>> scan(String basePackage) {
@@ -431,6 +467,21 @@ private void registerDiscoveredClass(Class<?> candidate) {
 }
 ```
 
+```mermaid
+flowchart TD
+    A["scan(basePackage)"] --> B["directory or jar entries"]
+    B --> C["load candidate class"]
+    C --> D{"managed type?"}
+    D -- no --> E["skip"]
+    D -- yes --> F["determine kind"]
+    F --> G["generate bean name"]
+    G --> H["extract scope/qualifier"]
+    H --> I["register BeanDefinition"]
+    I --> J{"configuration class?"}
+    J -- yes --> K["register @Bean methods"]
+    J -- no --> L["done"]
+```
+
 이 장에서 독자가 실제로 손으로 구현해 보면, `@Service`나 `@Repository` 같은 애너테이션이 별도 마법이 아니라 결국 "스캔 대상 후보"를 판별하는 메타데이터라는 사실을 가장 빨리 체감하게 된다.
 
 ### Chapter 6. `@Configuration`과 `@Bean`
@@ -446,6 +497,8 @@ private void registerDiscoveredClass(Class<?> candidate) {
 설정 클래스를 특별 취급해야 한다는 점도 중요하다. 일반 빈은 생성의 결과물이지만, 설정 클래스는 다른 빈 정의를 추가로 만들어 내는 메타 계층이기도 하다. 따라서 컨테이너는 설정 클래스를 읽는 시점과 그 결과를 등록하는 시점을 의식해야 한다. 이 작은 차이를 이해하면, 실제 Spring에서 왜 설정 처리기가 별도 인프라로 존재하고 왜 `@Import`, 조건부 등록, auto-configuration 같은 메커니즘이 메타데이터 단계에서 복잡하게 얽히는지 더 쉽게 이해하게 된다.
 
 실무에서는 `@Configuration`과 `@Bean`이 외부 시스템 연결 지점을 깔끔하게 드러내는 장점도 있다. 데이터소스, HTTP 클라이언트, 메시지 프로듀서 같은 인프라 객체를 설정 계층에 모아두면 애플리케이션의 조립 구조가 더 명확해진다. 즉, 이 장은 단순 문법 차이를 넘어 애플리케이션의 구성 책임을 어디에 둘 것인가에 대한 설계 장이기도 하다.
+
+이 장은 "선언형 조립과 명령형 조립의 타협점"으로 읽어도 좋다. `@Bean` 메서드 안에서는 평범한 자바 코드를 쓴다. if 문도 쓸 수 있고, 객체 생성 순서도 직접 표현할 수 있다. 하지만 그 결과는 다시 선언형 메타데이터로 환원되어 컨테이너의 규칙을 따른다. 즉, Spring은 조립 로직을 자바 코드로 열어 두면서도, 최종 결과물은 프레임워크의 생명주기와 확장 모델 안으로 끌어들인다.
 
 ```java
 private void registerBeanMethods(Class<?> configurationClass) {
@@ -477,6 +530,17 @@ private Object invokeFactoryMethod(BeanDefinition beanDefinition) {
 }
 ```
 
+```mermaid
+flowchart LR
+    A["@Configuration class"] --> B["registerBeanMethods()"]
+    B --> C["FACTORY_METHOD BeanDefinition"]
+    C --> D["get configuration bean"]
+    D --> E["resolve method arguments"]
+    E --> F["invoke @Bean method"]
+    F --> G["initialize returned object"]
+    G --> H["singleton cache if needed"]
+```
+
 build-along 형식으로는 이 장의 첫 검증을 팩토리 메서드 빈 생성 테스트로 두는 편이 자연스럽다.
 
 ```java
@@ -505,6 +569,8 @@ void createsFactoryMethodBeansFromConfigurationClass() {
 설정 값 주입은 더 넓은 주제로 이어진다. 애플리케이션은 더 이상 코드만으로 구성되지 않는다. 포트 번호, 데이터베이스 URL, 기본 상태 값, 실행 프로파일, 외부 시스템 엔드포인트처럼 환경에 따라 달라지는 요소가 모두 조립 과정에 참여한다. 따라서 프로퍼티 해석은 컨테이너 바깥의 부가 기능이 아니라, 빈 생성과 같은 수준의 핵심 런타임 기능이다. `spring-lite`에서 YAML 로딩, 기본값 처리, 타입 변환을 함께 다루는 이유도 여기에 있다.
 
 독자는 이 장을 통해 Spring Boot의 핵심 감각 하나를 미리 배우게 된다. 좋은 프레임워크는 값을 단순히 읽는 데서 끝나지 않고, "어떤 설정이 어떤 우선순위로 적용되었는가"를 설명할 수 있어야 한다. 프로파일별 파일 병합, 런타임 오버라이드, 플레이스홀더 기본값은 모두 그 설명력을 높이는 장치다. 실무에서 환경별 버그가 생기는 이유도 대개 여기서 시작한다.
+
+설정 주입을 설명할 때는 "값도 의존성이다"라는 말을 자주 떠올리면 좋다. 객체 의존성은 다른 빈을 찾으면 되지만, 값 의존성은 외부 환경이라는 더 넓은 입력 공간을 읽어야 한다. 그 때문에 프로퍼티 해석에는 키 이름, 기본값, 변환 규칙, 프로파일 병합, 런타임 오버라이드 같은 또 다른 해석 단계가 따라붙는다. 결국 `@Value`는 단순 문자열 치환이 아니라, 컨테이너가 외부 환경을 내부 객체 그래프로 번역하는 기능이다.
 
 ```java
 public static PropertyResolver loadApplicationProperties() {
@@ -589,6 +655,18 @@ private void injectFieldValues(Object bean) {
 }
 ```
 
+```mermaid
+flowchart TD
+    A["@Value expression"] --> B["parse placeholder"]
+    B --> C["lookup merged properties"]
+    C --> D{"value found?"}
+    D -- yes --> E["convert to target type"]
+    D -- no --> F{"default value exists?"}
+    F -- yes --> E
+    F -- no --> G["IllegalStateException"]
+    E --> H["inject into parameter or field"]
+```
+
 ### Chapter 8. Scope와 컨테이너 이벤트
 
 컨테이너는 객체를 한 번 만들어주는 유틸리티가 아니다. 시작과 종료, 재사용과 파괴, 이벤트 발행을 가진 런타임이다. `singleton`은 한 번 만든 인스턴스를 재사용하고, `prototype`은 매번 새 인스턴스를 만든다. 차이는 단순 성능이 아니라 수명과 책임의 차이다. 싱글톤은 생성부터 종료까지 컨테이너가 관리하지만, 프로토타입은 생성 이후 관리 범위가 줄어든다.
@@ -602,6 +680,8 @@ Part 2를 마치면 독자는 이제 컨테이너의 기본 골격을 설명할 
 이벤트 모델 역시 컨테이너를 런타임으로 바라보게 만든다. 컨텍스트 refresh 이후에만 실행되어야 하는 작업이 있고, close 시점에 정리되어야 하는 작업이 있다면, 이를 직접 순서대로 호출하는 것보다 이벤트로 연결하는 편이 훨씬 유연하다. `ApplicationListener`는 느슨한 결합이라는 소프트웨어 설계 원칙을 컨테이너 내부 런타임에도 적용하는 예다. 프레임워크 안쪽에서도 컴포넌트 사이의 연결을 이벤트로 늦출 수 있다는 점이 중요하다.
 
 Part 2 전체를 돌아보면, 우리는 사실 "객체를 만드는 법"보다 "객체를 조립하고 관리하는 규칙의 체계"를 만든 셈이다. `BeanDefinition`, 생성자 해석, 스캔, 설정 클래스, 값 주입, 스코프, 이벤트는 각자 다른 기능처럼 보이지만 모두 한 질문으로 연결된다. 애플리케이션 객체들을 누가 어떤 규칙으로 생성하고 연결하며, 그 수명과 확장을 누가 관리할 것인가. 이 질문에 대한 첫 번째 완성형 답이 바로 IoC 컨테이너다.
+
+이 장을 끝내고 나면 독자는 Spring 컨테이너를 더 이상 "편리한 객체 공장"으로만 보지 않게 된다. 이제 컨테이너는 메타데이터 수집기이자, 의존성 해석기이자, 수명 관리자이자, 이벤트 발행기다. 바로 이 다층적 성격 때문에 Spring의 나머지 기능도 모두 컨테이너 위에 안전하게 올라갈 수 있다. 다음 Part에서 보게 될 라이프사이클 확장과 후처리기 모델도 결국 이 기반이 있기 때문에 가능하다.
 
 ```mermaid
 sequenceDiagram
@@ -743,6 +823,8 @@ Spring이 강력한 이유를 하나만 꼽으라면, 많은 경우 답은 `Bean
 
 `spring-lite`에서도 후처리기는 초기화 전과 후 두 단계로 나뉜다. 초기화 전 훅은 메타데이터 준비나 값 주입 같은 작업에 적합하고, 초기화 후 훅은 프록시 생성처럼 완성된 빈을 다른 객체로 대체해야 하는 작업에 적합하다. 특히 트랜잭션과 AOP는 둘 다 이 단계에서 빈을 감싸는 방식으로 동작한다. 이 사실을 이해하면 Part 4의 프록시/AOP 장은 전혀 새로운 세계가 아니라, 지금 만든 컨테이너 위에 올라가는 자연스러운 확장처럼 보인다.
 
+후처리기가 중요한 더 근본적인 이유는, 프레임워크가 "생성 알고리즘을 닫아 두지 않기" 때문이다. 컨테이너가 모든 빈을 완성한 뒤 아무 개입점도 주지 않는다면, 이후의 선언형 기능은 빈 생성 로직 자체를 뜯어고치지 않고서는 추가할 수 없다. 하지만 후처리기 훅이 있으면, 컨테이너의 기본 생성 알고리즘은 유지한 채 결과물에만 개입할 수 있다. 이것이 Spring이 오랫동안 확장에 강했던 이유다.
+
 ```java
 public interface BeanPostProcessor {
     default Object postProcessBeforeInitialization(String beanName, Object bean) {
@@ -753,6 +835,16 @@ public interface BeanPostProcessor {
         return bean;
     }
 }
+```
+
+```mermaid
+flowchart LR
+    A["raw bean"] --> B["postProcessBeforeInitialization"]
+    B --> C["@PostConstruct / init callbacks"]
+    C --> D["postProcessAfterInitialization"]
+    D --> E{"replace bean?"}
+    E -- no --> F["return original bean"]
+    E -- yes --> G["return proxy / wrapped bean"]
 ```
 
 build-along 방식에서는 이 장에서 아주 작은 후처리기 하나를 테스트로 먼저 만드는 편이 자연스럽다.
@@ -799,6 +891,8 @@ private void instantiateBeanPostProcessors() {
 
 독자는 이 장에서 프레임워크의 친절함과 구조적 건전성이 항상 같은 방향으로 가지 않는다는 사실도 배워야 한다. 사용성만 강조하면 프레임워크는 점점 더 많은 예외를 흡수하게 되고, 그 결과 내부 규칙은 더 복잡해진다. 반대로 학습용 구현은 엄격한 실패를 통해 핵심 원리를 더 선명하게 보여줄 수 있다. 실제 Spring 소스를 읽을 때도 이 관점을 갖고 보면, "왜 이렇게까지 했을까"라는 질문에 더 공정하게 답할 수 있다.
 
+이 장은 기술 설명이면서 동시에 설계 훈련이기도 하다. 순환 참조는 종종 "컨테이너가 좀 더 똑똑하면 풀 수 있지 않을까?"라는 방향으로만 논의된다. 하지만 그 전에 물어야 할 질문은, 왜 두 서비스가 서로를 직접 필요로 하게 되었는가다. 조정 책임이 한쪽에 과도하게 몰린 것은 아닌지, 더 작은 도메인 서비스나 이벤트 협력으로 풀 수는 없는지, 읽기 모델과 쓰기 모델을 분리해야 하는 것은 아닌지 점검해야 한다. 컨테이너의 실패는 종종 설계의 냄새를 드러내는 진단 도구이기도 하다.
+
 직접 구현하는 독자에게는 이 장 역시 실패를 테스트로 고정하게 하는 편이 좋다.
 
 ```java
@@ -819,6 +913,15 @@ void failsFastOnCircularConstructorDependency() {
 if (!beansInCreation.add(beanName)) {
     throw new BeansException("Circular dependency detected while creating " + beanName);
 }
+```
+
+```mermaid
+flowchart TD
+    A["create OrderService"] --> B["needs PaymentService"]
+    B --> C["create PaymentService"]
+    C --> D["needs OrderService"]
+    D --> E["OrderService already in creation"]
+    E --> F["circular dependency failure"]
 ```
 
 이렇게 해야 다음 장들에서 프록시와 후처리기가 추가되더라도 독자는 "지금 이 실패는 컨테이너가 구조 문제를 조기에 드러낸 것"이라고 해석할 수 있다.
