@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Part 6 Integration Map</title>
+  <desc id="desc">Overview of JDBC, example app integration, bootstrapping, and testing support topics.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop offset="0%" stop-color="#fff6ef"/><stop offset="100%" stop-color="#ffe7da"/></linearGradient>
+    <style>.title{font:700 34px Arial,sans-serif;fill:#5d311c}.sub{font:500 18px Arial,sans-serif;fill:#8c5a40}.box{fill:#fffdfa;stroke:#5d311c;stroke-width:2.5;rx:18;ry:18}.label{font:700 21px Arial,sans-serif;fill:#5d311c}.body{font:500 17px Arial,sans-serif;fill:#73462d}.arrow{stroke:#5d311c;stroke-width:3;fill:none;marker-end:url(#a)}</style>
+    <marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5d311c"/></marker>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <text x="70" y="84" class="title">Part 6. Integration And Completion Roadmap</text>
+  <text x="70" y="116" class="sub">Data access, example app wiring, bootstrapping, and test support close the loop around the whole framework.</text>
+  <rect x="92" y="228" width="196" height="96" class="box"/><text x="132" y="284" class="label">21. JDBC</text>
+  <rect x="348" y="228" width="196" height="96" class="box"/><text x="375" y="284" class="label">22. Example App</text>
+  <rect x="604" y="228" width="196" height="96" class="box"/><text x="636" y="284" class="label">23. Boot</text>
+  <rect x="860" y="228" width="196" height="96" class="box"/><text x="894" y="284" class="label">24. Testing</text>
+  <path d="M288 276 L348 276" class="arrow"/><path d="M544 276 L604 276" class="arrow"/><path d="M800 276 L860 276" class="arrow"/>
+  <rect x="174" y="460" width="936" height="126" class="box"/>
+  <text x="212" y="512" class="label">Part outcome</text>
+  <text x="212" y="548" class="body">The framework now persists data, runs an app end-to-end, starts with one entry point, and tests itself with reusable support.</text>
+</svg>

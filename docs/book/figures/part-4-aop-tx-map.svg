@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Part 4 AOP And Transaction Map</title>
+  <desc id="desc">Overview of proxy, interceptor, aspect, transactional boundary, and propagation topics.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop offset="0%" stop-color="#eef6f1"/><stop offset="100%" stop-color="#ddeadf"/></linearGradient>
+    <style>.title{font:700 34px Arial,sans-serif;fill:#1a3a2f}.sub{font:500 18px Arial,sans-serif;fill:#4d6c61}.box{fill:#fbfffc;stroke:#1a3a2f;stroke-width:2.5;rx:18;ry:18}.label{font:700 21px Arial,sans-serif;fill:#1a3a2f}.body{font:500 17px Arial,sans-serif;fill:#3d5b51}.arrow{stroke:#1a3a2f;stroke-width:3;fill:none;marker-end:url(#a)}</style>
+    <marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1a3a2f"/></marker>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <text x="70" y="84" class="title">Part 4. Proxy, AOP, And Transaction Roadmap</text>
+  <text x="70" y="116" class="sub">A single call boundary evolves from raw proxying into ordered interceptors, declarative aspects, and transaction policy.</text>
+  <rect x="96" y="230" width="180" height="96" class="box"/><text x="142" y="286" class="label">12. Proxy</text>
+  <rect x="336" y="230" width="210" height="96" class="box"/><text x="372" y="286" class="label">13. Interceptor Chain</text>
+  <rect x="606" y="230" width="180" height="96" class="box"/><text x="646" y="286" class="label">14. @Aspect</text>
+  <rect x="846" y="230" width="180" height="96" class="box"/><text x="871" y="286" class="label">15. Transaction</text>
+  <rect x="1086" y="230" width="120" height="96" class="box"/><text x="1102" y="286" class="label">16. Policy</text>
+  <path d="M276 278 L336 278" class="arrow"/><path d="M546 278 L606 278" class="arrow"/><path d="M786 278 L846 278" class="arrow"/><path d="M1026 278 L1086 278" class="arrow"/>
+  <rect x="246" y="470" width="790" height="118" class="box"/>
+  <text x="284" y="520" class="label">One core question</text>
+  <text x="284" y="556" class="body">What can happen at the method boundary before, during, and after the target method runs?</text>
+</svg>

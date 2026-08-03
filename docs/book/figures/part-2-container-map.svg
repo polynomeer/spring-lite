@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Part 2 Container Map</title>
+  <desc id="desc">Overview of the IoC container topics covered in Part 2.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop offset="0%" stop-color="#f8f4eb"/><stop offset="100%" stop-color="#ece3d0"/></linearGradient>
+    <style>.title{font:700 34px Arial,sans-serif;fill:#2f2a1f}.sub{font:500 18px Arial,sans-serif;fill:#665f50}.box{fill:#fffdfa;stroke:#2f2a1f;stroke-width:2.5;rx:18;ry:18}.label{font:700 21px Arial,sans-serif;fill:#2f2a1f}.body{font:500 17px Arial,sans-serif;fill:#544d40}.arrow{stroke:#2f2a1f;stroke-width:3;fill:none;marker-end:url(#a)}</style>
+    <marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2f2a1f"/></marker>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <text x="70" y="84" class="title">Part 2. IoC Container Roadmap</text>
+  <text x="70" y="116" class="sub">Metadata, dependency resolution, scanning, configuration, values, scope, and events become one container runtime.</text>
+  <rect x="78" y="210" width="170" height="96" class="box"/><text x="118" y="266" class="label">3. Definition</text>
+  <rect x="306" y="210" width="170" height="96" class="box"/><text x="335" y="266" class="label">4. Injection</text>
+  <rect x="534" y="210" width="170" height="96" class="box"/><text x="578" y="266" class="label">5. Scan</text>
+  <rect x="762" y="210" width="190" height="96" class="box"/><text x="788" y="266" class="label">6. Configuration</text>
+  <rect x="1010" y="210" width="182" height="96" class="box"/><text x="1055" y="266" class="label">7. Values</text>
+  <rect x="420" y="438" width="200" height="96" class="box"/><text x="468" y="494" class="label">8. Scope</text>
+  <rect x="664" y="438" width="200" height="96" class="box"/><text x="713" y="494" class="label">Events</text>
+  <path d="M248 258 L306 258" class="arrow"/><path d="M476 258 L534 258" class="arrow"/><path d="M704 258 L762 258" class="arrow"/><path d="M952 258 L1010 258" class="arrow"/>
+  <path d="M602 306 L520 438" class="arrow"/><path d="M838 306 L764 438" class="arrow"/>
+  <rect x="214" y="600" width="848" height="62" class="box"/>
+  <text x="250" y="639" class="body">Reading cue: later features in the book assume the container can first describe, then create, then manage objects.</text>
+</svg>

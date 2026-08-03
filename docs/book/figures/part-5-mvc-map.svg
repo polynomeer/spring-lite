@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Part 5 MVC Map</title>
+  <desc id="desc">Overview of dispatcher, argument resolution, response rendering, exception handling, and validation topics.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop offset="0%" stop-color="#eef3fb"/><stop offset="100%" stop-color="#dde7fa"/></linearGradient>
+    <style>.title{font:700 34px Arial,sans-serif;fill:#233b63}.sub{font:500 18px Arial,sans-serif;fill:#58729d}.box{fill:#fbfdff;stroke:#233b63;stroke-width:2.5;rx:18;ry:18}.label{font:700 21px Arial,sans-serif;fill:#233b63}.body{font:500 17px Arial,sans-serif;fill:#465a7b}.arrow{stroke:#233b63;stroke-width:3;fill:none;marker-end:url(#a)}</style>
+    <marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#233b63"/></marker>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <text x="70" y="84" class="title">Part 5. MVC Pipeline Roadmap</text>
+  <text x="70" y="116" class="sub">A web request becomes a typed method call, then a structured response, through staged interpretation.</text>
+  <rect x="88" y="230" width="214" height="96" class="box"/><text x="124" y="286" class="label">17. Dispatcher</text>
+  <rect x="362" y="230" width="214" height="96" class="box"/><text x="388" y="286" class="label">18. Arguments</text>
+  <rect x="636" y="230" width="214" height="96" class="box"/><text x="661" y="286" class="label">19. Response/Error</text>
+  <rect x="910" y="230" width="214" height="96" class="box"/><text x="932" y="286" class="label">20. Conditions/Valid</text>
+  <path d="M302 278 L362 278" class="arrow"/><path d="M576 278 L636 278" class="arrow"/><path d="M850 278 L910 278" class="arrow"/>
+  <rect x="194" y="470" width="908" height="118" class="box"/>
+  <text x="230" y="520" class="label">Reading cue</text>
+  <text x="230" y="556" class="body">Every 404, 400, and 500 in this part reflects a different stage of the same request pipeline.</text>
+</svg>

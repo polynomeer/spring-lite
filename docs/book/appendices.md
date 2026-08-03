@@ -251,9 +251,13 @@
 
 | 그림 번호 | 파일 | 설명 |
 | --- | --- | --- |
+| 그림 2-1 | `docs/book/figures/part-2-container-map.svg` | Part 2 전체의 IoC 컨테이너 확장 순서 |
 | 그림 3-1 | `docs/book/figures/container-metadata-lifecycle.svg` | 빈 정의 수집, 생성 전략 선택, 초기화, 싱글톤 캐시까지의 컨테이너 기본 흐름 |
+| 그림 4-1 | `docs/book/figures/part-4-aop-tx-map.svg` | 프록시, 인터셉터, AOP, 트랜잭션 정책으로 이어지는 호출 경계 로드맵 |
 | 그림 15-1 | `docs/book/figures/transaction-boundary.svg` | 프록시 기반 선언형 트랜잭션 호출 경계 |
+| 그림 5-1 | `docs/book/figures/part-5-mvc-map.svg` | 요청 해석, 응답 모델, 검증을 포함한 MVC 로드맵 |
 | 그림 17-1 | `docs/book/figures/dispatcher-pipeline.svg` | `DispatcherServlet` 중심 MVC 파이프라인과 404/400/500 분기 |
+| 그림 6-1 | `docs/book/figures/part-6-integration-map.svg` | JDBC, 예제 앱, Boot, 테스트 지원으로 이어지는 통합 로드맵 |
 | 그림 21-1 | `docs/book/figures/jdbc-template-skeleton.svg` | `JdbcTemplate`의 불변 실행 골격과 트랜잭션 커넥션 재사용 |
 | 그림 23-1 | `docs/book/figures/boot-orchestration.svg` | `SpringLiteApplication.run()`의 부트스트랩 조립 순서 |
 | 그림 24-1 | `docs/book/figures/test-extension-lifecycle.svg` | `SpringLiteTestExtension`의 컨텍스트/트랜잭션 라이프사이클 |
