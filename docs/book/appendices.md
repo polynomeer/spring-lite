@@ -238,6 +238,100 @@
 - `spring-lite`에서 추적할 메서드:
   - `BootInfrastructureRegistrar.registerDefaults(...)`
   - `isBeanEligible(...)`
+
+## Appendix F. 용어집
+
+이 부록은 책 전체에서 반복되는 핵심 용어를 같은 의미로 읽도록 돕기 위한 최소 용어집이다.
+
+### BeanDefinition
+
+빈 인스턴스 자체가 아니라, 빈을 어떻게 만들지 설명하는 메타데이터다. 이름, 타입, 생성 전략, 스코프, 한정자 같은 정보를 담는다.
+
+### Bean Registry
+
+빈 정의를 등록하고 조회하는 저장소다. 인스턴스 캐시와 구분해서 보는 것이 중요하다.
+
+### Dependency Resolution
+
+생성자나 메서드 파라미터를 보고 어떤 빈을 연결할지 결정하는 과정이다. 타입 탐색, 한정자 선택, 실패 전략이 모두 여기에 속한다.
+
+### Bean Lifecycle
+
+인스턴스 생성, 의존성 주입, 초기화, 후처리, 소멸까지 이어지는 전체 흐름이다.
+
+### BeanPostProcessor
+
+생성된 빈에 초기화 전후로 개입해 변경하거나 감쌀 수 있게 하는 확장 포인트다. 프록시 적용의 핵심 관문이다.
+
+### Proxy
+
+원본 객체 대신 앞단에 배치되어 메서드 호출 경계에 개입하는 객체다. AOP와 선언형 트랜잭션이 여기에 의존한다.
+
+### Advice / Interceptor
+
+메서드 호출 전후 또는 도중에 실행되는 공통 관심사 로직이다. `spring-lite`에서는 인터셉터 체인 중심으로 설명한다.
+
+### Dispatcher
+
+HTTP 요청을 컨트롤러 메서드 실행으로 번역하는 조정자다. 매핑, 인자 구성, 예외 처리, 응답 변환을 통합한다.
+
+### Transaction Boundary
+
+트랜잭션이 시작되고 끝나는 호출 경계다. 선언형 트랜잭션에서는 대개 프록시가 이 경계를 만든다.
+
+### Propagation
+
+이미 열린 트랜잭션이 있을 때 새 호출이 그 문맥에 참여할지, 새 문맥을 만들지 정하는 규칙이다.
+
+### Auto-configuration
+
+사용자 설정과 클래스패스 상태를 보고 적절한 기본 빈을 자동으로 조립하는 부트스트랩 계층이다.
+
+## Appendix G. 실제 Spring 공식 문서와 병행 읽기
+
+이 책은 `spring-lite` 구현을 중심에 두지만, 실제 Spring 학습 효과를 높이려면 공식 문서를 Part 단위로 병행하는 편이 좋다.
+
+### Part 1~2를 읽을 때
+
+- Spring Framework Reference의 Core, IoC Container, Bean Overview, Classpath Scanning 관련 장을 함께 본다.
+- 목표:
+  - 공식 용어와 책의 용어를 일치시키기
+  - 빈 정의, 컨테이너, 스캔, Java Config가 어디까지 표준 개념인지 확인하기
+
+### Part 3을 읽을 때
+
+- Bean lifecycle callbacks, BeanPostProcessor, container extension points 관련 문서를 함께 본다.
+- 목표:
+  - 라이프사이클과 후처리기가 어디서 개입하는지 공식 용어로 다시 확인하기
+  - 학습용 단순화와 실제 확장 포인트의 차이를 파악하기
+
+### Part 4를 읽을 때
+
+- Spring AOP와 transaction management 문서를 병행한다.
+- 목표:
+  - 프록시 기반 AOP의 전제와 한계를 공식 설명으로 재확인하기
+  - propagation, rollback rule, self-invocation 주의를 실제 문서 표현으로 익히기
+
+### Part 5를 읽을 때
+
+- Spring MVC, annotated controllers, method arguments, exception handling 문서를 함께 본다.
+- 목표:
+  - `DispatcherServlet` 중심 파이프라인을 실제 전략 인터페이스 관점에서 확장해 읽기
+  - 인자 해석기, 메시지 변환기, 예외 처리기 계층을 공식 문서 언어로 다시 정리하기
+
+### Part 6~7을 읽을 때
+
+- Spring JDBC, Spring Boot externalized configuration, auto-configuration, testing support 문서를 함께 본다.
+- 목표:
+  - `spring-lite`의 단순화된 Boot 모델이 실제 Boot에서 어떻게 일반화되는지 비교하기
+  - 테스트 지원이 프레임워크 본체의 일부라는 관점을 공식 문서와 연결하기
+
+### 병행 읽기 원칙
+
+1. 공식 문서를 처음부터 끝까지 연속해서 읽으려 하지 않는다.
+2. 책에서 이미 구현한 주제와 대응되는 절만 골라 읽는다.
+3. 기능 사용법보다 용어와 책임 경계를 먼저 확인한다.
+4. 문서를 읽은 뒤에는 저장소 코드에서 대응 클래스를 바로 열어 본다.
   - 조건 메타데이터 해석 메서드
 - 실제 Spring에서 이어서 볼 클래스:
   - `AutoConfigurationImportSelector`

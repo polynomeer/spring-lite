@@ -19,6 +19,13 @@
 3. 실제 구현 코드를 추가한다.
 4. 다음 장을 위해 어떤 설계 여지를 남기는지 정리한다.
 
+또한 구현형 독서라고 해서 코드만 따라 적는 방식으로 읽지는 않는다. 각 장마다 아래 질문을 함께 유지하는 편이 좋다.
+
+1. 지금 추가하는 코드는 어떤 설계 문제를 해결하는가
+2. 이 단계에서 의도적으로 생략한 복잡성은 무엇인가
+3. 실패한다면 어떤 테스트나 어떤 예외로 드러나야 하는가
+4. 실제 Spring은 이 문제를 어디까지 더 일반화했는가
+
 이 문서는 현재 저장소의 실제 구현을 기준으로 작성했다. 따라서 본문에 실린 코드는 설명을 위해 일부 줄을 생략하더라도 구조와 책임은 실제 코드와 일치한다.
 
 ---
@@ -122,6 +129,12 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
 
 여기서 중요한 것은 아직 `new`를 거의 하지 않는다는 점이다. 지금 단계의 목적은 "정의가 먼저다"라는 축을 세우는 것이다.
 
+#### 실패로 확인할 포인트
+
+- 빈 정의 등록과 실제 인스턴스 생성 시점을 섞지 않았는가
+- 같은 이름의 정의가 중복 등록될 때 정책이 모호하지 않은가
+- `BeanDefinition`이 인스턴스 생성에 필요한 정보를 충분히 담고 있는가
+
 #### 클래스 구조 해설
 
 - `BeanDefinition`
@@ -156,6 +169,12 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
   - 설정 클래스라면 `registerBeanMethods(...)`까지 이어진다.
 
 독자가 이 흐름을 이해해야 하는 이유는 명확하다. 실제 Spring에서도 "후보 수집", "정의 생성", "추가 메타데이터 처리"는 같은 단계가 아니기 때문이다. build-along 책에서는 이 차이를 일찍부터 분명히 보여주는 편이 좋다.
+
+#### 실제 Spring과 바로 연결해 보기
+
+- `AnnotationConfigApplicationContext`
+- `BeanDefinitionRegistry`
+- `DefaultListableBeanFactory`
 
 ### Chapter 4. 생성자 선택과 의존성 해석
 
@@ -244,6 +263,12 @@ private Object createBean(String beanName, BeanDefinition beanDefinition) {
 
 이 장이 끝나면 컨테이너는 최소 생성자 주입을 수행할 수 있어야 한다.
 
+#### 실패로 확인할 포인트
+
+- 후보 빈이 없을 때 즉시 실패하는가
+- 같은 타입 후보가 여러 개인데 조용히 하나를 고르지 않는가
+- 순환 참조가 시작되면 생성 중 마커가 정확히 탐지하는가
+
 #### 메서드 구조 해설
 
 - `selectConstructor(...)`
@@ -280,6 +305,12 @@ private Object createBean(String beanName, BeanDefinition beanDefinition) {
 6. `finally`에서 생성 중 마커를 제거한다.
 
 이 순서가 중요한 이유는, 이후 라이프사이클과 프록시 장이 모두 4번 단계에 개입하기 때문이다. 즉, 지금은 단순 생성 메서드처럼 보여도 사실상 이후 모든 확장의 허브다.
+
+#### 실제 Spring과 바로 연결해 보기
+
+- `AbstractAutowireCapableBeanFactory.createBean(...)`
+- `ConstructorResolver`
+- `DefaultListableBeanFactory.resolveDependency(...)`
 
 ### Chapter 5. 컴포넌트 스캔
 
@@ -368,6 +399,18 @@ private void registerDiscoveredClass(Class<?> candidate) {
   - 책임: 메타 애너테이션까지 따라가며 관리 대상 여부를 판단한다.
   - 설계 이유: `@Service`와 `@Repository`도 결국 컴포넌트 후보이기 때문이다.
 
+#### 실패로 확인할 포인트
+
+- 패키지 경로는 맞는데 후보가 누락되는가
+- 메타 애너테이션을 놓쳐 `@Service`가 등록되지 않는가
+- JAR 환경과 디렉터리 환경에서 동작이 달라지는가
+
+#### 실제 Spring과 바로 연결해 보기
+
+- `ClassPathScanningCandidateComponentProvider`
+- `ClassPathBeanDefinitionScanner`
+- `AnnotatedBeanDefinitionReader`
+
 ### Chapter 6. `@Configuration`과 `@Bean`
 
 이 장의 테스트는 팩토리 메서드 빈을 직접 검증해야 한다.
@@ -418,6 +461,18 @@ private Object invokeFactoryMethod(BeanDefinition beanDefinition) {
     return ReflectionUtils.invoke(factoryMethod, configurationBean, arguments);
 }
 ```
+
+#### 실패로 확인할 포인트
+
+- 설정 클래스 자신이 아직 준비되지 않았는데 팩토리 메서드를 먼저 호출하지 않는가
+- `@Bean` 메서드 이름과 명시 이름 전략이 충돌하지 않는가
+- 설정 메서드 의존성도 동일한 해석 규칙을 따르는가
+
+#### 실제 Spring과 바로 연결해 보기
+
+- `ConfigurationClassPostProcessor`
+- `ConfigurationClassBeanDefinitionReader`
+- `BeanMethod`
 
 이제 컨테이너는 컴포넌트 스캔과 명시적 설정 메서드를 같은 파이프라인 안에서 처리할 수 있다.
 
