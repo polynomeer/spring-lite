@@ -215,6 +215,8 @@ Part 2부터는 이 큰 그림의 바닥인 IoC 컨테이너부터 직접 구현
 
 _그림 3-1. 빈 정의 수집에서 싱글톤 캐시 저장까지 이어지는 컨테이너 기본 흐름_
 
+이후 Chapter 4에서 생성자 선택과 의존성 해석을 읽을 때도 다시 그림 3-1을 떠올리면 좋다. 지금 보는 분기들은 모두 이 큰 컨테이너 생성 흐름의 중간 단계에 놓여 있다.
+
 ```java
 public final class BeanDefinition {
     public enum Kind {
@@ -1223,6 +1225,8 @@ sequenceDiagram
 
 _그림 15-1. 프록시 기반 선언형 트랜잭션 경계와 호출 흐름_
 
+특히 self-invocation 문제를 이해할 때는 그림 15-1에서 `Caller -> Proxy -> Interceptor`로 이어지는 앞단 경로가 왜 필수인지 다시 보는 편이 좋다. 이 경로가 끊기는 순간 선언형 트랜잭션도 함께 사라진다.
+
 바로 아래 코드는 그 도식을 코드 수준으로 대응시킨다. 앞부분은 왜 이 빈이 프록시 대상인지 결정하고, 뒷부분은 실제 호출 경계에서 begin/commit/rollback을 수행한다.
 
 ```java
@@ -1420,6 +1424,8 @@ flowchart LR
 ![Dispatcher pipeline](./figures/dispatcher-pipeline.svg)
 
 _그림 17-1. 핸들러 선택, 인자 바인딩, 실행, 응답 렌더링으로 이어지는 MVC 파이프라인_
+
+이후 Chapter 18에서 인자 해석기를, Chapter 19에서 예외 처리기를 읽을 때는 그림 17-1의 어느 단계에 해당하는지 계속 매칭해 보자. 그러면 웹 모듈의 각 클래스가 파이프라인의 어느 빈칸을 채우는지 더 빨리 보인다.
 
 ```java
 public DispatcherServlet(ApplicationContext applicationContext, JsonMapper jsonMapper) {
@@ -1766,6 +1772,8 @@ flowchart TD
 
 _그림 21-1. 트랜잭션 커넥션 참여를 포함한 `JdbcTemplate` 실행 골격_
 
+이 그림은 Chapter 22의 예제 앱을 읽을 때도 다시 중요해진다. 주문 생성 요청이 저장소까지 내려가면 결국 어떤 커넥션을 쓰는지, 트랜잭션 문맥에 어떻게 참여하는지가 여기서 결정된다.
+
 ```java
 public int update(String sql, Object... args) {
     try (
@@ -1928,6 +1936,8 @@ Spring Boot 공식 문서가 auto-configuration을 설명할 때 반복해서 �
 
 _그림 23-1. 설정 입력 수집부터 웹 서버 시작까지 이어지는 Boot 조립 순서_
 
+앞서 배운 컨테이너, AOP, MVC, JDBC가 어떻게 한 줄 진입점 뒤에 접히는지를 보고 싶다면 그림 23-1을 예제 앱 장과 함께 왕복해 읽는 것이 가장 효과적이다. Boot는 새로운 런타임을 만드는 것이 아니라, 이미 만든 조각들의 시작 순서를 표준화한다.
+
 아래 `run()` 코드는 Boot 장 전체의 축약판이라고 생각하면 좋다. 설정 입력을 모으고, 기본 인프라를 등록하고, 컨텍스트를 띄우고, 마지막에 웹 서버를 시작하는 순서가 한 메서드에 모여 있다.
 
 ```java
@@ -2000,6 +2010,8 @@ flowchart TB
 ![Test extension lifecycle](./figures/test-extension-lifecycle.svg)
 
 _그림 24-1. 컨텍스트 재사용, 테스트 주입, 트랜잭션 롤백을 포함한 테스트 확장 라이프사이클_
+
+그림 24-1을 기준으로 보면 테스트 지원도 결국은 또 하나의 오케스트레이션 계층이라는 점이 분명해진다. Boot가 애플리케이션 시작을 감쌌다면, 테스트 확장은 테스트 실행을 감싼다.
 
 아래 코드는 테스트 지원 장에서 가장 중요한 실행 경계를 보여 준다. 테스트 메서드 전에는 트랜잭션을 열고, 후에는 항상 롤백한다는 계약이 어디서 보장되는지 이 두 메서드가 드러낸다.
 
