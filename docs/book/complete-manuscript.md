@@ -687,6 +687,10 @@ void publishesRefreshAndCloseEvents() {
 
 `@PostConstruct`, `@PreDestroy`, `AutoCloseable` 지원은 이 흐름을 독자 눈앞에 드러낸다. 초기화와 파괴를 생성자 하나에 모두 넣지 않고, 컨테이너가 관리하는 생명주기 단계로 분리하는 이유가 명확해진다. 실제 Spring에서도 라이프사이클은 독립 주제로 다뤄질 만큼 중요하다. 프레임워크는 객체를 만드는 것뿐 아니라 "어떤 순서로 준비하고 정리할 것인가"를 관리하는 시스템이기 때문이다.
 
+여기서 특히 중요한 점은, 라이프사이클이 단순 편의 기능이 아니라 "안전한 개입 순서"를 정의한다는 사실이다. 예를 들어 어떤 빈이 외부 리소스에 연결을 맺어야 하고, 또 다른 후처리기가 그 빈을 프록시로 감싸야 한다면, 둘은 아무 순서로나 실행될 수 없다. 생성 직후에 필드 값이 아직 준비되지 않은 상태에서 초기화 로직이 먼저 실행되면 잘못된 연결이 만들어질 수 있고, 반대로 프록시 적용 전에 원본 객체를 다른 인프라가 붙잡아 버리면 이후의 선언형 기능이 기대대로 작동하지 않을 수 있다. 라이프사이클은 바로 이런 순서 문제를 프레임워크 차원에서 고정하는 계약이다.
+
+독자가 이 장에서 꼭 얻어야 할 감각은 "컨테이너가 빈을 소유한다"는 말의 구체적 의미다. 생성자를 호출하는 것만으로는 아직 소유가 완성되지 않는다. 의존성을 채우고, 후처리기를 통과시키고, 종료 시 정리 책임까지 예약해야 비로소 컨테이너 관리 객체라고 부를 수 있다. 실제 Spring에서 초기화 타이밍 문제, 프록시 적용 시점 문제, 종료 누락 문제를 디버깅할 때도 결국 이 소유권 모델을 다시 떠올리게 된다.
+
 ```java
 private Object initializeBean(String beanName, Object bean) {
     injectFieldValues(bean);
@@ -730,6 +734,8 @@ void invokesLifecycleCallbacksInOrder() {
 ```
 
 그리고 `initializeBean()` 하나만으로 끝내지 말고, 종료 콜백 등록까지 이어지는 구조를 함께 따라가게 하는 편이 좋다. 이 장에서 독자가 잡아야 할 핵심은 "생성 완료"와 "사용 가능"이 같지 않다는 사실이기 때문이다.
+
+또한 종료 단계는 학습용 구현에서 종종 가볍게 넘어가지만, 실무 감각을 만들기 위해서는 오히려 강조할 필요가 있다. 애플리케이션은 시작보다 종료에서 더 쉽게 무질서해진다. 커넥션 풀, 파일 핸들, 스케줄러, 백그라운드 스레드가 적절히 정리되지 않으면 운영 환경에서는 메모리 누수와 자원 잠김으로 이어진다. `@PreDestroy`와 `AutoCloseable`을 같은 타임라인 위에 올려놓는 이유는, 프레임워크가 시작과 종료를 하나의 생명주기 이야기로 묶어 관리해야 함을 보여 주기 위해서다.
 
 ### Chapter 10. `BeanPostProcessor`
 
@@ -1011,6 +1017,37 @@ Spring 공식 트랜잭션 문서는 "애너테이션을 붙이면 된다"는 �
 
 이 장을 읽으며 독자는 선언형 트랜잭션의 장점과 한계를 동시에 잡아야 한다. 장점은 비즈니스 코드에서 기술 코드를 밀어내고 경계를 선언적으로 표현할 수 있다는 점이다. 한계는 그 선언이 결국 프록시 경유 호출에 의존한다는 점이다. 실무에서 Spring을 잘 활용하는 사람은 이 두 가지를 함께 기억한다. 편의만 보고 과신하지도 않고, 내부 구조를 안다고 해서 불필요하게 모든 것을 수동 트랜잭션으로 되돌리지도 않는다. 중요한 것은 어떤 경계에서는 선언형이 최적이고, 어떤 경계에서는 더 명시적인 제어가 낫다는 판단을 구조적으로 내릴 수 있는가다.
 
+트랜잭션을 더 깊게 이해하려면 "무엇이 선언이고 무엇이 실행인가"를 구분해서 보아야 한다. `@Transactional`은 메서드 선언에 붙어 있지만, 그 자체로는 아무 일도 하지 않는다. 선언은 단지 메타데이터다. 실제 실행은 프록시가 호출을 가로채고, 인터셉터가 트랜잭션 매니저를 호출하며, 매니저가 현재 스레드의 연결 상태를 바꾸는 단계에서 일어난다. 이 구분이 명확해지면, 왜 같은 애너테이션이 붙어 있어도 호출 경로에 따라 결과가 달라질 수 있는지 자연스럽게 이해된다.
+
+실무에서 선언형 트랜잭션이 흔히 오해되는 이유도 여기에 있다. 많은 개발자가 애너테이션을 "속성"으로 받아들이지만, 프레임워크는 그것을 "호출 경계에 적용할 정책"으로 읽는다. 따라서 경계가 달라지면 의미도 달라진다. 컨트롤러에서 서비스로 진입할 때는 잘 동작하던 트랜잭션이 같은 클래스 내부 메서드 호출에서는 사라지는 이유, 동기 호출에서는 안전하던 트랜잭션이 새 스레드나 비동기 작업으로 넘어가면 끊어지는 이유가 모두 이 경계 개념에서 나온다.
+
+아래 그림은 책 전체에서 가장 자주 돌아가게 되는 트랜잭션 호출 흐름을 요약한다.
+
+```mermaid
+sequenceDiagram
+    participant Caller as Caller
+    participant Proxy as Transaction Proxy
+    participant TI as TransactionInterceptor
+    participant TM as TransactionManager
+    participant Target as Target Service
+    participant Repo as Repository
+    participant DB as Database
+
+    Caller->>Proxy: createOrder()
+    Proxy->>TI: invoke()
+    TI->>TM: begin()
+    TI->>Target: proceed()
+    Target->>Repo: save(...)
+    Repo->>DB: execute SQL
+    DB-->>Repo: result
+    Repo-->>Target: saved entity
+    Target-->>TI: return
+    TI->>TM: commit() or rollback()
+    TI-->>Caller: result or exception
+```
+
+이 도식의 핵심은 비즈니스 메서드가 트랜잭션을 직접 제어하지 않는다는 점이다. 타깃 서비스는 자신의 일만 하고, 경계 개시와 종료는 주변 인프라가 맡는다. 이것이 선언형 모델의 생산성이며, 동시에 호출 구조를 모르면 놓치기 쉬운 함정이기도 하다.
+
 ```java
 @Override
 public Object postProcessAfterInitialization(String beanName, Object bean) {
@@ -1160,6 +1197,26 @@ public class TransactionManager {
 이 장에서 독자가 특히 얻어야 할 감각은 "웹 프레임워크도 컨테이너처럼 단계적 해석기"라는 사실이다. 요청 URL 하나가 컨트롤러 메서드로 곧바로 점프하는 것이 아니라, 여러 전략 객체가 차례로 책임을 나누어 가진다. 따라서 웹 계층을 설계하거나 디버깅할 때도 한 번에 모든 것을 보려 하지 말고, 핸들러 선택, 인자 구성, 메서드 실행, 반환값 처리, 예외 변환이라는 연쇄를 따라가는 편이 정확하다. 이것은 MVC를 단순 라우터로 오해하지 않게 해 주는 중요한 시야다.
 
 Spring MVC 공식 문서가 `DispatcherServlet`을 가장 먼저 설명하는 이유도 똑같다. Spring MVC의 핵심은 컨트롤러 애너테이션 자체가 아니라, 중앙 서블릿이 공통 알고리즘을 소유하고 실제 작업을 여러 위임 컴포넌트에 분배한다는 구조다. 즉, `DispatcherServlet`은 단순 진입점이 아니라 "알고리즘은 공통으로 유지하고, 세부 전략은 바꿀 수 있게 한다"는 프레임워크 설계 원칙의 구현체다. `spring-lite-web`의 `HandlerMapping`, `HandlerAdapter`, argument resolver, return value handler 분해는 이 원칙을 가능한 한 작게 재현한 것이다.
+
+이 장은 독자가 MVC를 단순 라우터로 오해하는 습관을 끊어 주는 장이기도 하다. URL 하나가 컨트롤러 메서드 하나로 매핑된다는 표면만 보면 웹 프레임워크는 매우 단순해 보인다. 하지만 실제로는 "어떤 핸들러를 선택할지", "인자를 어떻게 구성할지", "본문과 쿼리 파라미터를 어떤 타입으로 변환할지", "예외를 어떤 응답으로 바꿀지"라는 여러 작은 판단이 연쇄적으로 쌓여 있다. `DispatcherServlet`은 이 연쇄를 소유하는 알고리즘 허브다.
+
+아래 흐름도를 보면 디스패처가 왜 Spring MVC의 중심인지 더 선명해진다.
+
+```mermaid
+flowchart LR
+    A["HTTP Request"] --> B["DispatcherServlet"]
+    B --> C["HandlerMapping"]
+    C --> D["HandlerMethod"]
+    D --> E["HandlerAdapter"]
+    E --> F["Argument Resolvers"]
+    F --> G["Controller Method"]
+    G --> H["Return Value Handler"]
+    H --> I["HTTP Response"]
+    E --> J["Exception Resolver"]
+    J --> I
+```
+
+이 구조를 머릿속에 두면 404, 400, 500의 의미도 더 정확해진다. 404는 대개 `HandlerMapping` 이전 또는 그 내부에서 핸들러를 찾지 못한 결과이고, 400은 인자 해석이나 검증 단계에서의 실패이며, 500은 컨트롤러 본문이나 예외 처리 정책에서 제어되지 않은 실패일 가능성이 높다. 즉, HTTP 상태 코드는 단순 숫자가 아니라 파이프라인 어느 계층에서 실패했는지 알려 주는 구조적 신호다.
 
 ```java
 public DispatcherServlet(ApplicationContext applicationContext, JsonMapper jsonMapper) {
@@ -1423,6 +1480,26 @@ JDBC 추상화의 가치를 제대로 이해하려면 "무엇을 숨기고 무�
 
 이 점은 실무에서 매우 중요하다. 상위 추상화가 제공하는 생산성은 분명하지만, 장애가 발생하면 결국 더 아래 계층의 현실을 마주하게 된다. 커넥션이 언제 열리고 닫히는지, 같은 트랜잭션 안에서 어떤 리소스가 공유되는지, 예외가 어디서 래핑되는지를 모르면 문제를 정확히 좁히기 어렵다. `JdbcTemplate`을 직접 구현해 보는 경험은 추상화 아래의 바닥을 다시 확인하게 해 주며, 이는 어떤 데이터 접근 기술을 사용하더라도 오래 남는 자산이 된다.
 
+템플릿 패턴의 교육적 가치도 여기서 드러난다. `JdbcTemplate`은 SQL을 대신 써 주지 않는다. 대신 SQL 실행을 둘러싼 불변 골격을 책임진다. 어떤 순서로 커넥션을 얻고, 파라미터를 바인딩하고, 실행 후 결과를 읽고, 예외를 공통 방식으로 감싸고, 자원을 정리할지를 프레임워크가 소유한다. 개발자는 그 골격 안에서 달라지는 부분만 공급한다. 이 분리는 Spring 전반에서 계속 반복되는 설계 철학이기도 하다.
+
+아래 도식은 update 호출 하나가 실제로 어떤 골격을 통과하는지 요약한다.
+
+```mermaid
+flowchart TD
+    A["JdbcTemplate.update(sql, args)"] --> B["obtainConnectionIfNeeded()"]
+    B --> C{"tx currentConnection exists?"}
+    C -- yes --> D["SingleConnectionProxy(current)"]
+    C -- no --> E["dataSource.getConnection()"]
+    D --> F["prepareStatement(sql)"]
+    E --> F
+    F --> G["bind(args)"]
+    G --> H["executeUpdate()"]
+    H --> I["wrap SQLException if needed"]
+    I --> J["close statement / close connection if standalone"]
+```
+
+이 흐름에서 중요한 분기는 `currentConnection` 존재 여부다. 트랜잭션이 이미 열려 있다면 JDBC 계층은 새 커넥션을 열어서는 안 된다. 같은 논리 작업 안에서 다른 커넥션을 열어 버리면, 호출자는 하나의 트랜잭션이라고 생각하지만 실제 DB 입장에서는 서로 다른 문맥으로 실행될 수 있다. `SingleConnectionProxy`는 이 오해를 막기 위해 등장한다. 닫기 호출을 가로채면서도 현재 트랜잭션 커넥션을 계속 재사용하게 만드는 장치다.
+
 ```java
 public int update(String sql, Object... args) {
     try (
@@ -1477,6 +1554,37 @@ void reusesCurrentTransactionConnection() {
 
 실무에서도 작은 예제 앱은 단순 튜토리얼을 넘어 아키텍처 설명 도구가 될 수 있다. 신규 팀원 온보딩, 장애 재현, 프레임워크 업그레이드 검증에 모두 도움이 된다. 이 책에서 예제 앱을 유지하는 이유도 마찬가지다. 설명은 말로 끝나지 않고, 동작하는 사례로 닫혀야 한다.
 
+예제 앱 장을 더 풍부하게 읽으려면, 각 계층을 "기능 구현"이 아니라 "앞 장의 구조가 실제로 만나는 접점"으로 보는 편이 좋다. 컨트롤러는 MVC 장의 산물이고, 서비스 프록시는 AOP/트랜잭션 장의 산물이며, 저장소는 JDBC 장의 산물이다. 예제 앱이 중요한 이유는 이 산물들이 하나의 요청 경로 안에서 충돌 없이 이어질 수 있음을 증명하기 때문이다. 설명만으로는 분리되어 있던 지식이, 주문 생성이라는 하나의 구체적 사건 안에서 비로소 런타임 이야기로 합쳐진다.
+
+```mermaid
+sequenceDiagram
+    participant Client as Client
+    participant DS as DispatcherServlet
+    participant OC as OrderController
+    participant SP as OrderService Proxy
+    participant TX as TransactionInterceptor
+    participant OS as OrderService Target
+    participant OR as OrderRepository
+    participant JT as JdbcTemplate
+    participant DB as Database
+
+    Client->>DS: POST /orders
+    DS->>OC: createOrder(request)
+    OC->>SP: createOrder(product, quantity)
+    SP->>TX: invoke()
+    TX->>OS: proceed()
+    OS->>OR: save(...)
+    OR->>JT: update/query
+    JT->>DB: SQL
+    DB-->>JT: rows
+    JT-->>OR: persisted order
+    OR-->>OS: Order
+    OS-->>TX: return
+    TX-->>OC: commit + result
+    OC-->>DS: Order
+    DS-->>Client: JSON response
+```
+
 ```java
 @RestController
 @RequestMapping("/orders")
@@ -1513,6 +1621,24 @@ public class DefaultOrderService implements OrderService {
 여기서 프로파일 대응 프로퍼티 로딩이 등장하면 Boot 계층의 설명력이 크게 올라간다. `application.yml`과 `application-{profile}.yml`이 병합되고, `spring.profiles.active`가 실행 환경에 따라 다른 조립 결과를 만든다는 사실은 실제 Spring Boot의 핵심 개념과도 닿아 있다.
 
 물론 실제 Spring Boot는 이보다 훨씬 더 크다. starter, 조건부 자동 설정, 방대한 환경 추상화, 내장 서버 생태계, 관측성, 운영 지원이 있다. 하지만 축소판이기 때문에 오히려 본질이 잘 보인다. 사용자가 한 줄로 애플리케이션을 시작한다는 사실 뒤에, 얼마나 많은 조립 논리가 숨어 있는지를 드러내는 것이 이 장의 목적이다.
+
+이 장에서 독자가 특히 붙잡아야 할 질문은 "누가 무엇을 기본값으로 결정하는가"다. 컨테이너를 직접 만들던 단계에서는 사용자가 많은 것을 수동으로 등록했다. 하지만 Boot 계층으로 오면 프레임워크가 대신 결정을 내리기 시작한다. 어떤 인프라를 기본으로 켤지, 어떤 빈이 없을 때만 대체 빈을 넣을지, 어떤 프로퍼티 파일을 어떤 순서로 병합할지, 서버는 언제 띄울지를 모두 부트스트랩 계층이 정한다. 생산성은 이 자동 결정에서 나오지만, 동시에 혼란도 여기서 시작된다.
+
+그래서 Boot 장은 편의 기능 소개가 아니라 "좋은 기본값의 구조"를 이해하는 장으로 읽어야 한다. 자동 설정은 마술이 아니라 조건 기반 조립 규칙이고, 프로파일은 환경에 따라 달라지는 입력값이며, `run()`은 그 규칙과 입력을 모아 한 번에 실행하는 진입점이다. 실제 Spring Boot가 방대한 이유도 결국 이 조립 규칙의 경우의 수가 매우 많기 때문이다.
+
+```mermaid
+flowchart TD
+    A["SpringLiteApplication.run()"] --> B["create AnnotationConfigApplicationContext"]
+    B --> C["load properties + active profiles"]
+    C --> D["register application config"]
+    D --> E["register boot infrastructure defaults"]
+    E --> F["refresh context"]
+    F --> G["discover DispatcherServlet / web beans"]
+    G --> H["start embedded server"]
+    H --> I["application ready"]
+```
+
+이 흐름도를 보면 Boot가 별도 마법 계층이 아니라, 기존에 만든 컨테이너와 웹 인프라를 "언제, 어떤 순서로, 어떤 기본값으로 조립할지"를 책임지는 오케스트레이션 계층이라는 점이 선명해진다. 즉, Boot의 핵심은 새 기능을 만드는 것이 아니라 기존 기능들의 시작 순서를 표준화하는 데 있다.
 
 부트스트랩 계층을 이해하는 일은 프레임워크의 사용성과 내부 복잡성이 어디서 만나는지 이해하는 일이기도 하다. 개발자는 `main()`에서 몇 줄만 쓰고 싶어 하지만, 그 몇 줄 뒤에는 설정 클래스 판별, 프로퍼티 병합, 인프라 빈 등록, 컨텍스트 refresh, 웹 서버 시작 같은 단계가 줄지어 있다. 좋은 부트스트랩 API는 이 복잡성을 감추되, 필요할 때는 각 단계를 다시 꺼내 볼 수 있게 해야 한다. `spring-lite-boot`는 바로 그 균형점을 작은 규모에서 보여준다.
 
@@ -1674,6 +1800,20 @@ flowchart TD
 ```
 
 이 그림은 실제 Spring이 더 많은 중간 단계를 갖고 있음에도, 큰 축에서는 `spring-lite`와 같은 질문을 푼다는 점을 보여 준다. 어떤 메타데이터를 먼저 준비할 것인가, 후처리기는 언제 등록할 것인가, 남은 싱글톤은 어느 시점에 일괄 생성할 것인가, 컨텍스트 완료 신호는 언제 발행할 것인가. 학습용 구현이 작다는 이유로 구조가 다른 것이 아니라, 같은 문제를 더 적은 단계로 압축해 둔 것이다.
+
+이 장에서는 독자가 비교표를 "같다/다르다" 수준에서 소비하지 않도록 만드는 것이 중요하다. 더 좋은 읽기 방식은 다음과 같다. 먼저 `spring-lite`에서 하나의 핵심 메서드를 고른다. 예를 들어 `createBean(...)`, `initializeBean(...)`, `DispatcherServlet.handle(...)`, `TransactionInterceptor.invoke(...)` 같은 메서드다. 그다음 실제 Spring에서 대응되는 클래스와 메서드로 이동한다. 이름은 다를 수 있지만, 대개 "메타데이터 준비", "확장 포인트 등록", "호출 경계 개입", "응답 변환"이라는 책임 축은 그대로 남아 있다. 이 경험을 몇 번 반복하면 방대한 Spring 코드베이스도 더 이상 무정형의 숲처럼 느껴지지 않는다.
+
+비교를 더 쉽게 하기 위해 아래처럼 책임 질문을 먼저 던지는 편이 좋다.
+
+```mermaid
+flowchart LR
+    A["spring-lite code"] --> B["책임 질문으로 환원"]
+    B --> C["실제 Spring 대응 클래스 찾기"]
+    C --> D["더 세분화된 추상화 읽기"]
+    D --> E["왜 복잡성이 늘었는지 해석"]
+```
+
+예를 들어 `spring-lite`의 `initializeBean(...)`을 본 뒤 실제 Spring의 초기화/후처리 단계를 보면, 처음에는 클래스 수가 많아 보여도 질문은 같다. "어느 시점에 후처리기가 끼어드는가", "프록시는 언제 원본을 대체하는가", "초기화 콜백은 전후 어디에 위치하는가" 같은 질문이다. 질문이 같다면 복잡성은 더 이상 무서운 덩어리가 아니라, 같은 문제를 더 일반화한 구조로 읽히기 시작한다.
 
 ### 클래스 대응 심화
 
