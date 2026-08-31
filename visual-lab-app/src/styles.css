@@ -1443,4 +1443,43 @@ code {
     grid-template-columns: 1fr;
     display: grid;
   }
+
+  .flow-compare-focus-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .flow-compare-disclosure-summary,
+  .flow-compare-head,
+  .lane-head {
+    align-items: start;
+  }
+}
+
+@media (max-width: 640px) {
+  .flow-compare-focus-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .flow-compare-disclosure-summary,
+  .flow-compare-head,
+  .lane-head,
+  .trace-step-top {
+    grid-template-columns: 1fr;
+    display: grid;
+    gap: 8px;
+  }
+
+  .flow-compare-disclosure-summary {
+    justify-content: start;
+  }
+
+  .flow-compare-badges,
+  .flow-compare-lane-meta,
+  .lane-focus-summary {
+    gap: 6px;
+  }
+
+  .flow-reference-checklist-head {
+    align-items: start;
+  }
 }
