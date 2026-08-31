@@ -44,6 +44,7 @@ interface TracePreviewProps {
     flowCompareSupportingSurface: string;
     flowCompareClassFocus: string;
     flowCompareMethodFocus: string;
+    flowCompareDocFocus: string;
     flowCompareReasonShape: string;
     flowCompareReasonRuntime: string;
     flowCompareReasonStatic: string;
@@ -362,6 +363,7 @@ export function TracePreview({ trace, baselineTrace, insight, runtimeDiffRows, r
                 supportingSurfaceLabel={labels.flowCompareSupportingSurface}
                 classFocusLabel={labels.flowCompareClassFocus}
                 methodFocusLabel={labels.flowCompareMethodFocus}
+                docFocusLabel={labels.flowCompareDocFocus}
                 reasonShapeLabel={labels.flowCompareReasonShape}
                 reasonRuntimeLabel={labels.flowCompareReasonRuntime}
                 reasonStaticLabel={labels.flowCompareReasonStatic}

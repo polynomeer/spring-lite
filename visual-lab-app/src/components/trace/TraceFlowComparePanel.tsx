@@ -1,5 +1,6 @@
 import type { LabTrace } from "../../lib/types";
 import { inferRelatedLaneKinds, isLaneRelatedToStep } from "./flow-linking";
+import { resolveFlowCodeFocus } from "./flow-code-map";
 
 interface TraceFlowComparePanelProps {
   locale: "ko" | "en";
@@ -19,6 +20,7 @@ interface TraceFlowComparePanelProps {
   supportingSurfaceLabel: string;
   classFocusLabel: string;
   methodFocusLabel: string;
+  docFocusLabel: string;
   reasonShapeLabel: string;
   reasonRuntimeLabel: string;
   reasonStaticLabel: string;
@@ -47,48 +49,6 @@ function compareStepState(liveTrace: LabTrace, staticTrace: LabTrace, index: num
   };
 }
 
-function classNameFromReference(reference: string) {
-  const name = reference.split("/").pop() ?? reference;
-  return name.replace(/\.java$|\.md$/g, "");
-}
-
-function inferMethodFocus(reference: string, marker: string | undefined, locale: "ko" | "en") {
-  const lower = reference.toLowerCase();
-  const markerText = (marker ?? "").toLowerCase();
-
-  if (lower.includes("controller")) {
-    if (markerText.includes("getorder") || markerText.includes("select")) {
-      return "getOrder(...)";
-    }
-    return "createOrder(...)";
-  }
-  if (lower.includes("service")) {
-    if (markerText.includes("rollback")) {
-      return "createOrderAndFail(...)";
-    }
-    if (markerText.includes("throw") || markerText.includes("getorder")) {
-      return "failForLab(...) / getOrder(...)";
-    }
-    return "createOrder(...)";
-  }
-  if (lower.includes("repository") || lower.includes("jdbc")) {
-    if (markerText.includes("select")) {
-      return "findById(...)";
-    }
-    return "save(...)";
-  }
-  if (lower.includes("transaction")) {
-    if (markerText.includes("rollback")) {
-      return "invoke(...) -> rollback()";
-    }
-    if (markerText.includes("commit")) {
-      return "invoke(...) -> commit()";
-    }
-    return locale === "ko" ? "postProcessAfterInitialization(...) / invoke(...)" : "postProcessAfterInitialization(...) / invoke(...)";
-  }
-  return locale === "ko" ? "관련 진입 메서드 추적" : "trace the related entry method";
-}
-
 export function TraceFlowComparePanel({
   locale,
   title,
@@ -107,6 +67,7 @@ export function TraceFlowComparePanel({
   supportingSurfaceLabel,
   classFocusLabel,
   methodFocusLabel,
+  docFocusLabel,
   reasonShapeLabel,
   reasonRuntimeLabel,
   reasonStaticLabel,
@@ -148,13 +109,15 @@ export function TraceFlowComparePanel({
           : isTx
             ? locale === "ko" ? "트랜잭션 경계와 프록시 동작" : "Transactional boundary and proxy behavior"
             : locale === "ko" ? "이 시나리오의 참고 코드 표면" : "Reference surface for this scenario";
+    const resolvedFocus = resolveFlowCodeFocus(reference, live.step?.marker ?? baseline.step?.marker, activeKinds, locale);
 
     return {
       reference,
-      note,
+      note: locale === "ko" ? resolvedFocus.noteKo : resolvedFocus.noteEn,
       isPrimary,
-      classFocus: classNameFromReference(reference),
-      methodFocus: inferMethodFocus(reference, live.step?.marker ?? baseline.step?.marker, locale)
+      classFocus: resolvedFocus.classFocus,
+      methodFocus: resolvedFocus.methodFocus,
+      docFocus: resolvedFocus.docFocus
     };
   });
 
@@ -272,6 +235,7 @@ export function TraceFlowComparePanel({
                 <div className="flow-reference-focus">
                   <span className="status-pill neutral">{classFocusLabel} {card.classFocus}</span>
                   <span className="status-pill info">{methodFocusLabel} {card.methodFocus}</span>
+                  <span className="status-pill warning">{docFocusLabel} {card.docFocus}</span>
                 </div>
                 <p><code>{card.reference}</code></p>
               </div>

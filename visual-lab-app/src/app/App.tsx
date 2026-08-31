@@ -660,6 +660,7 @@ export function App() {
                 flowCompareSupportingSurface: text.flowCompareSupportingSurface,
                 flowCompareClassFocus: text.flowCompareClassFocus,
                 flowCompareMethodFocus: text.flowCompareMethodFocus,
+                flowCompareDocFocus: text.flowCompareDocFocus,
                 flowCompareReasonShape: text.flowCompareReasonShape,
                 flowCompareReasonRuntime: text.flowCompareReasonRuntime,
                 flowCompareReasonStatic: text.flowCompareReasonStatic,

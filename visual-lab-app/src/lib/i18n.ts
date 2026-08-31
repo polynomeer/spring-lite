@@ -128,6 +128,7 @@ export interface UiText {
   flowCompareSupportingSurface: string;
   flowCompareClassFocus: string;
   flowCompareMethodFocus: string;
+  flowCompareDocFocus: string;
   flowCompareReasonShape: string;
   flowCompareReasonRuntime: string;
   flowCompareReasonStatic: string;
@@ -282,6 +283,7 @@ const uiTextByLocale: Record<Locale, UiText> = {
     flowCompareSupportingSurface: "supporting surface",
     flowCompareClassFocus: "class focus",
     flowCompareMethodFocus: "method focus",
+    flowCompareDocFocus: "doc focus",
     flowCompareReasonShape: "The two traces do not expose the same number of steps at this position, so the comparison is aligning the nearest matching stage.",
     flowCompareReasonRuntime: "The live run captures runtime-specific verification or observed values that the static baseline compresses into a simpler teaching step.",
     flowCompareReasonStatic: "The static baseline keeps the concept compact, while the live trace expands details such as verification or extra lane events.",
@@ -434,6 +436,7 @@ const uiTextByLocale: Record<Locale, UiText> = {
     flowCompareSupportingSurface: "보조 추적 코드",
     flowCompareClassFocus: "클래스 포커스",
     flowCompareMethodFocus: "메서드 포커스",
+    flowCompareDocFocus: "문서 포커스",
     flowCompareReasonShape: "두 trace가 이 위치에서 같은 개수의 단계를 노출하지 않기 때문에, 비교는 가장 가까운 대응 단계를 기준으로 정렬됩니다.",
     flowCompareReasonRuntime: "live 실행은 정적 기준선이 축약한 단계를 실제 검증 단계나 관찰된 값까지 포함해 더 자세히 보여줍니다.",
     flowCompareReasonStatic: "static 기준선은 개념을 짧게 유지하고, live trace는 검증 단계나 lane 이벤트 같은 세부 정보를 더 펼쳐 보여줍니다.",
