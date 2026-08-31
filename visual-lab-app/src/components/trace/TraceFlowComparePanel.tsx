@@ -25,6 +25,7 @@ interface TraceFlowComparePanelProps {
   testMethodFocusLabel: string;
   assertionFocusLabel: string;
   checklistLabel: string;
+  sequenceLabel: string;
   reasonShapeLabel: string;
   reasonRuntimeLabel: string;
   reasonStaticLabel: string;
@@ -76,6 +77,7 @@ export function TraceFlowComparePanel({
   testMethodFocusLabel,
   assertionFocusLabel,
   checklistLabel,
+  sequenceLabel,
   reasonShapeLabel,
   reasonRuntimeLabel,
   reasonStaticLabel,
@@ -253,10 +255,23 @@ export function TraceFlowComparePanel({
                 </div>
                 <p>{assertionFocusLabel} {card.assertionFocus}</p>
                 <div className="flow-reference-checklist">
-                  <strong>{checklistLabel}</strong>
-                  {card.checklist.map((item) => (
-                    <p key={`${card.reference}-${item}`}>{item}</p>
-                  ))}
+                  <div className="flow-reference-checklist-head">
+                    <strong>{checklistLabel}</strong>
+                    <span className="status-pill neutral">{sequenceLabel} {card.checklist.length}</span>
+                  </div>
+                  <div className="flow-reference-checklist-steps">
+                    {card.checklist.map((item, checklistIndex) => (
+                      <div
+                        className={checklistIndex === 0 ? "flow-reference-checklist-step active" : "flow-reference-checklist-step"}
+                        key={`${card.reference}-${item}`}
+                      >
+                        <span className={checklistIndex === 0 ? "status-pill success" : "status-pill info"}>
+                          {String(checklistIndex + 1).padStart(2, "0")}
+                        </span>
+                        <p>{item}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <p><code>{card.reference}</code></p>
               </div>

@@ -904,10 +904,38 @@ code {
 
 .flow-reference-checklist {
   display: grid;
-  gap: 4px;
+  gap: 10px;
 }
 
-.flow-reference-checklist p {
+.flow-reference-checklist-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.flow-reference-checklist-steps {
+  display: grid;
+  gap: 8px;
+}
+
+.flow-reference-checklist-step {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(37, 197, 97, 0.12);
+  background: rgba(10, 16, 11, 0.88);
+}
+
+.flow-reference-checklist-step.active {
+  border-color: rgba(200, 255, 121, 0.22);
+  background: rgba(17, 29, 17, 0.96);
+}
+
+.flow-reference-checklist-step p {
   margin: 0;
   color: var(--muted);
 }
