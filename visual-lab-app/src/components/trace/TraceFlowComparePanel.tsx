@@ -192,16 +192,16 @@ export function TraceFlowComparePanel({
           <strong>{briefingLabel}</strong>
           {live.step ? <span className="status-pill info">{live.step.marker}</span> : null}
         </div>
-        <div className="metric-mini-grid">
-          <div className="metric-mini">
+        <div className="metric-mini-grid flow-compare-briefing-grid">
+          <div className="metric-mini flow-compare-briefing-card">
             <span>{watchLabel}</span>
             <strong>{liveTrace.snapshot.watch}</strong>
           </div>
-          <div className="metric-mini">
+          <div className="metric-mini flow-compare-briefing-card">
             <span>{whyLabel}</span>
             <strong>{briefingWhy}</strong>
           </div>
-          <div className="metric-mini">
+          <div className="metric-mini flow-compare-briefing-card">
             <span>{nextLabel}</span>
             <strong>{briefingNext}</strong>
           </div>
