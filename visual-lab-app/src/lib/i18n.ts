@@ -75,6 +75,10 @@ export interface UiText {
   rerunHint: string;
   resultGuide: string;
   resultGuideBody: string;
+  traceNarrative: string;
+  traceNarrativeMode: string;
+  traceNarrativeBranch: string;
+  traceNarrativeNext: string;
   lastSuccessfulRun: string;
   projectLayout: string;
   frontendStructure: string;
@@ -190,6 +194,10 @@ const uiTextByLocale: Record<Locale, UiText> = {
     rerunHint: "Selection changed. Run again to refresh the result.",
     resultGuide: "Result Guide",
     resultGuideBody: "Start with the conclusion card, then inspect the flow panels only where the branch changes.",
+    traceNarrative: "Trace Narrative",
+    traceNarrativeMode: "Mode reading",
+    traceNarrativeBranch: "Branch meaning",
+    traceNarrativeNext: "Next comparison",
     lastSuccessfulRun: "Last successful run",
     projectLayout: "Project Layout",
     frontendStructure: "Frontend Structure",
@@ -303,6 +311,10 @@ const uiTextByLocale: Record<Locale, UiText> = {
     rerunHint: "선택이 바뀌었습니다. 결과를 갱신하려면 다시 실행하세요.",
     resultGuide: "결과 읽기 가이드",
     resultGuideBody: "결론 카드를 먼저 읽고, 분기가 바뀌는 지점만 흐름 패널에서 확인하세요.",
+    traceNarrative: "Trace 내러티브",
+    traceNarrativeMode: "모드 해석",
+    traceNarrativeBranch: "분기 의미",
+    traceNarrativeNext: "다음 비교",
     lastSuccessfulRun: "마지막 성공 실행",
     projectLayout: "프로젝트 구조",
     frontendStructure: "프런트엔드 구조",

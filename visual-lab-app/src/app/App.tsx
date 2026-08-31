@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { TracePreview } from "../components/trace/TracePreview";
+import { TraceNarrativePanel } from "../components/trace/TraceNarrativePanel";
 import { adaptTrace } from "../features/trace-adapters";
 import { useLabTrace } from "../hooks/useLabTrace";
 import {
@@ -150,6 +151,28 @@ export function App() {
     queryLocked: "// LEARNING CONTROLS",
     ...dynamicConsoleText
   };
+
+  const narrativeTone = traceStatus?.tone ?? (traceError ? "error" : "info");
+  const narrativeTitle = traceStatus?.label ?? (traceError ? text.traceLoadingFailed : text.tracePipelineReady);
+  const narrativeSummary = traceError
+    ? displayError ?? pipelineDetail
+    : localizedTrace
+      ? localizedTrace.summary
+      : pipelineDetail;
+  const narrativeModeDetail = executedRequest.mode === "live"
+    ? locale === "ko"
+      ? `현재 결과는 live provider 기준입니다. API 응답과 실제 런타임 상태를 따라가며, endpoint는 ${endpointLabel} 입니다.`
+      : `This result comes from the live provider. It follows API-backed runtime output, and the endpoint is ${endpointLabel}.`
+    : locale === "ko"
+      ? "현재 결과는 static replay 기준입니다. 미리 정규화된 trace를 통해 개념을 안정적으로 학습하는 데 적합합니다."
+      : "This result comes from the static replay provider. It is optimized for stable concept learning through normalized traces.";
+  const narrativeBranchDetail = traceStatus
+    ? `${traceStatus.detail} ${locale === "ko" ? "현재 시나리오:" : "Current scenario:"} ${executedRequest.labId}:${executedRequest.scenario}.`
+    : pipelineDetail;
+  const narrativeNextDetail = localizedTrace?.snapshot.next
+    ?? (locale === "ko"
+      ? "다음 단계에서는 흐름 탭에서 step replay를 실행하고, references 탭에서 관련 문서를 함께 보세요."
+      : "Next, run the step replay in the flow tab and open the related references side by side.");
 
   function difficultyLabel(level: string) {
     if (level === "beginner") {
@@ -445,6 +468,19 @@ export function App() {
                   </div>
                 </div>
               ) : null}
+
+              <TraceNarrativePanel
+                eyebrow={text.traceNarrative}
+                title={narrativeTitle}
+                summary={narrativeSummary}
+                modeLabel={text.traceNarrativeMode}
+                branchLabel={text.traceNarrativeBranch}
+                nextStepLabel={text.traceNarrativeNext}
+                modeDetail={narrativeModeDetail}
+                branchDetail={narrativeBranchDetail}
+                nextStepDetail={narrativeNextDetail}
+                tone={narrativeTone}
+              />
 
               <label className="field">
                 <span>{text.requestPayload}</span>
