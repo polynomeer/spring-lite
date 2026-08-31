@@ -30,10 +30,18 @@ export interface TraceExecutionPathDiagram {
   branches: TraceDiagramBranchOption[];
 }
 
+export interface TraceStateTransitionDiagram {
+  title: string;
+  subtitle: string;
+  states: TraceDiagramNode[];
+  sideEffects: TraceDiagramBranchOption[];
+}
+
 export interface TraceAdapterResult {
   accent: string;
   insight: TraceInsight;
   executionPath?: TraceExecutionPathDiagram;
+  stateTransition?: TraceStateTransitionDiagram;
 }
 
 export interface TraceAdapter {

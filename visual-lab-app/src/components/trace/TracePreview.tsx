@@ -8,6 +8,7 @@ import { TraceLanesPanel } from "./TraceLanesPanel";
 import { TraceMetricsPanel } from "./TraceMetricsPanel";
 import { TraceReferencesPanel } from "./TraceReferencesPanel";
 import { TraceSnapshotPanel } from "./TraceSnapshotPanel";
+import { TraceStateTransitionPanel } from "./TraceStateTransitionPanel";
 import { TraceStepsPanel } from "./TraceStepsPanel";
 
 interface TracePreviewProps {
@@ -18,6 +19,9 @@ interface TracePreviewProps {
     executionPath: string;
     activePath: string;
     alternatePath: string;
+    stateTransition: string;
+    primaryLifecycle: string;
+    sideEffects: string;
     overview: string;
     flowView: string;
     flowTimeline: string;
@@ -95,6 +99,14 @@ export function TracePreview({ trace, insight, runSequence, loading, locale, lab
                 executionPathLabel={labels.executionPath}
                 activePathLabel={labels.activePath}
                 alternatePathLabel={labels.alternatePath}
+              />
+            ) : null}
+            {insight?.stateTransition ? (
+              <TraceStateTransitionPanel
+                diagram={insight.stateTransition}
+                stateTransitionLabel={labels.stateTransition}
+                primaryLifecycleLabel={labels.primaryLifecycle}
+                sideEffectLabel={labels.sideEffects}
               />
             ) : null}
             <TraceMetricsPanel trace={trace} locale={locale} loadedTraceLabel={labels.loadedTrace} />

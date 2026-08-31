@@ -83,6 +83,9 @@ export interface UiText {
   executionPath: string;
   activePath: string;
   alternatePath: string;
+  stateTransition: string;
+  primaryLifecycle: string;
+  sideEffects: string;
   overview: string;
   flowView: string;
   flowTimeline: string;
@@ -184,6 +187,9 @@ const uiTextByLocale: Record<Locale, UiText> = {
     executionPath: "Execution Path",
     activePath: "active path",
     alternatePath: "alternate path",
+    stateTransition: "State Transition",
+    primaryLifecycle: "primary lifecycle",
+    sideEffects: "side effects",
     overview: "Overview",
     flowView: "Flow",
     flowTimeline: "Flow Timeline",
@@ -283,6 +289,9 @@ const uiTextByLocale: Record<Locale, UiText> = {
     executionPath: "실행 경로",
     activePath: "실제 실행 경로",
     alternatePath: "대체 분기",
+    stateTransition: "상태 전이",
+    primaryLifecycle: "주요 생명주기",
+    sideEffects: "부가 효과",
     overview: "개요",
     flowView: "흐름",
     flowTimeline: "흐름 타임라인",
