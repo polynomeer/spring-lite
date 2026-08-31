@@ -890,6 +890,12 @@ code {
   gap: 14px;
 }
 
+.flow-reference-card,
+.flow-reference-head {
+  display: grid;
+  gap: 8px;
+}
+
 .runtime-diff-row {
   display: grid;
   grid-template-columns: minmax(180px, 1.3fr) minmax(0, 1fr) minmax(0, 1fr);

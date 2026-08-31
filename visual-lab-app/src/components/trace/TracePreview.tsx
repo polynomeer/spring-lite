@@ -40,6 +40,8 @@ interface TracePreviewProps {
     flowCompareEventCountDiff: string;
     flowCompareWhyDiffers: string;
     flowCompareInspectCode: string;
+    flowComparePrimarySurface: string;
+    flowCompareSupportingSurface: string;
     flowCompareReasonShape: string;
     flowCompareReasonRuntime: string;
     flowCompareReasonStatic: string;
@@ -341,6 +343,7 @@ export function TracePreview({ trace, baselineTrace, insight, runtimeDiffRows, r
             ) : null}
             {flowSource === "split" && baselineTrace ? (
               <TraceFlowComparePanel
+                locale={locale}
                 title={labels.flowTimeline}
                 currentRunLabel={labels.focusCurrentRun}
                 staticBaselineLabel={labels.focusStaticBaseline}
@@ -353,6 +356,8 @@ export function TracePreview({ trace, baselineTrace, insight, runtimeDiffRows, r
                 eventCountDiffLabel={labels.flowCompareEventCountDiff}
                 whyDiffersLabel={labels.flowCompareWhyDiffers}
                 inspectCodeLabel={labels.flowCompareInspectCode}
+                primarySurfaceLabel={labels.flowComparePrimarySurface}
+                supportingSurfaceLabel={labels.flowCompareSupportingSurface}
                 reasonShapeLabel={labels.flowCompareReasonShape}
                 reasonRuntimeLabel={labels.flowCompareReasonRuntime}
                 reasonStaticLabel={labels.flowCompareReasonStatic}

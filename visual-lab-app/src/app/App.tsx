@@ -656,6 +656,8 @@ export function App() {
                 flowCompareEventCountDiff: text.flowCompareEventCountDiff,
                 flowCompareWhyDiffers: text.flowCompareWhyDiffers,
                 flowCompareInspectCode: text.flowCompareInspectCode,
+                flowComparePrimarySurface: text.flowComparePrimarySurface,
+                flowCompareSupportingSurface: text.flowCompareSupportingSurface,
                 flowCompareReasonShape: text.flowCompareReasonShape,
                 flowCompareReasonRuntime: text.flowCompareReasonRuntime,
                 flowCompareReasonStatic: text.flowCompareReasonStatic,

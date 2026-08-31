@@ -2,6 +2,7 @@ import type { LabTrace } from "../../lib/types";
 import { inferRelatedLaneKinds, isLaneRelatedToStep } from "./flow-linking";
 
 interface TraceFlowComparePanelProps {
+  locale: "ko" | "en";
   title: string;
   currentRunLabel: string;
   staticBaselineLabel: string;
@@ -14,6 +15,8 @@ interface TraceFlowComparePanelProps {
   eventCountDiffLabel: string;
   whyDiffersLabel: string;
   inspectCodeLabel: string;
+  primarySurfaceLabel: string;
+  supportingSurfaceLabel: string;
   reasonShapeLabel: string;
   reasonRuntimeLabel: string;
   reasonStaticLabel: string;
@@ -43,6 +46,7 @@ function compareStepState(liveTrace: LabTrace, staticTrace: LabTrace, index: num
 }
 
 export function TraceFlowComparePanel({
+  locale,
   title,
   currentRunLabel,
   staticBaselineLabel,
@@ -55,6 +59,8 @@ export function TraceFlowComparePanel({
   eventCountDiffLabel,
   whyDiffersLabel,
   inspectCodeLabel,
+  primarySurfaceLabel,
+  supportingSurfaceLabel,
   reasonShapeLabel,
   reasonRuntimeLabel,
   reasonStaticLabel,
@@ -71,6 +77,38 @@ export function TraceFlowComparePanel({
     stepDiff.titleChanged || stepDiff.markerChanged || stepDiff.detailChanged ? reasonRuntimeLabel : null,
     stepDiff.missingOnOneSide || stepDiff.detailChanged ? reasonStaticLabel : null
   ].filter((line): line is string => Boolean(line));
+  const activeKinds = Array.from(new Set([
+    ...(live.step ? inferRelatedLaneKinds(live.step) : []),
+    ...(baseline.step ? inferRelatedLaneKinds(baseline.step) : [])
+  ]));
+  const referenceCards = matchingReferences.map((reference, index) => {
+    const lower = reference.toLowerCase();
+    const isController = lower.includes("controller");
+    const isService = lower.includes("service");
+    const isRepository = lower.includes("repository") || lower.includes("jdbc");
+    const isTx = lower.includes("transaction");
+    const isPrimary = (activeKinds.includes("web") && isController)
+      || (activeKinds.includes("service") && isService)
+      || (activeKinds.includes("jdbc") && isRepository)
+      || (activeKinds.includes("tx") && isTx)
+      || index === 0;
+
+    const note = isController
+      ? locale === "ko" ? "HTTP 진입, 바인딩, 응답 작성 경로" : "HTTP entry, binding, and response path"
+      : isService
+        ? locale === "ko" ? "비즈니스 분기와 예외 발생 지점" : "Business branch and exception point"
+        : isRepository
+          ? locale === "ko" ? "영속화와 row 가시성 경로" : "Persistence and row visibility path"
+          : isTx
+            ? locale === "ko" ? "트랜잭션 경계와 프록시 동작" : "Transactional boundary and proxy behavior"
+            : locale === "ko" ? "이 시나리오의 참고 코드 표면" : "Reference surface for this scenario";
+
+    return {
+      reference,
+      note,
+      isPrimary
+    };
+  });
 
   return (
     <article className="trace-panel flow-compare-panel">
@@ -174,9 +212,16 @@ export function TraceFlowComparePanel({
         <section className="runtime-flow-card">
           <strong>{inspectCodeLabel}</strong>
           <div className="trace-list">
-            {matchingReferences.map((reference) => (
-              <div className="trace-item info" key={reference}>
-                <p><code>{reference}</code></p>
+            {referenceCards.map((card) => (
+              <div className={card.isPrimary ? "trace-item success flow-reference-card" : "trace-item info flow-reference-card"} key={card.reference}>
+                <div className="flow-reference-head">
+                  <strong>{card.isPrimary ? primarySurfaceLabel : supportingSurfaceLabel}</strong>
+                  <span className={card.isPrimary ? "status-pill success" : "status-pill neutral"}>
+                    {card.isPrimary ? primarySurfaceLabel : supportingSurfaceLabel}
+                  </span>
+                </div>
+                <p>{card.note}</p>
+                <p><code>{card.reference}</code></p>
               </div>
             ))}
           </div>
