@@ -124,6 +124,7 @@ export interface UiText {
   flowCompareEventCountDiff: string;
   flowCompareWhyDiffers: string;
   flowCompareInspectCode: string;
+  flowCompareBriefing: string;
   flowComparePrimarySurface: string;
   flowCompareSupportingSurface: string;
   flowCompareClassFocus: string;
@@ -284,6 +285,7 @@ const uiTextByLocale: Record<Locale, UiText> = {
     flowCompareEventCountDiff: "event count diff",
     flowCompareWhyDiffers: "why this differs",
     flowCompareInspectCode: "inspect code",
+    flowCompareBriefing: "comparison briefing",
     flowComparePrimarySurface: "primary surface",
     flowCompareSupportingSurface: "supporting surface",
     flowCompareClassFocus: "class focus",
@@ -442,6 +444,7 @@ const uiTextByLocale: Record<Locale, UiText> = {
     flowCompareEventCountDiff: "이벤트 수 차이",
     flowCompareWhyDiffers: "왜 차이가 나는가",
     flowCompareInspectCode: "관련 코드 보기",
+    flowCompareBriefing: "비교 브리핑",
     flowComparePrimarySurface: "핵심 진입 코드",
     flowCompareSupportingSurface: "보조 추적 코드",
     flowCompareClassFocus: "클래스 포커스",

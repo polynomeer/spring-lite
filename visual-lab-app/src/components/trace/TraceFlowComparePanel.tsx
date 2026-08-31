@@ -16,6 +16,7 @@ interface TraceFlowComparePanelProps {
   eventCountDiffLabel: string;
   whyDiffersLabel: string;
   inspectCodeLabel: string;
+  briefingLabel: string;
   primarySurfaceLabel: string;
   supportingSurfaceLabel: string;
   classFocusLabel: string;
@@ -26,6 +27,9 @@ interface TraceFlowComparePanelProps {
   assertionFocusLabel: string;
   checklistLabel: string;
   sequenceLabel: string;
+  watchLabel: string;
+  whyLabel: string;
+  nextLabel: string;
   reasonShapeLabel: string;
   reasonRuntimeLabel: string;
   reasonStaticLabel: string;
@@ -68,6 +72,7 @@ export function TraceFlowComparePanel({
   eventCountDiffLabel,
   whyDiffersLabel,
   inspectCodeLabel,
+  briefingLabel,
   primarySurfaceLabel,
   supportingSurfaceLabel,
   classFocusLabel,
@@ -78,6 +83,9 @@ export function TraceFlowComparePanel({
   assertionFocusLabel,
   checklistLabel,
   sequenceLabel,
+  watchLabel,
+  whyLabel,
+  nextLabel,
   reasonShapeLabel,
   reasonRuntimeLabel,
   reasonStaticLabel,
@@ -134,6 +142,11 @@ export function TraceFlowComparePanel({
       checklist: locale === "ko" ? resolvedFocus.checklistKo : resolvedFocus.checklistEn
     };
   });
+  const primaryCard = referenceCards.find((card) => card.isPrimary) ?? referenceCards[0] ?? null;
+  const briefingNext = primaryCard
+    ? `${classFocusLabel} ${primaryCard.classFocus} -> ${methodFocusLabel} ${primaryCard.methodFocus}`
+    : liveTrace.snapshot.next;
+  const briefingWhy = reasonLines[0] ?? liveTrace.snapshot.why;
 
   return (
     <article className="trace-panel flow-compare-panel">
@@ -143,6 +156,27 @@ export function TraceFlowComparePanel({
           <h3>{relatedLanesLabel}</h3>
         </div>
       </div>
+
+      <section className="flow-compare-briefing">
+        <div className="flow-reference-checklist-head">
+          <strong>{briefingLabel}</strong>
+          {live.step ? <span className="status-pill info">{live.step.marker}</span> : null}
+        </div>
+        <div className="metric-mini-grid">
+          <div className="metric-mini">
+            <span>{watchLabel}</span>
+            <strong>{liveTrace.snapshot.watch}</strong>
+          </div>
+          <div className="metric-mini">
+            <span>{whyLabel}</span>
+            <strong>{briefingWhy}</strong>
+          </div>
+          <div className="metric-mini">
+            <span>{nextLabel}</span>
+            <strong>{briefingNext}</strong>
+          </div>
+        </div>
+      </section>
 
       <div className="flow-compare-grid">
         {[{

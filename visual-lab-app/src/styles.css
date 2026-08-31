@@ -868,6 +868,15 @@ code {
   gap: 14px;
 }
 
+.flow-compare-briefing {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 1px solid rgba(37, 197, 97, 0.14);
+  background: rgba(9, 15, 10, 0.96);
+}
+
 .flow-compare-column,
 .flow-compare-head {
   display: grid;

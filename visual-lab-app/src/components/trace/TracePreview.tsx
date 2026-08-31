@@ -40,6 +40,7 @@ interface TracePreviewProps {
     flowCompareEventCountDiff: string;
     flowCompareWhyDiffers: string;
     flowCompareInspectCode: string;
+    flowCompareBriefing: string;
     flowComparePrimarySurface: string;
     flowCompareSupportingSurface: string;
     flowCompareClassFocus: string;
@@ -364,6 +365,7 @@ export function TracePreview({ trace, baselineTrace, insight, runtimeDiffRows, r
                 eventCountDiffLabel={labels.flowCompareEventCountDiff}
                 whyDiffersLabel={labels.flowCompareWhyDiffers}
                 inspectCodeLabel={labels.flowCompareInspectCode}
+                briefingLabel={labels.flowCompareBriefing}
                 primarySurfaceLabel={labels.flowComparePrimarySurface}
                 supportingSurfaceLabel={labels.flowCompareSupportingSurface}
                 classFocusLabel={labels.flowCompareClassFocus}
@@ -374,6 +376,9 @@ export function TracePreview({ trace, baselineTrace, insight, runtimeDiffRows, r
                 assertionFocusLabel={labels.flowCompareAssertionFocus}
                 checklistLabel={labels.flowCompareChecklist}
                 sequenceLabel={labels.flowCompareSequence}
+                watchLabel={labels.watch}
+                whyLabel={labels.why}
+                nextLabel={labels.nextLabel}
                 reasonShapeLabel={labels.flowCompareReasonShape}
                 reasonRuntimeLabel={labels.flowCompareReasonRuntime}
                 reasonStaticLabel={labels.flowCompareReasonStatic}
