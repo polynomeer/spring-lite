@@ -216,12 +216,12 @@ export function TraceFlowComparePanel({
           </span>
         </div>
         <div className="metric-mini-grid flow-compare-focus-grid">
-          <div className="metric-mini">
+          <div className="metric-mini flow-compare-focus-card">
             <span>{selectedStepLabel}</span>
             <strong>{live.step?.title ?? baseline.step?.title ?? "-"}</strong>
             <p>{live.step?.marker ?? baseline.step?.marker ?? "-"}</p>
           </div>
-              <div className="metric-mini">
+          <div className="metric-mini flow-compare-focus-card">
             <span>{differencesLabel}</span>
             <strong>{differenceBadges.length === 0 ? "0" : String(differenceBadges.length).padStart(2, "0")}</strong>
             <div className="lane-focus-summary">
@@ -232,12 +232,12 @@ export function TraceFlowComparePanel({
               )}
             </div>
           </div>
-          <div className="metric-mini">
+          <div className="metric-mini flow-compare-focus-card">
             <span>{relatedLanesLabel}</span>
             <strong>{activeKinds.length === 0 ? "-" : activeKinds.join(" / ")}</strong>
             <p>{activeKinds.length === 0 ? "-" : `${activeKinds.length} ${laneCountSuffix}`}</p>
           </div>
-          <div className="metric-mini">
+          <div className="metric-mini flow-compare-focus-card">
             <span>{codeSurfacesLabel}</span>
             <strong>{String(referenceCards.length).padStart(2, "0")}</strong>
             <p>{primaryCard?.classFocus ?? "-"}</p>

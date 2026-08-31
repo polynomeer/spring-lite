@@ -887,13 +887,23 @@ code {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.flow-compare-focus-grid .metric-mini {
-  gap: 8px;
+.flow-compare-focus-card {
+  padding: 10px;
+  gap: 6px;
 }
 
-.flow-compare-focus-grid .metric-mini p {
+.flow-compare-focus-card strong {
+  line-height: 1.25;
+}
+
+.flow-compare-focus-card p {
   margin: 0;
   color: var(--muted);
+  line-height: 1.35;
+}
+
+.flow-compare-focus-card .lane-focus-summary {
+  gap: 6px;
 }
 
 .flow-compare-column,
