@@ -20,6 +20,9 @@ interface TracePreviewProps {
     alternatePath: string;
     overview: string;
     flowView: string;
+    flowTimeline: string;
+    selectedStep: string;
+    relatedLanes: string;
     deepLinks: string;
     steps: string;
     lanes: string;
@@ -39,9 +42,11 @@ interface TracePreviewProps {
 
 export function TracePreview({ trace, insight, runSequence, loading, locale, labels }: TracePreviewProps) {
   const [activeTab, setActiveTab] = useState<"overview" | "flow" | "references">("overview");
+  const [activeStepId, setActiveStepId] = useState<string>(trace.steps[0]?.id ?? "");
 
   useEffect(() => {
     setActiveTab("overview");
+    setActiveStepId(trace.steps[0]?.id ?? "");
   }, [trace.id, runSequence]);
 
   return (
@@ -100,8 +105,22 @@ export function TracePreview({ trace, insight, runSequence, loading, locale, lab
 
         {activeTab === "flow" ? (
           <>
-            <TraceStepsPanel trace={trace} locale={locale} stepsLabel={labels.steps} />
-            <TraceLanesPanel trace={trace} locale={locale} lanesLabel={labels.lanes} />
+            <TraceStepsPanel
+              trace={trace}
+              locale={locale}
+              stepsLabel={labels.steps}
+              flowTimelineLabel={labels.flowTimeline}
+              selectedStepLabel={labels.selectedStep}
+              activeStepId={activeStepId}
+              onSelectStep={setActiveStepId}
+            />
+            <TraceLanesPanel
+              trace={trace}
+              locale={locale}
+              lanesLabel={labels.lanes}
+              relatedLanesLabel={labels.relatedLanes}
+              activeStepId={activeStepId}
+            />
           </>
         ) : null}
 

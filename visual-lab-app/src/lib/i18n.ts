@@ -85,6 +85,9 @@ export interface UiText {
   alternatePath: string;
   overview: string;
   flowView: string;
+  flowTimeline: string;
+  selectedStep: string;
+  relatedLanes: string;
   deepLinks: string;
   steps: string;
   lanes: string;
@@ -183,6 +186,9 @@ const uiTextByLocale: Record<Locale, UiText> = {
     alternatePath: "alternate path",
     overview: "Overview",
     flowView: "Flow",
+    flowTimeline: "Flow Timeline",
+    selectedStep: "Selected step",
+    relatedLanes: "Related lanes",
     deepLinks: "References",
     steps: "Steps",
     lanes: "Lanes",
@@ -279,6 +285,9 @@ const uiTextByLocale: Record<Locale, UiText> = {
     alternatePath: "대체 분기",
     overview: "개요",
     flowView: "흐름",
+    flowTimeline: "흐름 타임라인",
+    selectedStep: "선택 단계",
+    relatedLanes: "관련 레인",
     deepLinks: "참고",
     steps: "단계",
     lanes: "레인",

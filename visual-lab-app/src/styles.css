@@ -880,6 +880,52 @@ code {
   color: var(--accent);
 }
 
+.flow-timeline {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.flow-timeline-step {
+  text-align: left;
+  padding: 12px;
+  border: 1px solid rgba(37, 197, 97, 0.18);
+  background: rgba(8, 14, 9, 0.95);
+  display: grid;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.flow-timeline-step.active {
+  border-color: var(--line-strong);
+  box-shadow: inset 0 0 0 1px rgba(49, 255, 132, 0.2), 0 0 16px rgba(49, 255, 132, 0.08);
+}
+
+.flow-timeline-step.error {
+  border-color: rgba(255, 122, 122, 0.24);
+}
+
+.flow-timeline-step.warning {
+  border-color: rgba(200, 255, 121, 0.24);
+}
+
+.flow-timeline-index,
+.lane-stop-index {
+  color: #8ab298;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.flow-timeline-marker {
+  color: var(--accent);
+  font-size: 12px;
+}
+
+.focus-step {
+  border-color: var(--line-strong);
+  box-shadow: inset 0 0 0 1px rgba(49, 255, 132, 0.18);
+}
+
 .trace-item.success,
 .lane-event.success {
   border-color: rgba(49, 255, 132, 0.26);
@@ -898,6 +944,53 @@ code {
 .lane-card {
   display: grid;
   gap: 10px;
+}
+
+.lane-card.active {
+  border-color: var(--line-strong);
+  box-shadow: inset 0 0 0 1px rgba(49, 255, 132, 0.18);
+}
+
+.lane-card.subdued {
+  opacity: 0.68;
+}
+
+.lane-focus-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.lane-track {
+  display: grid;
+  gap: 8px;
+}
+
+.lane-stop {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid rgba(37, 197, 97, 0.08);
+}
+
+.lane-stop:first-child {
+  border-top: 0;
+}
+
+.lane-stop.active {
+  background: rgba(49, 255, 132, 0.04);
+}
+
+.trace-step {
+  text-align: left;
+  cursor: pointer;
+}
+
+.trace-step.active {
+  border-color: var(--line-strong);
+  box-shadow: inset 0 0 0 1px rgba(49, 255, 132, 0.18);
 }
 
 .lane-web,
@@ -949,6 +1042,7 @@ code {
   .focus-summary,
   .execution-path-rail,
   .execution-branch-grid,
+  .flow-timeline,
   .run-focus-grid,
   .trace-preview-grid,
   .metric-mini-grid,
