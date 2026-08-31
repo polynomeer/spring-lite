@@ -101,8 +101,9 @@
 25. [작업 백로그](./docs/codex/task-backlog.md)
 26. [모듈 맵](./docs/codex/module-map.md)
 27. [Visual Lab 프론트엔드 분리 기획안](./docs/codex/visual-lab-frontend-separation-plan.md)
-28. [개발 규칙](./docs/guides/development-conventions.md)
-29. [커밋 규칙](./docs/guides/commit-conventions.md)
+28. [Visual Lab UX 및 시각화 개선안](./docs/codex/visual-lab-ux-visualization-improvement-plan.md)
+29. [개발 규칙](./docs/guides/development-conventions.md)
+30. [커밋 규칙](./docs/guides/commit-conventions.md)
 
 ## 비교 샘플
 
@@ -118,6 +119,7 @@
 
 - [Visual Lab 안내](./visual-lab/README.md)
 - [Visual Lab 프론트엔드 분리 기획안](./docs/codex/visual-lab-frontend-separation-plan.md)
+- [Visual Lab UX 및 시각화 개선안](./docs/codex/visual-lab-ux-visualization-improvement-plan.md)
 - [Visual Lab App 스캐폴드](./visual-lab-app/README.md)
 - [Visual Lab Hub](./visual-lab/index.html)
 - [Spring Lite Playground](./visual-lab/spring-lite-playground.html)
