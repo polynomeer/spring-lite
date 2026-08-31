@@ -22,6 +22,7 @@ interface TraceFlowComparePanelProps {
   methodFocusLabel: string;
   docFocusLabel: string;
   testFocusLabel: string;
+  assertionFocusLabel: string;
   reasonShapeLabel: string;
   reasonRuntimeLabel: string;
   reasonStaticLabel: string;
@@ -70,6 +71,7 @@ export function TraceFlowComparePanel({
   methodFocusLabel,
   docFocusLabel,
   testFocusLabel,
+  assertionFocusLabel,
   reasonShapeLabel,
   reasonRuntimeLabel,
   reasonStaticLabel,
@@ -120,7 +122,8 @@ export function TraceFlowComparePanel({
       classFocus: resolvedFocus.classFocus,
       methodFocus: resolvedFocus.methodFocus,
       docFocus: resolvedFocus.docFocus,
-      testFocus: resolvedFocus.testFocus
+      testFocus: resolvedFocus.testFocus,
+      assertionFocus: locale === "ko" ? resolvedFocus.assertionFocusKo : resolvedFocus.assertionFocusEn
     };
   });
 
@@ -241,6 +244,7 @@ export function TraceFlowComparePanel({
                   <span className="status-pill warning">{docFocusLabel} {card.docFocus}</span>
                   <span className="status-pill success">{testFocusLabel} {card.testFocus}</span>
                 </div>
+                <p>{assertionFocusLabel} {card.assertionFocus}</p>
                 <p><code>{card.reference}</code></p>
               </div>
             ))}
