@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { TraceAdapterResult } from "../../features/types";
 import type { Locale } from "../../lib/i18n";
 import type { LabTrace } from "../../lib/types";
+import { TraceExecutionPathPanel } from "./TraceExecutionPathPanel";
 import { TraceInsightPanel } from "./TraceInsightPanel";
 import { TraceLanesPanel } from "./TraceLanesPanel";
 import { TraceMetricsPanel } from "./TraceMetricsPanel";
@@ -14,6 +15,9 @@ interface TracePreviewProps {
   labels: {
     loadedTrace: string;
     featureAdapter: string;
+    executionPath: string;
+    activePath: string;
+    alternatePath: string;
     overview: string;
     flowView: string;
     deepLinks: string;
@@ -80,6 +84,14 @@ export function TracePreview({ trace, insight, runSequence, loading, locale, lab
       >
         {activeTab === "overview" ? (
           <>
+            {insight?.executionPath ? (
+              <TraceExecutionPathPanel
+                diagram={insight.executionPath}
+                executionPathLabel={labels.executionPath}
+                activePathLabel={labels.activePath}
+                alternatePathLabel={labels.alternatePath}
+              />
+            ) : null}
             <TraceMetricsPanel trace={trace} locale={locale} loadedTraceLabel={labels.loadedTrace} />
             {insight ? <TraceInsightPanel insight={insight} trace={trace} locale={locale} featureAdapterLabel={labels.featureAdapter} /> : null}
             <TraceSnapshotPanel trace={trace} locale={locale} snapshotLabel={labels.snapshot} watchLabel={labels.watch} whyLabel={labels.why} nextLabel={labels.nextLabel} />

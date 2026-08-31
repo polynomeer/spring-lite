@@ -80,6 +80,9 @@ export interface UiText {
   frontendStructure: string;
   loadedTrace: string;
   featureAdapter: string;
+  executionPath: string;
+  activePath: string;
+  alternatePath: string;
   overview: string;
   flowView: string;
   deepLinks: string;
@@ -175,6 +178,9 @@ const uiTextByLocale: Record<Locale, UiText> = {
     frontendStructure: "Frontend Structure",
     loadedTrace: "Loaded Trace",
     featureAdapter: "Feature Adapter",
+    executionPath: "Execution Path",
+    activePath: "active path",
+    alternatePath: "alternate path",
     overview: "Overview",
     flowView: "Flow",
     deepLinks: "References",
@@ -268,6 +274,9 @@ const uiTextByLocale: Record<Locale, UiText> = {
     frontendStructure: "프런트엔드 구조",
     loadedTrace: "로드된 Trace",
     featureAdapter: "Feature Adapter",
+    executionPath: "실행 경로",
+    activePath: "실제 실행 경로",
+    alternatePath: "대체 분기",
     overview: "개요",
     flowView: "흐름",
     deepLinks: "참고",

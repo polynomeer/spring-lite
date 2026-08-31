@@ -480,6 +480,9 @@ export function App() {
                   labels={{
                     loadedTrace: text.loadedTrace,
                     featureAdapter: text.featureAdapter,
+                    executionPath: text.executionPath,
+                    activePath: text.activePath,
+                    alternatePath: text.alternatePath,
                     overview: text.overview,
                     flowView: text.flowView,
                     deepLinks: text.deepLinks,
