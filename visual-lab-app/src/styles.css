@@ -939,6 +939,23 @@ code {
   gap: 14px;
 }
 
+.flow-compare-disclosure[open] {
+  gap: 12px;
+}
+
+.flow-compare-disclosure-summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.flow-compare-disclosure-summary::-webkit-details-marker {
+  display: none;
+}
+
 .flow-reference-card,
 .flow-reference-head {
   display: grid;

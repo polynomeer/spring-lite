@@ -18,6 +18,7 @@ interface TraceFlowComparePanelProps {
   inspectCodeLabel: string;
   briefingLabel: string;
   focusRailLabel: string;
+  detailsLabel: string;
   primarySurfaceLabel: string;
   supportingSurfaceLabel: string;
   classFocusLabel: string;
@@ -35,6 +36,8 @@ interface TraceFlowComparePanelProps {
   codeSurfacesLabel: string;
   alignedLabel: string;
   laneCountSuffix: string;
+  reasonCountSuffix: string;
+  surfaceCountSuffix: string;
   reasonShapeLabel: string;
   reasonRuntimeLabel: string;
   reasonStaticLabel: string;
@@ -79,6 +82,7 @@ export function TraceFlowComparePanel({
   inspectCodeLabel,
   briefingLabel,
   focusRailLabel,
+  detailsLabel,
   primarySurfaceLabel,
   supportingSurfaceLabel,
   classFocusLabel,
@@ -96,6 +100,8 @@ export function TraceFlowComparePanel({
   codeSurfacesLabel,
   alignedLabel,
   laneCountSuffix,
+  reasonCountSuffix,
+  surfaceCountSuffix,
   reasonShapeLabel,
   reasonRuntimeLabel,
   reasonStaticLabel,
@@ -315,8 +321,14 @@ export function TraceFlowComparePanel({
       </div>
 
       <div className="flow-compare-context">
-        <section className="runtime-flow-card">
-          <strong>{whyDiffersLabel}</strong>
+        <details className="runtime-flow-card flow-compare-disclosure" open>
+          <summary className="flow-compare-disclosure-summary">
+            <strong>{whyDiffersLabel}</strong>
+            <div className="lane-focus-summary">
+              <span className="status-pill info">{reasonLines.length} {reasonCountSuffix}</span>
+              <span className="status-pill neutral">{detailsLabel}</span>
+            </div>
+          </summary>
           <div className="trace-list">
             {reasonLines.map((line) => (
               <div className="trace-item info" key={line}>
@@ -324,10 +336,16 @@ export function TraceFlowComparePanel({
               </div>
             ))}
           </div>
-        </section>
+        </details>
 
-        <section className="runtime-flow-card">
-          <strong>{inspectCodeLabel}</strong>
+        <details className="runtime-flow-card flow-compare-disclosure">
+          <summary className="flow-compare-disclosure-summary">
+            <strong>{inspectCodeLabel}</strong>
+            <div className="lane-focus-summary">
+              <span className="status-pill success">{referenceCards.length} {surfaceCountSuffix}</span>
+              <span className="status-pill neutral">{detailsLabel}</span>
+            </div>
+          </summary>
           <div className="trace-list">
             {referenceCards.map((card) => (
               <div className={card.isPrimary ? "trace-item success flow-reference-card" : "trace-item info flow-reference-card"} key={card.reference}>
@@ -369,7 +387,7 @@ export function TraceFlowComparePanel({
               </div>
             ))}
           </div>
-        </section>
+        </details>
       </div>
     </article>
   );
