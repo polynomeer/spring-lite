@@ -39,6 +39,7 @@ interface TraceFlowComparePanelProps {
   relatedLaneCountLabel: string;
   otherLaneCountLabel: string;
   otherLanesLabel: string;
+  changedLaneCountLabel: string;
   reasonCountSuffix: string;
   surfaceCountSuffix: string;
   reasonShapeLabel: string;
@@ -106,6 +107,7 @@ export function TraceFlowComparePanel({
   relatedLaneCountLabel,
   otherLaneCountLabel,
   otherLanesLabel,
+  changedLaneCountLabel,
   reasonCountSuffix,
   surfaceCountSuffix,
   reasonShapeLabel,
@@ -271,7 +273,23 @@ export function TraceFlowComparePanel({
           const relatedLaneCount = sortedLanes.filter((lane) => isLaneRelatedToStep(lane, column.step)).length;
           const otherLaneCount = sortedLanes.length - relatedLaneCount;
           const relatedLanes = sortedLanes.filter((lane) => isLaneRelatedToStep(lane, column.step));
-          const otherLanes = sortedLanes.filter((lane) => !isLaneRelatedToStep(lane, column.step));
+          const otherLanes = sortedLanes
+            .filter((lane) => !isLaneRelatedToStep(lane, column.step))
+            .map((lane) => {
+              const counterpartLane = counterpartTrace.lanes.find((item) => item.kind === lane.kind);
+              return {
+                lane,
+                eventCountChanged: (counterpartLane?.events.length ?? 0) !== lane.events.length
+              };
+            })
+            .sort((left, right) => {
+              if (left.eventCountChanged === right.eventCountChanged) {
+                return left.lane.label.localeCompare(right.lane.label);
+              }
+
+              return left.eventCountChanged ? -1 : 1;
+            });
+          const changedOtherLaneCount = otherLanes.filter((item) => item.eventCountChanged).length;
           return (
             <section className={`flow-compare-column ${columnTone}`} key={column.label}>
               <div className="flow-compare-head">
@@ -341,17 +359,16 @@ export function TraceFlowComparePanel({
                     <summary className="flow-compare-disclosure-summary">
                       <div className="flow-compare-disclosure-copy">
                         <strong>{otherLanesLabel}</strong>
-                        <p>{otherLanes.map((lane) => lane.label).join(", ")}</p>
+                        <p>{otherLanes.slice(0, 3).map((item) => item.lane.label).join(", ")}</p>
                       </div>
                       <div className="lane-focus-summary">
+                        {changedOtherLaneCount > 0 ? <span className="status-pill warning">{changedLaneCountLabel} {changedOtherLaneCount}</span> : null}
                         <span className="status-pill neutral">{otherLaneCountLabel} {otherLaneCount}</span>
                         <span className="status-pill neutral">{detailsLabel}</span>
                       </div>
                     </summary>
                     <div className="trace-list">
-                      {otherLanes.map((lane) => {
-                        const counterpartLane = counterpartTrace.lanes.find((item) => item.kind === lane.kind);
-                        const eventCountChanged = (counterpartLane?.events.length ?? 0) !== lane.events.length;
+                      {otherLanes.map(({ lane, eventCountChanged }) => {
                         return (
                           <div className="lane-card subdued" key={`${column.label}-${lane.id}`}>
                             <div className="lane-head">
