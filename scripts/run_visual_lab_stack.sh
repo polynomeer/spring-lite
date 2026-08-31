@@ -51,6 +51,27 @@ wait_for_http() {
   return 1
 }
 
+is_port_available() {
+  local port=$1
+  ! lsof -nP -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1
+}
+
+find_available_port() {
+  local preferred_port=$1
+  local label=$2
+  local port=$preferred_port
+
+  while ! is_port_available "$port"; do
+    port=$((port + 1))
+  done
+
+  if [[ "$port" != "$preferred_port" ]]; then
+    echo "[info] $label port $preferred_port is busy, using $port instead" >&2
+  fi
+
+  printf '%s\n' "$port"
+}
+
 require_command() {
   local command_name=$1
   if ! command -v "$command_name" >/dev/null 2>&1; then
@@ -62,6 +83,7 @@ require_command() {
 require_command curl
 require_command java
 require_command npm
+require_command lsof
 
 if [[ ! -d "$FRONTEND_DIR/node_modules" ]]; then
   echo "[error] Frontend dependencies are missing." >&2
@@ -71,10 +93,13 @@ fi
 
 trap cleanup EXIT INT TERM
 
+BACKEND_PORT="$(find_available_port "$BACKEND_PORT" "Backend")"
+FRONTEND_PORT="$(find_available_port "$FRONTEND_PORT" "Frontend")"
+
 echo "[info] Starting example-app on port $BACKEND_PORT"
 (
   cd "$ROOT_DIR"
-  ./gradlew :example-app:run --console=plain >"$BACKEND_LOG" 2>&1
+  ./gradlew :example-app:run --console=plain --args="--server.port=${BACKEND_PORT}" >"$BACKEND_LOG" 2>&1
 ) &
 backend_pid=$!
 
@@ -86,7 +111,7 @@ wait_for_http "http://127.0.0.1:${BACKEND_PORT}/orders" "example-app" || {
 echo "[info] Starting visual-lab-app on port $FRONTEND_PORT"
 (
   cd "$FRONTEND_DIR"
-  npm run dev -- --host 127.0.0.1 --port "$FRONTEND_PORT" >"$FRONTEND_LOG" 2>&1
+  VITE_PROXY_TARGET="http://127.0.0.1:${BACKEND_PORT}" npm run dev -- --host 127.0.0.1 --port "$FRONTEND_PORT" >"$FRONTEND_LOG" 2>&1
 ) &
 frontend_pid=$!
 
@@ -96,6 +121,7 @@ wait_for_http "http://127.0.0.1:${FRONTEND_PORT}" "visual-lab-app" || {
 }
 
 if [[ "$RUN_STATIC_SERVER" == "1" ]]; then
+  STATIC_PORT="$(find_available_port "$STATIC_PORT" "Static")"
   echo "[info] Starting static visual-lab server on port $STATIC_PORT"
   (
     cd "$ROOT_DIR"
@@ -114,7 +140,7 @@ cat <<EOF
 
   Live dashboard:   http://127.0.0.1:${FRONTEND_PORT}
   Example API:      http://127.0.0.1:${BACKEND_PORT}/orders
-  Static visual-lab: http://127.0.0.1:${STATIC_PORT}/visual-lab/index.html
+  Static visual-lab: $( [[ "$RUN_STATIC_SERVER" == "1" ]] && printf 'http://127.0.0.1:%s/visual-lab/index.html' "$STATIC_PORT" || printf 'not started (set RUN_STATIC_SERVER=1)' )
 
 Logs:
   backend:  $BACKEND_LOG

@@ -34,6 +34,8 @@ npm run dev
 ./scripts/run_visual_lab_stack.sh
 ```
 
+기본 포트가 사용 중이면 스크립트가 다음 사용 가능한 포트를 자동으로 선택하고, 프론트의 `/lab` 프록시도 같은 백엔드 포트를 따라간다.
+
 live mode를 실서버와 연결하려면 환경변수를 지정한다.
 
 ```bash
