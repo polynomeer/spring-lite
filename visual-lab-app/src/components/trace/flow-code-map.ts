@@ -6,6 +6,7 @@ export interface FlowCodeFocus {
   classFocus: string;
   methodFocus: string;
   docFocus: string;
+  testFocus: string;
 }
 
 interface FlowCodeRule {
@@ -21,7 +22,8 @@ const flowCodeRules: FlowCodeRule[] = [
       noteEn: "HTTP entry, request binding, and controller entry path",
       classFocus: "OrderController",
       methodFocus: "createOrder(...) / getOrder(...)",
-      docFocus: "docs/book/complete-manuscript.md#chapter-17-dispatcherservlet과-front-controller-패턴"
+      docFocus: "docs/book/complete-manuscript.md#chapter-17-dispatcherservlet과-front-controller-패턴",
+      testFocus: "ExampleApplicationWebTest / DispatcherServletTest"
     }
   },
   {
@@ -31,7 +33,8 @@ const flowCodeRules: FlowCodeRule[] = [
       noteEn: "Business branching, exception origin, and service delegation path",
       classFocus: "DefaultOrderService",
       methodFocus: "createOrder(...) / createOrderAndFail(...) / getOrder(...) / failForLab(...)",
-      docFocus: "docs/book/build-along-implementation-guide.md"
+      docFocus: "docs/book/build-along-implementation-guide.md",
+      testFocus: "ExampleApplicationTest"
     }
   },
   {
@@ -41,7 +44,8 @@ const flowCodeRules: FlowCodeRule[] = [
       noteEn: "Persistence, row lookup, and before/after rollback visibility path",
       classFocus: "JdbcOrderRepository",
       methodFocus: "save(...) / findById(...) / findAll(...)",
-      docFocus: "docs/testing/detailed-test-guide.md"
+      docFocus: "docs/testing/detailed-test-guide.md",
+      testFocus: "ExampleApplicationTest"
     }
   },
   {
@@ -51,7 +55,8 @@ const flowCodeRules: FlowCodeRule[] = [
       noteEn: "Transaction proxy creation and begin/commit/rollback decision path",
       classFocus: "TransactionalBeanPostProcessor",
       methodFocus: "postProcessAfterInitialization(...) / TransactionInterceptor.invoke(...)",
-      docFocus: "docs/book/complete-manuscript.md"
+      docFocus: "docs/book/complete-manuscript.md",
+      testFocus: "TransactionManagerTest / ExampleApplicationWebTest"
     }
   }
 ];
@@ -73,6 +78,7 @@ export function resolveFlowCodeFocus(reference: string, marker: string | undefin
     noteEn: "Supporting reference surface for this scenario",
     classFocus: reference.split("/").pop()?.replace(/\.java$|\.md$/g, "") ?? reference,
     methodFocus: locale === "ko" ? "관련 진입 메서드 추적" : "trace the related entry method",
-    docFocus: "docs/book/complete-manuscript.md"
+    docFocus: "docs/book/complete-manuscript.md",
+    testFocus: locale === "ko" ? "관련 테스트 추적" : "trace the related test"
   };
 }
