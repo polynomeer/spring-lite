@@ -664,6 +664,7 @@ export function App() {
                 flowCompareTestFocus: text.flowCompareTestFocus,
                 flowCompareTestMethodFocus: text.flowCompareTestMethodFocus,
                 flowCompareAssertionFocus: text.flowCompareAssertionFocus,
+                flowCompareChecklist: text.flowCompareChecklist,
                 flowCompareReasonShape: text.flowCompareReasonShape,
                 flowCompareReasonRuntime: text.flowCompareReasonRuntime,
                 flowCompareReasonStatic: text.flowCompareReasonStatic,

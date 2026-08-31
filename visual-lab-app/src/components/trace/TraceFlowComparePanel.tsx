@@ -24,6 +24,7 @@ interface TraceFlowComparePanelProps {
   testFocusLabel: string;
   testMethodFocusLabel: string;
   assertionFocusLabel: string;
+  checklistLabel: string;
   reasonShapeLabel: string;
   reasonRuntimeLabel: string;
   reasonStaticLabel: string;
@@ -74,6 +75,7 @@ export function TraceFlowComparePanel({
   testFocusLabel,
   testMethodFocusLabel,
   assertionFocusLabel,
+  checklistLabel,
   reasonShapeLabel,
   reasonRuntimeLabel,
   reasonStaticLabel,
@@ -126,7 +128,8 @@ export function TraceFlowComparePanel({
       docFocus: resolvedFocus.docFocus,
       testFocus: resolvedFocus.testFocus,
       testMethodFocus: resolvedFocus.testMethodFocus,
-      assertionFocus: locale === "ko" ? resolvedFocus.assertionFocusKo : resolvedFocus.assertionFocusEn
+      assertionFocus: locale === "ko" ? resolvedFocus.assertionFocusKo : resolvedFocus.assertionFocusEn,
+      checklist: locale === "ko" ? resolvedFocus.checklistKo : resolvedFocus.checklistEn
     };
   });
 
@@ -249,6 +252,12 @@ export function TraceFlowComparePanel({
                   <span className="status-pill neutral">{testMethodFocusLabel} {card.testMethodFocus}</span>
                 </div>
                 <p>{assertionFocusLabel} {card.assertionFocus}</p>
+                <div className="flow-reference-checklist">
+                  <strong>{checklistLabel}</strong>
+                  {card.checklist.map((item) => (
+                    <p key={`${card.reference}-${item}`}>{item}</p>
+                  ))}
+                </div>
                 <p><code>{card.reference}</code></p>
               </div>
             ))}

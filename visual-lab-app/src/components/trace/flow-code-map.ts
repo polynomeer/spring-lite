@@ -10,6 +10,8 @@ export interface FlowCodeFocus {
   testMethodFocus: string;
   assertionFocusKo: string;
   assertionFocusEn: string;
+  checklistKo: string[];
+  checklistEn: string[];
 }
 
 interface FlowCodeRule {
@@ -29,7 +31,17 @@ const flowCodeRules: FlowCodeRule[] = [
       testFocus: "ExampleApplicationWebTest / DispatcherServletTest",
       testMethodFocus: "returnsValidationErrorsForInvalidOrderRequest(...) / dispatchesPostRequestsWithRecordBodyBinding(...)",
       assertionFocusKo: "상태 코드, 요청 바인딩 성공, JSON 응답 본문 또는 검증 오류 본문을 먼저 확인한다.",
-      assertionFocusEn: "Start with status code, successful request binding, and the JSON response body or validation error body."
+      assertionFocusEn: "Start with status code, successful request binding, and the JSON response body or validation error body.",
+      checklistKo: [
+        "요청이 200 또는 400으로 끝나는지 확인한다.",
+        "JSON 바인딩 결과나 validation 오류 path가 본문에 포함되는지 본다.",
+        "컨트롤러 진입 전후 흐름이 step marker와 맞는지 대조한다."
+      ],
+      checklistEn: [
+        "Confirm the request ends with 200 or 400.",
+        "Check that JSON binding results or validation error paths appear in the body.",
+        "Compare the pre/post controller flow with the current step marker."
+      ]
     }
   },
   {
@@ -43,7 +55,17 @@ const flowCodeRules: FlowCodeRule[] = [
       testFocus: "ExampleApplicationTest",
       testMethodFocus: "loadsExampleApplicationAndCreatesOrders() / throwsForUnknownOrderId()",
       assertionFocusKo: "생성된 주문 상태, unknown id 예외 메시지, 서비스 분기별 결과를 확인한다.",
-      assertionFocusEn: "Check created order status, unknown-id exception messages, and scenario-specific service outcomes."
+      assertionFocusEn: "Check created order status, unknown-id exception messages, and scenario-specific service outcomes.",
+      checklistKo: [
+        "서비스 호출 뒤 생성된 주문 상태가 기대값과 같은지 본다.",
+        "unknown id 경로라면 IllegalArgumentException 메시지를 확인한다.",
+        "현재 step이 성공 분기인지 예외 분기인지 테스트 메서드와 대조한다."
+      ],
+      checklistEn: [
+        "Verify the created order status after the service call.",
+        "For unknown-id paths, confirm the IllegalArgumentException message.",
+        "Match the current step against the success or exception branch in the test."
+      ]
     }
   },
   {
@@ -57,7 +79,17 @@ const flowCodeRules: FlowCodeRule[] = [
       testFocus: "ExampleApplicationTest",
       testMethodFocus: "returnsSeededOrderAndAppendsNewOrders() / usesJdbcBackedRepository()",
       assertionFocusKo: "seed row 보존, 생성 후 목록 변화, rollback 이후 visible row count를 확인한다.",
-      assertionFocusEn: "Check seeded row preservation, post-create list growth, and visible row counts after rollback."
+      assertionFocusEn: "Check seeded row preservation, post-create list growth, and visible row counts after rollback.",
+      checklistKo: [
+        "seed 데이터가 유지되는지 먼저 확인한다.",
+        "생성 후 목록 크기나 product 목록이 기대대로 늘어나는지 본다.",
+        "rollback 계열이면 before/after row count가 유지되는지 대조한다."
+      ],
+      checklistEn: [
+        "Confirm the seeded data is preserved first.",
+        "Check that list size or product names grow as expected after creation.",
+        "For rollback paths, compare before/after row counts."
+      ]
     }
   },
   {
@@ -71,7 +103,17 @@ const flowCodeRules: FlowCodeRule[] = [
       testFocus: "TransactionManagerTest / ExampleApplicationWebTest",
       testMethodFocus: "commitsPhysicalTransactionOnlyAtOutermostBoundary() / returnsLiveLabTraceForRollbackScenario(...)",
       assertionFocusKo: "outermost commit, rollback-only 전파, rollback branch의 결과 메트릭을 확인한다.",
-      assertionFocusEn: "Check outermost commit behavior, rollback-only propagation, and rollback-branch result metrics."
+      assertionFocusEn: "Check outermost commit behavior, rollback-only propagation, and rollback-branch result metrics.",
+      checklistKo: [
+        "중첩 경계에서 마지막 commit만 물리 commit을 수행하는지 확인한다.",
+        "rollback 분기라면 commit 대신 rollback 결과가 남는지 본다.",
+        "live trace 메트릭의 Tx Outcome과 테스트 의도를 같이 대조한다."
+      ],
+      checklistEn: [
+        "Confirm that only the last commit performs the physical commit in nested boundaries.",
+        "For rollback paths, verify rollback happens instead of commit.",
+        "Compare the live trace Tx Outcome metric with the test intent."
+      ]
     }
   }
 ];
@@ -97,6 +139,14 @@ export function resolveFlowCodeFocus(reference: string, marker: string | undefin
     testFocus: locale === "ko" ? "관련 테스트 추적" : "trace the related test",
     testMethodFocus: locale === "ko" ? "우선 관련 테스트 메서드 확인" : "start with the nearest test method",
     assertionFocusKo: "현재 단계와 가장 가까운 상태 코드, 예외, row 변화 assertion을 확인한다.",
-    assertionFocusEn: "Check the nearest status-code, exception, or row-visibility assertion for this step."
+    assertionFocusEn: "Check the nearest status-code, exception, or row-visibility assertion for this step.",
+    checklistKo: [
+      "현재 step과 가장 가까운 테스트 메서드를 연다.",
+      "상태 코드, 예외, row 변화 중 핵심 assertion 하나를 먼저 찾는다."
+    ],
+    checklistEn: [
+      "Open the nearest test method for the current step.",
+      "Start with the key status-code, exception, or row-visibility assertion."
+    ]
   };
 }
