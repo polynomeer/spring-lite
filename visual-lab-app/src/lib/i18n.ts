@@ -86,6 +86,10 @@ export interface UiText {
   stateTransition: string;
   primaryLifecycle: string;
   sideEffects: string;
+  comparisonDiff: string;
+  sharedCore: string;
+  liteSide: string;
+  springSide: string;
   overview: string;
   flowView: string;
   flowTimeline: string;
@@ -190,6 +194,10 @@ const uiTextByLocale: Record<Locale, UiText> = {
     stateTransition: "State Transition",
     primaryLifecycle: "primary lifecycle",
     sideEffects: "side effects",
+    comparisonDiff: "Comparison Diff",
+    sharedCore: "shared core",
+    liteSide: "spring-lite view",
+    springSide: "Spring view",
     overview: "Overview",
     flowView: "Flow",
     flowTimeline: "Flow Timeline",
@@ -292,6 +300,10 @@ const uiTextByLocale: Record<Locale, UiText> = {
     stateTransition: "상태 전이",
     primaryLifecycle: "주요 생명주기",
     sideEffects: "부가 효과",
+    comparisonDiff: "비교 차이도",
+    sharedCore: "공통 코어",
+    liteSide: "spring-lite 관점",
+    springSide: "Spring 관점",
     overview: "개요",
     flowView: "흐름",
     flowTimeline: "흐름 타임라인",

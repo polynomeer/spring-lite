@@ -654,6 +654,10 @@ code {
   grid-column: 1 / -1;
 }
 
+.comparison-diff-panel {
+  grid-column: 1 / -1;
+}
+
 .execution-path-subtitle {
   margin: 6px 0 0;
   color: #b5e8c0;
@@ -780,6 +784,24 @@ code {
 .state-transition-rail {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.comparison-diff-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 1.1fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.comparison-side,
+.comparison-shared-core {
+  display: grid;
+  gap: 12px;
+}
+
+.comparison-side-list {
+  display: grid;
   gap: 12px;
 }
 
@@ -1104,6 +1126,7 @@ code {
   .focus-summary,
   .execution-path-rail,
   .state-transition-rail,
+  .comparison-diff-layout,
   .execution-branch-grid,
   .flow-timeline,
   .run-focus-grid,

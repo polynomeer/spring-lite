@@ -37,11 +37,20 @@ export interface TraceStateTransitionDiagram {
   sideEffects: TraceDiagramBranchOption[];
 }
 
+export interface TraceComparisonDiffDiagram {
+  title: string;
+  subtitle: string;
+  sharedCore: TraceDiagramNode[];
+  liteSide: TraceDiagramBranchOption[];
+  springSide: TraceDiagramBranchOption[];
+}
+
 export interface TraceAdapterResult {
   accent: string;
   insight: TraceInsight;
   executionPath?: TraceExecutionPathDiagram;
   stateTransition?: TraceStateTransitionDiagram;
+  comparisonDiff?: TraceComparisonDiffDiagram;
 }
 
 export interface TraceAdapter {

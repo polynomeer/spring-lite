@@ -480,12 +480,13 @@ export function App() {
                   labels={{
                     loadedTrace: text.loadedTrace,
                     featureAdapter: text.featureAdapter,
-                    executionPath: text.executionPath,
-                    activePath: text.activePath,
-                    alternatePath: text.alternatePath,
-                    stateTransition: text.stateTransition,
-                    primaryLifecycle: text.primaryLifecycle,
-                    sideEffects: text.sideEffects,
+                executionPath: text.executionPath,
+                activePath: text.activePath,
+                alternatePath: text.alternatePath,
+                comparisonDiff: text.comparisonDiff,
+                stateTransition: text.stateTransition,
+                primaryLifecycle: text.primaryLifecycle,
+                sideEffects: text.sideEffects,
                     overview: text.overview,
                     flowView: text.flowView,
                     flowTimeline: text.flowTimeline,
@@ -495,12 +496,15 @@ export function App() {
                     steps: text.steps,
                     lanes: text.lanes,
                     snapshot: text.snapshot,
-                    references: text.references,
-                    relatedFiles: text.relatedFiles,
-                    refs: text.refs,
-                    watch: text.watch,
-                    why: text.why,
-                    nextLabel: text.nextLabel
+                references: text.references,
+                relatedFiles: text.relatedFiles,
+                refs: text.refs,
+                sharedCore: text.sharedCore,
+                liteSide: text.liteSide,
+                springSide: text.springSide,
+                watch: text.watch,
+                why: text.why,
+                nextLabel: text.nextLabel
                   }}
                 />
               ) : null}

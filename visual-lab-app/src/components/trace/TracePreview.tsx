@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { TraceAdapterResult } from "../../features/types";
 import type { Locale } from "../../lib/i18n";
 import type { LabTrace } from "../../lib/types";
+import { TraceComparisonDiffPanel } from "./TraceComparisonDiffPanel";
 import { TraceExecutionPathPanel } from "./TraceExecutionPathPanel";
 import { TraceInsightPanel } from "./TraceInsightPanel";
 import { TraceLanesPanel } from "./TraceLanesPanel";
@@ -19,6 +20,7 @@ interface TracePreviewProps {
     executionPath: string;
     activePath: string;
     alternatePath: string;
+    comparisonDiff: string;
     stateTransition: string;
     primaryLifecycle: string;
     sideEffects: string;
@@ -34,6 +36,9 @@ interface TracePreviewProps {
     references: string;
     relatedFiles: string;
     refs: string;
+    sharedCore: string;
+    liteSide: string;
+    springSide: string;
     watch: string;
     why: string;
     nextLabel: string;
@@ -107,6 +112,15 @@ export function TracePreview({ trace, insight, runSequence, loading, locale, lab
                 stateTransitionLabel={labels.stateTransition}
                 primaryLifecycleLabel={labels.primaryLifecycle}
                 sideEffectLabel={labels.sideEffects}
+              />
+            ) : null}
+            {insight?.comparisonDiff ? (
+              <TraceComparisonDiffPanel
+                diagram={insight.comparisonDiff}
+                comparisonDiffLabel={labels.comparisonDiff}
+                sharedCoreLabel={labels.sharedCore}
+                liteSideLabel={labels.liteSide}
+                springSideLabel={labels.springSide}
               />
             ) : null}
             <TraceMetricsPanel trace={trace} locale={locale} loadedTraceLabel={labels.loadedTrace} />
