@@ -370,6 +370,7 @@ export function TracePreview({ trace, baselineTrace, insight, runtimeDiffRows, r
                 currentRunLabel={labels.focusCurrentRun}
                 staticBaselineLabel={labels.focusStaticBaseline}
                 selectedStepLabel={labels.selectedStep}
+                stepsLabel={labels.steps}
                 relatedLanesLabel={labels.relatedLanes}
                 stepShapeDiffLabel={labels.flowCompareStepShapeDiff}
                 titleDiffLabel={labels.flowCompareTitleDiff}

@@ -965,6 +965,17 @@ code {
   gap: 8px;
 }
 
+.flow-compare-column-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: -2px;
+  color: #8ab298;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .flow-compare-context {
   margin-top: 14px;
   display: grid;

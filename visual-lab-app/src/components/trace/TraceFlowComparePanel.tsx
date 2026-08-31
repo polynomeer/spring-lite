@@ -8,6 +8,7 @@ interface TraceFlowComparePanelProps {
   currentRunLabel: string;
   staticBaselineLabel: string;
   selectedStepLabel: string;
+  stepsLabel: string;
   relatedLanesLabel: string;
   stepShapeDiffLabel: string;
   titleDiffLabel: string;
@@ -77,6 +78,7 @@ export function TraceFlowComparePanel({
   currentRunLabel,
   staticBaselineLabel,
   selectedStepLabel,
+  stepsLabel,
   relatedLanesLabel,
   stepShapeDiffLabel,
   titleDiffLabel,
@@ -305,6 +307,11 @@ export function TraceFlowComparePanel({
                 <span className="status-pill neutral">{relatedEventCountLabel} {relatedEventCount}</span>
                 {changedLaneCount > 0 ? <span className="status-pill warning">{changedLaneCountLabel} {changedLaneCount}</span> : null}
                 {stepDiff.missingOnOneSide ? <span className="status-pill warning">{stepShapeDiffLabel}</span> : null}
+              </div>
+              <div className="flow-compare-column-summary">
+                <span>{stepsLabel} {column.trace.steps.length}</span>
+                <span>{relatedLaneCountLabel} {relatedLaneCount}</span>
+                <span>{changedLaneCountLabel} {changedLaneCount}</span>
               </div>
 
               <div className={`trace-item trace-step focus-step ${columnTone}`}>
