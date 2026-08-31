@@ -970,6 +970,14 @@ code {
   flex-wrap: wrap;
   gap: 12px;
   margin-top: -2px;
+}
+
+.flow-compare-summary-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 8px;
+  border: 1px solid rgba(37, 197, 97, 0.12);
+  background: rgba(8, 12, 8, 0.88);
   color: #8ab298;
   font-size: 11px;
   letter-spacing: 0.08em;
