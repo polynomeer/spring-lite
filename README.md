@@ -125,6 +125,23 @@
 - [Spring Lite Example Flow Lab](./visual-lab/spring-lite-example-flow-lab.html)
 - [Spring Lite vs Spring Dashboard](./visual-lab/spring-lite-vs-spring-dashboard.html)
 
+동적 대시보드와 백엔드를 함께 띄우는 가장 빠른 방법은 아래 스크립트다.
+
+```bash
+./scripts/run_visual_lab_stack.sh
+```
+
+기본 실행 결과:
+
+- `example-app` 백엔드: `http://127.0.0.1:8080`
+- `visual-lab-app` 프론트엔드: `http://127.0.0.1:4173`
+
+정적 HTML 랩까지 같이 띄우려면 아래처럼 실행한다.
+
+```bash
+RUN_STATIC_SERVER=1 ./scripts/run_visual_lab_stack.sh
+```
+
 가장 빠른 실행 방법은 아래 둘 중 하나다.
 
 ```bash

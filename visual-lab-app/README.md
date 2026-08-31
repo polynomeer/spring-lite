@@ -28,6 +28,12 @@ npm run dev
 
 기본 개발 서버 포트는 `4173`이다.
 
+루트에서 백엔드와 함께 올리려면 아래 스크립트를 사용해도 된다.
+
+```bash
+./scripts/run_visual_lab_stack.sh
+```
+
 live mode를 실서버와 연결하려면 환경변수를 지정한다.
 
 ```bash
