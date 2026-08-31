@@ -648,6 +648,7 @@ export function App() {
                 flowSource: text.flowSource,
                 focusCurrentRun: text.focusCurrentRun,
                 focusStaticBaseline: text.focusStaticBaseline,
+                focusSplitCompare: text.focusSplitCompare,
                 flowTimeline: text.flowTimeline,
                 replayControls: text.replayControls,
                 replayPlay: text.replayPlay,

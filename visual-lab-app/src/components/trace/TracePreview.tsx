@@ -4,6 +4,7 @@ import type { Locale } from "../../lib/i18n";
 import type { LabTrace } from "../../lib/types";
 import { TraceComparisonDiffPanel } from "./TraceComparisonDiffPanel";
 import { TraceExecutionPathPanel } from "./TraceExecutionPathPanel";
+import { TraceFlowComparePanel } from "./TraceFlowComparePanel";
 import { TraceInsightPanel } from "./TraceInsightPanel";
 import { TraceLanesPanel } from "./TraceLanesPanel";
 import { TraceMetricsPanel } from "./TraceMetricsPanel";
@@ -31,6 +32,7 @@ interface TracePreviewProps {
     flowSource: string;
     focusCurrentRun: string;
     focusStaticBaseline: string;
+    focusSplitCompare: string;
     flowTimeline: string;
     replayControls: string;
     replayPlay: string;
@@ -93,26 +95,49 @@ interface TracePreviewProps {
 
 export function TracePreview({ trace, baselineTrace, insight, runtimeDiffRows, runtimeFlowDiff, runSequence, loading, locale, labels }: TracePreviewProps) {
   const [activeTab, setActiveTab] = useState<"overview" | "flow" | "references">("overview");
-  const [flowSource, setFlowSource] = useState<"live" | "static">("live");
+  const [flowSource, setFlowSource] = useState<"live" | "static" | "split">("live");
   const [activeStepId, setActiveStepId] = useState<string>(trace.steps[0]?.id ?? "");
   const [isReplaying, setIsReplaying] = useState(false);
+  const [compareIndex, setCompareIndex] = useState(0);
   const flowTrace = flowSource === "static" && baselineTrace ? baselineTrace : trace;
+  const replayLength = flowSource === "split" && baselineTrace
+    ? Math.max(trace.steps.length, baselineTrace.steps.length)
+    : flowTrace.steps.length;
 
   useEffect(() => {
     setActiveTab("overview");
     setFlowSource("live");
     setActiveStepId(trace.steps[0]?.id ?? "");
     setIsReplaying(false);
+    setCompareIndex(0);
   }, [trace.id, runSequence]);
 
   useEffect(() => {
+    if (flowSource === "split") {
+      setCompareIndex(0);
+      setIsReplaying(false);
+      return;
+    }
     setActiveStepId(flowTrace.steps[0]?.id ?? "");
     setIsReplaying(false);
   }, [flowSource, flowTrace.id]);
 
   useEffect(() => {
-    if (!isReplaying || flowTrace.steps.length <= 1) {
+    if (!isReplaying || replayLength <= 1) {
       return;
+    }
+
+    if (flowSource === "split") {
+      const timer = window.setTimeout(() => {
+        setCompareIndex((current) => {
+          if (current >= replayLength - 1) {
+            setIsReplaying(false);
+            return current;
+          }
+          return current + 1;
+        });
+      }, 1200);
+      return () => window.clearTimeout(timer);
     }
 
     const currentIndex = flowTrace.steps.findIndex((step) => step.id === activeStepId);
@@ -126,7 +151,7 @@ export function TracePreview({ trace, baselineTrace, insight, runtimeDiffRows, r
     }, 1200);
 
     return () => window.clearTimeout(timer);
-  }, [activeStepId, flowTrace.steps, isReplaying]);
+  }, [activeStepId, flowSource, flowTrace.steps, isReplaying, replayLength]);
 
   function selectStep(stepId: string) {
     setIsReplaying(false);
@@ -134,6 +159,12 @@ export function TracePreview({ trace, baselineTrace, insight, runtimeDiffRows, r
   }
 
   function moveReplay(offset: -1 | 1) {
+    if (flowSource === "split" && baselineTrace) {
+      const nextIndex = Math.min(replayLength - 1, Math.max(0, compareIndex + offset));
+      setIsReplaying(false);
+      setCompareIndex(nextIndex);
+      return;
+    }
     const currentIndex = flowTrace.steps.findIndex((step) => step.id === activeStepId);
     const safeIndex = currentIndex >= 0 ? currentIndex : 0;
     const nextIndex = Math.min(flowTrace.steps.length - 1, Math.max(0, safeIndex + offset));
@@ -142,7 +173,17 @@ export function TracePreview({ trace, baselineTrace, insight, runtimeDiffRows, r
   }
 
   function toggleReplay() {
-    if (flowTrace.steps.length <= 1) {
+    if (replayLength <= 1) {
+      return;
+    }
+
+    if (flowSource === "split" && baselineTrace) {
+      if (compareIndex >= replayLength - 1) {
+        setCompareIndex(0);
+        setIsReplaying(true);
+        return;
+      }
+      setIsReplaying((current) => !current);
       return;
     }
 
@@ -278,36 +319,58 @@ export function TracePreview({ trace, baselineTrace, insight, runtimeDiffRows, r
                   >
                     {labels.focusStaticBaseline}
                   </button>
+                  <button
+                    className={flowSource === "split" ? "filter-chip active" : "filter-chip"}
+                    type="button"
+                    onClick={() => setFlowSource("split")}
+                  >
+                    {labels.focusSplitCompare}
+                  </button>
                 </div>
               </article>
             ) : null}
-            <TraceStepsPanel
-              trace={flowTrace}
-              locale={locale}
-              stepsLabel={labels.steps}
-              flowTimelineLabel={labels.flowTimeline}
-              replayControlsLabel={labels.replayControls}
-              replayPlayLabel={labels.replayPlay}
-              replayPauseLabel={labels.replayPause}
-              replayPreviousLabel={labels.replayPrevious}
-              replayNextLabel={labels.replayNext}
-              replayAutoLabel={labels.replayAuto}
-              replayManualLabel={labels.replayManual}
-              selectedStepLabel={labels.selectedStep}
-              activeStepId={activeStepId}
-              isReplaying={isReplaying}
-              onSelectStep={selectStep}
-              onToggleReplay={toggleReplay}
-              onReplayPrevious={() => moveReplay(-1)}
-              onReplayNext={() => moveReplay(1)}
-            />
-            <TraceLanesPanel
-              trace={flowTrace}
-              locale={locale}
-              lanesLabel={labels.lanes}
-              relatedLanesLabel={labels.relatedLanes}
-              activeStepId={activeStepId}
-            />
+            {flowSource === "split" && baselineTrace ? (
+              <TraceFlowComparePanel
+                title={labels.flowTimeline}
+                currentRunLabel={labels.focusCurrentRun}
+                staticBaselineLabel={labels.focusStaticBaseline}
+                selectedStepLabel={labels.selectedStep}
+                relatedLanesLabel={labels.relatedLanes}
+                liveTrace={trace}
+                staticTrace={baselineTrace}
+                activeIndex={compareIndex}
+              />
+            ) : (
+              <>
+                <TraceStepsPanel
+                  trace={flowTrace}
+                  locale={locale}
+                  stepsLabel={labels.steps}
+                  flowTimelineLabel={labels.flowTimeline}
+                  replayControlsLabel={labels.replayControls}
+                  replayPlayLabel={labels.replayPlay}
+                  replayPauseLabel={labels.replayPause}
+                  replayPreviousLabel={labels.replayPrevious}
+                  replayNextLabel={labels.replayNext}
+                  replayAutoLabel={labels.replayAuto}
+                  replayManualLabel={labels.replayManual}
+                  selectedStepLabel={labels.selectedStep}
+                  activeStepId={activeStepId}
+                  isReplaying={isReplaying}
+                  onSelectStep={selectStep}
+                  onToggleReplay={toggleReplay}
+                  onReplayPrevious={() => moveReplay(-1)}
+                  onReplayNext={() => moveReplay(1)}
+                />
+                <TraceLanesPanel
+                  trace={flowTrace}
+                  locale={locale}
+                  lanesLabel={labels.lanes}
+                  relatedLanesLabel={labels.relatedLanes}
+                  activeStepId={activeStepId}
+                />
+              </>
+            )}
           </>
         ) : null}
 

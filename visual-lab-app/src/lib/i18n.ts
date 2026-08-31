@@ -116,6 +116,7 @@ export interface UiText {
   flowSource: string;
   focusCurrentRun: string;
   focusStaticBaseline: string;
+  focusSplitCompare: string;
   flowTimeline: string;
   replayControls: string;
   replayPlay: string;
@@ -255,6 +256,7 @@ const uiTextByLocale: Record<Locale, UiText> = {
     flowSource: "Flow Source",
     focusCurrentRun: "current run",
     focusStaticBaseline: "static baseline",
+    focusSplitCompare: "split compare",
     flowTimeline: "Flow Timeline",
     replayControls: "Replay Controls",
     replayPlay: "Play",
@@ -392,6 +394,7 @@ const uiTextByLocale: Record<Locale, UiText> = {
     flowSource: "흐름 기준",
     focusCurrentRun: "현재 실행",
     focusStaticBaseline: "정적 기준선",
+    focusSplitCompare: "좌우 비교",
     flowTimeline: "흐름 타임라인",
     replayControls: "재생 컨트롤",
     replayPlay: "재생",

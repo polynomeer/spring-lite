@@ -670,6 +670,10 @@ code {
   grid-column: 1 / -1;
 }
 
+.flow-compare-panel {
+  grid-column: 1 / -1;
+}
+
 .execution-path-subtitle {
   margin: 6px 0 0;
   color: #b5e8c0;
@@ -855,6 +859,18 @@ code {
 .flow-source-toggle {
   display: flex;
   flex-wrap: wrap;
+  gap: 10px;
+}
+
+.flow-compare-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.flow-compare-column,
+.flow-compare-head {
+  display: grid;
   gap: 10px;
 }
 
@@ -1244,6 +1260,7 @@ code {
   .state-transition-rail,
   .comparison-diff-layout,
   .runtime-flow-diff-grid,
+  .flow-compare-grid,
   .runtime-diff-row,
   .execution-branch-grid,
   .flow-timeline,
