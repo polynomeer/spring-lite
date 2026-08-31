@@ -7,6 +7,7 @@ export interface FlowCodeFocus {
   methodFocus: string;
   docFocus: string;
   testFocus: string;
+  testMethodFocus: string;
   assertionFocusKo: string;
   assertionFocusEn: string;
 }
@@ -26,6 +27,7 @@ const flowCodeRules: FlowCodeRule[] = [
       methodFocus: "createOrder(...) / getOrder(...)",
       docFocus: "docs/book/complete-manuscript.md#chapter-17-dispatcherservlet과-front-controller-패턴",
       testFocus: "ExampleApplicationWebTest / DispatcherServletTest",
+      testMethodFocus: "returnsValidationErrorsForInvalidOrderRequest(...) / dispatchesPostRequestsWithRecordBodyBinding(...)",
       assertionFocusKo: "상태 코드, 요청 바인딩 성공, JSON 응답 본문 또는 검증 오류 본문을 먼저 확인한다.",
       assertionFocusEn: "Start with status code, successful request binding, and the JSON response body or validation error body."
     }
@@ -39,6 +41,7 @@ const flowCodeRules: FlowCodeRule[] = [
       methodFocus: "createOrder(...) / createOrderAndFail(...) / getOrder(...) / failForLab(...)",
       docFocus: "docs/book/build-along-implementation-guide.md",
       testFocus: "ExampleApplicationTest",
+      testMethodFocus: "loadsExampleApplicationAndCreatesOrders() / throwsForUnknownOrderId()",
       assertionFocusKo: "생성된 주문 상태, unknown id 예외 메시지, 서비스 분기별 결과를 확인한다.",
       assertionFocusEn: "Check created order status, unknown-id exception messages, and scenario-specific service outcomes."
     }
@@ -52,6 +55,7 @@ const flowCodeRules: FlowCodeRule[] = [
       methodFocus: "save(...) / findById(...) / findAll(...)",
       docFocus: "docs/testing/detailed-test-guide.md",
       testFocus: "ExampleApplicationTest",
+      testMethodFocus: "returnsSeededOrderAndAppendsNewOrders() / usesJdbcBackedRepository()",
       assertionFocusKo: "seed row 보존, 생성 후 목록 변화, rollback 이후 visible row count를 확인한다.",
       assertionFocusEn: "Check seeded row preservation, post-create list growth, and visible row counts after rollback."
     }
@@ -65,6 +69,7 @@ const flowCodeRules: FlowCodeRule[] = [
       methodFocus: "postProcessAfterInitialization(...) / TransactionInterceptor.invoke(...)",
       docFocus: "docs/book/complete-manuscript.md",
       testFocus: "TransactionManagerTest / ExampleApplicationWebTest",
+      testMethodFocus: "commitsPhysicalTransactionOnlyAtOutermostBoundary() / returnsLiveLabTraceForRollbackScenario(...)",
       assertionFocusKo: "outermost commit, rollback-only 전파, rollback branch의 결과 메트릭을 확인한다.",
       assertionFocusEn: "Check outermost commit behavior, rollback-only propagation, and rollback-branch result metrics."
     }
@@ -90,6 +95,7 @@ export function resolveFlowCodeFocus(reference: string, marker: string | undefin
     methodFocus: locale === "ko" ? "관련 진입 메서드 추적" : "trace the related entry method",
     docFocus: "docs/book/complete-manuscript.md",
     testFocus: locale === "ko" ? "관련 테스트 추적" : "trace the related test",
+    testMethodFocus: locale === "ko" ? "우선 관련 테스트 메서드 확인" : "start with the nearest test method",
     assertionFocusKo: "현재 단계와 가장 가까운 상태 코드, 예외, row 변화 assertion을 확인한다.",
     assertionFocusEn: "Check the nearest status-code, exception, or row-visibility assertion for this step."
   };
