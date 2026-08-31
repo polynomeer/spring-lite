@@ -666,6 +666,10 @@ code {
   grid-column: 1 / -1;
 }
 
+.flow-source-panel {
+  grid-column: 1 / -1;
+}
+
 .execution-path-subtitle {
   margin: 6px 0 0;
   color: #b5e8c0;
@@ -845,6 +849,12 @@ code {
 
 .runtime-lane-diff-table {
   display: grid;
+  gap: 10px;
+}
+
+.flow-source-toggle {
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
 

@@ -28,6 +28,9 @@ interface TracePreviewProps {
     sideEffects: string;
     overview: string;
     flowView: string;
+    flowSource: string;
+    focusCurrentRun: string;
+    focusStaticBaseline: string;
     flowTimeline: string;
     replayControls: string;
     replayPlay: string;
@@ -63,6 +66,7 @@ interface TracePreviewProps {
     liveObserved: string;
   };
   trace: LabTrace;
+  baselineTrace?: LabTrace;
   insight: TraceAdapterResult | null;
   runtimeDiffRows?: Array<{
     label: string;
@@ -87,34 +91,42 @@ interface TracePreviewProps {
   loading: boolean;
 }
 
-export function TracePreview({ trace, insight, runtimeDiffRows, runtimeFlowDiff, runSequence, loading, locale, labels }: TracePreviewProps) {
+export function TracePreview({ trace, baselineTrace, insight, runtimeDiffRows, runtimeFlowDiff, runSequence, loading, locale, labels }: TracePreviewProps) {
   const [activeTab, setActiveTab] = useState<"overview" | "flow" | "references">("overview");
+  const [flowSource, setFlowSource] = useState<"live" | "static">("live");
   const [activeStepId, setActiveStepId] = useState<string>(trace.steps[0]?.id ?? "");
   const [isReplaying, setIsReplaying] = useState(false);
+  const flowTrace = flowSource === "static" && baselineTrace ? baselineTrace : trace;
 
   useEffect(() => {
     setActiveTab("overview");
+    setFlowSource("live");
     setActiveStepId(trace.steps[0]?.id ?? "");
     setIsReplaying(false);
   }, [trace.id, runSequence]);
 
   useEffect(() => {
-    if (!isReplaying || trace.steps.length <= 1) {
+    setActiveStepId(flowTrace.steps[0]?.id ?? "");
+    setIsReplaying(false);
+  }, [flowSource, flowTrace.id]);
+
+  useEffect(() => {
+    if (!isReplaying || flowTrace.steps.length <= 1) {
       return;
     }
 
-    const currentIndex = trace.steps.findIndex((step) => step.id === activeStepId);
+    const currentIndex = flowTrace.steps.findIndex((step) => step.id === activeStepId);
     const safeIndex = currentIndex >= 0 ? currentIndex : 0;
     const timer = window.setTimeout(() => {
-      if (safeIndex >= trace.steps.length - 1) {
+      if (safeIndex >= flowTrace.steps.length - 1) {
         setIsReplaying(false);
         return;
       }
-      setActiveStepId(trace.steps[safeIndex + 1]?.id ?? trace.steps[safeIndex].id);
+      setActiveStepId(flowTrace.steps[safeIndex + 1]?.id ?? flowTrace.steps[safeIndex].id);
     }, 1200);
 
     return () => window.clearTimeout(timer);
-  }, [activeStepId, isReplaying, trace.steps]);
+  }, [activeStepId, flowTrace.steps, isReplaying]);
 
   function selectStep(stepId: string) {
     setIsReplaying(false);
@@ -122,21 +134,21 @@ export function TracePreview({ trace, insight, runtimeDiffRows, runtimeFlowDiff,
   }
 
   function moveReplay(offset: -1 | 1) {
-    const currentIndex = trace.steps.findIndex((step) => step.id === activeStepId);
+    const currentIndex = flowTrace.steps.findIndex((step) => step.id === activeStepId);
     const safeIndex = currentIndex >= 0 ? currentIndex : 0;
-    const nextIndex = Math.min(trace.steps.length - 1, Math.max(0, safeIndex + offset));
+    const nextIndex = Math.min(flowTrace.steps.length - 1, Math.max(0, safeIndex + offset));
     setIsReplaying(false);
-    setActiveStepId(trace.steps[nextIndex]?.id ?? trace.steps[0]?.id ?? "");
+    setActiveStepId(flowTrace.steps[nextIndex]?.id ?? flowTrace.steps[0]?.id ?? "");
   }
 
   function toggleReplay() {
-    if (trace.steps.length <= 1) {
+    if (flowTrace.steps.length <= 1) {
       return;
     }
 
-    const currentIndex = trace.steps.findIndex((step) => step.id === activeStepId);
-    if (currentIndex >= trace.steps.length - 1) {
-      setActiveStepId(trace.steps[0]?.id ?? "");
+    const currentIndex = flowTrace.steps.findIndex((step) => step.id === activeStepId);
+    if (currentIndex >= flowTrace.steps.length - 1) {
+      setActiveStepId(flowTrace.steps[0]?.id ?? "");
       setIsReplaying(true);
       return;
     }
@@ -240,8 +252,37 @@ export function TracePreview({ trace, insight, runtimeDiffRows, runtimeFlowDiff,
 
         {activeTab === "flow" ? (
           <>
+            {baselineTrace ? (
+              <article className="trace-panel flow-source-panel">
+                <div className="trace-head">
+                  <div>
+                    <p className="eyebrow">{labels.flowView}</p>
+                    <h3>{labels.flowSource}</h3>
+                  </div>
+                  <span className={flowSource === "live" ? "status-pill info" : "status-pill neutral"}>
+                    {flowSource === "live" ? labels.focusCurrentRun : labels.focusStaticBaseline}
+                  </span>
+                </div>
+                <div className="flow-source-toggle">
+                  <button
+                    className={flowSource === "live" ? "filter-chip active" : "filter-chip"}
+                    type="button"
+                    onClick={() => setFlowSource("live")}
+                  >
+                    {labels.focusCurrentRun}
+                  </button>
+                  <button
+                    className={flowSource === "static" ? "filter-chip active" : "filter-chip"}
+                    type="button"
+                    onClick={() => setFlowSource("static")}
+                  >
+                    {labels.focusStaticBaseline}
+                  </button>
+                </div>
+              </article>
+            ) : null}
             <TraceStepsPanel
-              trace={trace}
+              trace={flowTrace}
               locale={locale}
               stepsLabel={labels.steps}
               flowTimelineLabel={labels.flowTimeline}
@@ -261,7 +302,7 @@ export function TracePreview({ trace, insight, runtimeDiffRows, runtimeFlowDiff,
               onReplayNext={() => moveReplay(1)}
             />
             <TraceLanesPanel
-              trace={trace}
+              trace={flowTrace}
               locale={locale}
               lanesLabel={labels.lanes}
               relatedLanesLabel={labels.relatedLanes}

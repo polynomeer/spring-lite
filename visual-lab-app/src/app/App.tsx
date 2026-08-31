@@ -645,6 +645,9 @@ export function App() {
                 sideEffects: text.sideEffects,
                 overview: text.overview,
                 flowView: text.flowView,
+                flowSource: text.flowSource,
+                focusCurrentRun: text.focusCurrentRun,
+                focusStaticBaseline: text.focusStaticBaseline,
                 flowTimeline: text.flowTimeline,
                 replayControls: text.replayControls,
                 replayPlay: text.replayPlay,
@@ -679,6 +682,7 @@ export function App() {
                 staticBaseline: text.staticBaseline,
                 liveObserved: text.liveObserved
                   }}
+                  baselineTrace={localizedStaticBaseline ?? undefined}
                   runtimeDiffRows={runtimeDiffRows}
                   runtimeFlowDiff={runtimeFlowDiff}
                 />

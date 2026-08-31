@@ -113,6 +113,9 @@ export interface UiText {
   springSide: string;
   overview: string;
   flowView: string;
+  flowSource: string;
+  focusCurrentRun: string;
+  focusStaticBaseline: string;
   flowTimeline: string;
   replayControls: string;
   replayPlay: string;
@@ -249,6 +252,9 @@ const uiTextByLocale: Record<Locale, UiText> = {
     springSide: "Spring view",
     overview: "Overview",
     flowView: "Flow",
+    flowSource: "Flow Source",
+    focusCurrentRun: "current run",
+    focusStaticBaseline: "static baseline",
     flowTimeline: "Flow Timeline",
     replayControls: "Replay Controls",
     replayPlay: "Play",
@@ -383,6 +389,9 @@ const uiTextByLocale: Record<Locale, UiText> = {
     springSide: "Spring 관점",
     overview: "개요",
     flowView: "흐름",
+    flowSource: "흐름 기준",
+    focusCurrentRun: "현재 실행",
+    focusStaticBaseline: "정적 기준선",
     flowTimeline: "흐름 타임라인",
     replayControls: "재생 컨트롤",
     replayPlay: "재생",
