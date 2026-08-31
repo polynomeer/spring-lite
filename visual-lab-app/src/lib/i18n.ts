@@ -8,6 +8,12 @@ export interface UiText {
   heroText: string;
   quickRun: string;
   quickRunBody: string;
+  questionGuide: string;
+  questionGuideBody: string;
+  howToUse: string;
+  howToUseStep1: string;
+  howToUseStep2: string;
+  howToUseStep3: string;
   scenarioLibrary: string;
   resultWorkspace: string;
   resultWorkspaceBody: string;
@@ -56,6 +62,20 @@ export interface UiText {
   loadingTrace: string;
   resolvingTrace: string;
   traceLoadingFailed: string;
+  runFocus: string;
+  thisRunAnswers: string;
+  recommendedReading: string;
+  selectedQuestion: string;
+  liveReady: string;
+  staticOnly: string;
+  difficultyBeginner: string;
+  difficultyIntermediate: string;
+  difficultyAdvanced: string;
+  executionTarget: string;
+  rerunHint: string;
+  resultGuide: string;
+  resultGuideBody: string;
+  lastSuccessfulRun: string;
   projectLayout: string;
   frontendStructure: string;
   loadedTrace: string;
@@ -79,12 +99,18 @@ const uiTextByLocale: Record<Locale, UiText> = {
   en: {
     appEyebrow: "spring-lite / visual-lab-app",
     heroTitle: "Unified visual lab app for all spring-lite study modules",
-    heroText: "The separated frontend now covers playground, container, example-flow, and comparison labs through one shared trace model. Static study traces and live runtime traces use the same rendering shell so each module can evolve without UI rewrites.",
+    heroText: "Choose one Spring question, run a focused scenario, and read the result as a guided execution story instead of a raw trace dump.",
     quickRun: "Quick Run",
-    quickRunBody: "Pick a lab, choose a scenario, then run the trace without scanning the entire page.",
+    quickRunBody: "Pick a question first, then adjust the scenario only if you need a different branch.",
+    questionGuide: "Question Guide",
+    questionGuideBody: "Start from the concept you want to verify, not from the module name.",
+    howToUse: "How To Use",
+    howToUseStep1: "Choose one question card.",
+    howToUseStep2: "Adjust mode or scenario if needed, then run once.",
+    howToUseStep3: "Read summary first, then flow, then references.",
     scenarioLibrary: "Scenario Library",
     resultWorkspace: "Result Workspace",
-    resultWorkspaceBody: "Keep execution status and rendered trace together so the latest result is visible immediately.",
+    resultWorkspaceBody: "The result pane explains what happened, where the branch changed, and what to inspect next.",
     supportingContext: "Supporting Context",
     supportingContextBody: "Open deeper module notes only when you need structure, roadmap, or file layout details.",
     runtimeMode: "Runtime Mode",
@@ -131,6 +157,20 @@ const uiTextByLocale: Record<Locale, UiText> = {
     loadingTrace: "Loading trace",
     resolvingTrace: "Resolving provider output for the last executed request.",
     traceLoadingFailed: "Trace loading failed",
+    runFocus: "Run Focus",
+    thisRunAnswers: "This run answers",
+    recommendedReading: "Recommended reading order",
+    selectedQuestion: "Selected Question",
+    liveReady: "live ready",
+    staticOnly: "static only",
+    difficultyBeginner: "beginner",
+    difficultyIntermediate: "intermediate",
+    difficultyAdvanced: "advanced",
+    executionTarget: "Execution Target",
+    rerunHint: "Selection changed. Run again to refresh the result.",
+    resultGuide: "Result Guide",
+    resultGuideBody: "Start with the conclusion card, then inspect the flow panels only where the branch changes.",
+    lastSuccessfulRun: "Last successful run",
     projectLayout: "Project Layout",
     frontendStructure: "Frontend Structure",
     loadedTrace: "Loaded Trace",
@@ -152,12 +192,18 @@ const uiTextByLocale: Record<Locale, UiText> = {
   ko: {
     appEyebrow: "spring-lite / visual-lab-app",
     heroTitle: "spring-lite 학습 모듈 전체를 위한 통합 비주얼 랩 앱",
-    heroText: "분리된 프런트엔드는 이제 playground, container, example-flow, comparison 랩을 하나의 공통 trace 모델로 다룹니다. 정적 학습 trace와 라이브 런타임 trace가 같은 렌더링 셸을 사용하므로 모듈별로 UI를 다시 만들지 않고 확장할 수 있습니다.",
+    heroText: "Spring 질문 하나를 고르고, 그 질문에 맞는 시나리오를 실행한 뒤, raw trace 대신 해석 가능한 실행 이야기로 결과를 읽는다.",
     quickRun: "빠른 실행",
-    quickRunBody: "한 화면 전체를 훑지 않고 랩과 시나리오를 고른 뒤 바로 trace를 실행합니다.",
+    quickRunBody: "먼저 질문을 고르고, 다른 분기가 필요할 때만 시나리오를 조정한 뒤 실행합니다.",
+    questionGuide: "질문 가이드",
+    questionGuideBody: "랩 이름보다 지금 검증하고 싶은 개념에서 시작합니다.",
+    howToUse: "사용 순서",
+    howToUseStep1: "질문 카드 하나를 고릅니다.",
+    howToUseStep2: "필요하면 모드와 시나리오를 조정한 뒤 한 번 실행합니다.",
+    howToUseStep3: "요약을 먼저 읽고, 그다음 흐름과 참고 자료를 봅니다.",
     scenarioLibrary: "시나리오 라이브러리",
     resultWorkspace: "결과 워크스페이스",
-    resultWorkspaceBody: "실행 상태와 렌더링 결과를 한곳에 묶어 최신 결과를 바로 읽을 수 있게 합니다.",
+    resultWorkspaceBody: "결과 패널은 무엇이 일어났는지, 어디서 분기되었는지, 다음에 무엇을 봐야 하는지를 먼저 설명합니다.",
     supportingContext: "보조 컨텍스트",
     supportingContextBody: "구조, 로드맵, 파일 배치 같은 상세 정보는 필요할 때만 펼쳐 봅니다.",
     runtimeMode: "실행 모드",
@@ -204,6 +250,20 @@ const uiTextByLocale: Record<Locale, UiText> = {
     loadingTrace: "Trace 로딩 중",
     resolvingTrace: "마지막으로 실행한 요청에 대한 provider 결과를 불러오는 중입니다.",
     traceLoadingFailed: "Trace 로딩 실패",
+    runFocus: "이번 실행의 초점",
+    thisRunAnswers: "이 실행이 답하는 질문",
+    recommendedReading: "권장 읽기 순서",
+    selectedQuestion: "선택한 질문",
+    liveReady: "live 지원",
+    staticOnly: "static 전용",
+    difficultyBeginner: "입문",
+    difficultyIntermediate: "중급",
+    difficultyAdvanced: "심화",
+    executionTarget: "실행 대상",
+    rerunHint: "선택이 바뀌었습니다. 결과를 갱신하려면 다시 실행하세요.",
+    resultGuide: "결과 읽기 가이드",
+    resultGuideBody: "결론 카드를 먼저 읽고, 분기가 바뀌는 지점만 흐름 패널에서 확인하세요.",
+    lastSuccessfulRun: "마지막 성공 실행",
     projectLayout: "프로젝트 구조",
     frontendStructure: "프런트엔드 구조",
     loadedTrace: "로드된 Trace",

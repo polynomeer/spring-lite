@@ -56,6 +56,69 @@ export const roadmapSteps = [
   }
 ] as const;
 
+export const questionCards = [
+  {
+    id: "tx-rollback",
+    labId: "example-flow",
+    scenario: "rollback",
+    difficulty: "intermediate",
+    supportsLive: true,
+    questionEn: "Where does the transaction start and why does it roll back?",
+    questionKo: "트랜잭션은 어디서 시작되고 왜 롤백되는가",
+    goalEn: "Trace one request across controller, service, transaction, and JDBC boundaries.",
+    goalKo: "하나의 요청이 컨트롤러, 서비스, 트랜잭션, JDBC 경계를 어떻게 지나는지 추적한다.",
+    readPathEn: "Read summary -> flow -> references",
+    readPathKo: "요약 -> 흐름 -> 참고 순서로 읽기",
+    moduleLabelEn: "Example Flow Lab",
+    moduleLabelKo: "Example Flow Lab"
+  },
+  {
+    id: "mvc-error-branch",
+    labId: "playground",
+    scenario: "mvc-validation",
+    difficulty: "beginner",
+    supportsLive: false,
+    questionEn: "At which stage does an HTTP request turn into 400 or 500?",
+    questionKo: "HTTP 요청은 어느 단계에서 400 또는 500으로 갈리는가",
+    goalEn: "See routing, binding, validation, controller, and response writing as one branch path.",
+    goalKo: "라우팅, 바인딩, 검증, 컨트롤러, 응답 작성이 하나의 분기 경로로 어떻게 이어지는지 본다.",
+    readPathEn: "Read branch summary -> steps -> lanes",
+    readPathKo: "분기 요약 -> 단계 -> 레인 순서로 읽기",
+    moduleLabelEn: "Playground",
+    moduleLabelKo: "Playground"
+  },
+  {
+    id: "container-proxy",
+    labId: "container",
+    scenario: "lifecycle-proxy",
+    difficulty: "intermediate",
+    supportsLive: false,
+    questionEn: "When does a bean stay raw and when is it exposed as a proxy?",
+    questionKo: "빈은 언제 원본으로 남고 언제 프록시로 노출되는가",
+    goalEn: "Follow bean creation, post-processing, proxy wrapping, and destroy registration.",
+    goalKo: "빈 생성, 후처리, 프록시 래핑, 종료 콜백 등록 순서를 따라간다.",
+    readPathEn: "Read summary -> snapshot -> references",
+    readPathKo: "요약 -> 스냅샷 -> 참고 순서로 읽기",
+    moduleLabelEn: "Container Lab",
+    moduleLabelKo: "Container Lab"
+  },
+  {
+    id: "spring-compare",
+    labId: "comparison",
+    scenario: "tx",
+    difficulty: "advanced",
+    supportsLive: false,
+    questionEn: "What matches real Spring and what is intentionally simplified?",
+    questionKo: "실제 Spring과 무엇이 같고 무엇이 의도적으로 단순화되었는가",
+    goalEn: "Map the same concept across Spring Lite and Spring with one comparison scenario.",
+    goalKo: "하나의 비교 시나리오로 같은 개념을 Spring Lite와 Spring 양쪽에 대응시킨다.",
+    readPathEn: "Read comparison summary -> differences -> references",
+    readPathKo: "비교 요약 -> 차이점 -> 참고 순서로 읽기",
+    moduleLabelEn: "Comparison Dashboard",
+    moduleLabelKo: "Comparison Dashboard"
+  }
+] as const;
+
 export const tracePresetOptions = [
   { labId: "example-flow", scenario: "create", label: "Example Flow / Create Order" },
   { labId: "example-flow", scenario: "validation", label: "Example Flow / Validation Failure" },

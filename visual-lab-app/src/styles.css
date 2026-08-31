@@ -179,6 +179,7 @@ code {
 .mode-subnote,
 .hero-panel-copy,
 .section-copy,
+.guide-card p,
 .console-strip-copy p,
 .info-box p,
 .request-card p,
@@ -196,6 +197,28 @@ code {
   align-content: start;
   gap: 16px;
   justify-items: end;
+}
+
+.hero-guides {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.guide-card {
+  border: 1px solid rgba(37, 197, 97, 0.18);
+  background: rgba(7, 12, 8, 0.84);
+  padding: 14px;
+  border-radius: 8px;
+}
+
+.guide-card strong,
+.question-card strong,
+.run-focus-card h3 {
+  display: block;
+  margin-bottom: 6px;
+  color: #effff2;
 }
 
 .hero-status-stack {
@@ -259,6 +282,13 @@ code {
   margin-top: 14px;
 }
 
+.question-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
 .control-block + .control-block,
 .selection-preview {
   margin-top: 18px;
@@ -279,6 +309,13 @@ code {
   gap: 12px;
 }
 
+.selection-brief {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
 .query-actions {
   margin-top: 18px;
   padding-top: 14px;
@@ -295,7 +332,8 @@ code {
 .filter-chip,
 .lab-tab,
 .trace-tab,
-.scenario-card {
+.scenario-card,
+.question-card {
   border: 1px solid var(--line);
   background: rgba(7, 12, 8, 0.94);
   color: var(--muted);
@@ -313,6 +351,27 @@ code {
   padding: 10px 14px;
 }
 
+.question-card {
+  padding: 14px;
+  text-align: left;
+  display: grid;
+  gap: 10px;
+}
+
+.question-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.question-card-meta {
+  display: grid;
+  gap: 6px;
+  color: #8ab298;
+  font-size: 12px;
+}
+
 .toggle:hover,
 .run-button:hover,
 .ghost-button:hover,
@@ -320,6 +379,7 @@ code {
 .lab-tab:hover,
 .trace-tab:hover,
 .scenario-card:hover,
+.question-card:hover,
 .card:hover {
   border-color: var(--line-strong);
   color: var(--accent);
@@ -329,7 +389,8 @@ code {
 .filter-chip.active,
 .lab-tab.active,
 .trace-tab.active,
-.scenario-card.active {
+.scenario-card.active,
+.question-card.active {
   color: var(--accent);
   box-shadow: inset 0 0 0 1px rgba(49, 255, 132, 0.22), 0 0 14px rgba(49, 255, 132, 0.08);
 }
@@ -551,16 +612,51 @@ code {
   gap: 12px;
 }
 
+.focus-summary {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
 .request-card,
 .trace-panel,
 .card,
-.info-box {
+.info-box,
+.run-focus-card {
   border: 1px solid rgba(37, 197, 97, 0.18);
   background: rgba(7, 12, 8, 0.96);
 }
 
 .request-card {
   padding: 14px;
+}
+
+.run-focus-card {
+  margin-top: 14px;
+  padding: 16px;
+  border-radius: 8px;
+}
+
+.run-focus-card.tone-warning {
+  border-color: rgba(200, 255, 121, 0.24);
+}
+
+.run-focus-card.tone-error {
+  border-color: rgba(255, 122, 122, 0.24);
+}
+
+.run-focus-detail {
+  margin: 10px 0 0;
+  color: #cde7d2;
+  line-height: 1.6;
+}
+
+.run-focus-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .field {
@@ -694,6 +790,15 @@ code {
   padding: 14px;
 }
 
+.compact-info-box {
+  margin-top: 14px;
+}
+
+.warning-box {
+  border-color: rgba(200, 255, 121, 0.24);
+  background: rgba(27, 29, 10, 0.92);
+}
+
 .error-box {
   border-color: rgba(255, 122, 122, 0.24);
 }
@@ -711,11 +816,16 @@ code {
     grid-template-columns: 1fr;
   }
 
+  .hero-guides,
+  .question-grid,
   .lab-tab-row,
+  .selection-brief,
   .scenario-list,
   .scenario-list.compact,
   .selection-preview,
   .request-summary,
+  .focus-summary,
+  .run-focus-grid,
   .trace-preview-grid,
   .metric-mini-grid,
   .results-header,

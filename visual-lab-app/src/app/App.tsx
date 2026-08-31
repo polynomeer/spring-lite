@@ -13,7 +13,8 @@ import {
   translateUiError
 } from "../lib/i18n";
 import { liveApiBaseUrl, liveTraceEndpointPath } from "../lib/runtime-config";
-import { labCards, tracePresetOptions } from "../lib/static-data";
+import { deriveTraceStatusSummary } from "../lib/trace-presentation";
+import { labCards, questionCards, tracePresetOptions } from "../lib/static-data";
 import type { LabId, LabTraceRequest, RuntimeMode } from "../lib/types";
 
 function toPresetKey(labId: LabId, scenario: string): string {
@@ -33,13 +34,24 @@ export function App() {
   const firstPreset = tracePresetOptions[0];
   const [locale, setLocale] = useState<Locale>("ko");
   const [mode, setMode] = useState<RuntimeMode>("static");
-  const [selectedLab, setSelectedLab] = useState<LabId | "all">("all");
+  const [selectedLab, setSelectedLab] = useState<LabId | "all">("example-flow");
   const [selectedPresetKey, setSelectedPresetKey] = useState<string>(toPresetKey(firstPreset.labId, firstPreset.scenario));
   const [executedRequest, setExecutedRequest] = useState<LabTraceRequest>(() => buildRequest(toPresetKey(firstPreset.labId, firstPreset.scenario), "static"));
   const [reloadKey, setReloadKey] = useState(0);
   const [lastRunLabel, setLastRunLabel] = useState(getUiText("ko").notRunYet);
   const text = getUiText(locale);
+
   const localizedCards = useMemo(() => localizeLabCards(labCards, locale), [locale]);
+  const localizedQuestions = useMemo(
+    () => questionCards.map((question) => ({
+      ...question,
+      question: locale === "ko" ? question.questionKo : question.questionEn,
+      goal: locale === "ko" ? question.goalKo : question.goalEn,
+      readPath: locale === "ko" ? question.readPathKo : question.readPathEn,
+      moduleLabel: locale === "ko" ? question.moduleLabelKo : question.moduleLabelEn
+    })),
+    [locale]
+  );
 
   const filteredPresets = useMemo(
     () => selectedLab === "all"
@@ -61,12 +73,21 @@ export function App() {
   const activeLabCard = localizedCards.find((card) => card.id === draftRequest.labId)
     ?? localizedCards.find((card) => card.id === executedRequest.labId)
     ?? localizedCards[0];
+  const selectedQuestion = localizedQuestions.find((question) => question.labId === draftRequest.labId && question.scenario === draftRequest.scenario)
+    ?? localizedQuestions.find((question) => question.labId === draftRequest.labId)
+    ?? localizedQuestions[0];
+  const executedQuestion = localizedQuestions.find((question) => question.labId === executedRequest.labId && question.scenario === executedRequest.scenario)
+    ?? localizedQuestions.find((question) => question.labId === executedRequest.labId)
+    ?? localizedQuestions[0];
   const isDraftDirty = draftRequest.labId !== executedRequest.labId
     || draftRequest.scenario !== executedRequest.scenario
     || draftRequest.mode !== executedRequest.mode;
+  const activeQuestion = isDraftDirty ? selectedQuestion : executedQuestion;
+
   const { trace, error: traceError, loading } = useLabTrace(executedRequest, reloadKey);
   const localizedTrace = useMemo(() => (trace ? localizeTrace(trace, locale) : null), [locale, trace]);
   const traceInsight = useMemo(() => (localizedTrace ? adaptTrace(localizedTrace, locale) : null), [localizedTrace, locale]);
+  const traceStatus = localizedTrace ? deriveTraceStatusSummary(localizedTrace, locale) : null;
   const endpointLabel = liveApiBaseUrl
     ? `${liveApiBaseUrl}${liveTraceEndpointPath}`
     : `${liveTraceEndpointPath} via Vite proxy`;
@@ -100,26 +121,6 @@ export function App() {
             : executedRequest.mode === "live"
               ? "[ runtime_live ]"
               : "[ runtime_static ]",
-        saveQuery: loading
-          ? "[ loading_trace ]"
-          : isDraftDirty
-            ? "[ run_trace ]"
-            : "[ refresh_trace ]",
-        traceResultsMeta: loading
-          ? "provider 응답을 수집하는 중"
-          : isDraftDirty
-            ? "선택은 바뀌었지만 결과는 아직 마지막 실행 기준"
-            : traceError
-              ? "최근 실행에서 오류가 감지됨"
-              : "마지막 실행 결과가 로드됨",
-        activeSelection: isDraftDirty ? "PENDING SELECTION" : "ACTIVE SELECTION",
-        telemetry: loading
-          ? "FETCHING"
-          : traceError
-            ? "DEGRADED"
-            : localizedTrace?.mode === "live"
-              ? "LIVE"
-              : "STATIC",
         runPrimary: loading
           ? "[ loading_trace ]"
           : isDraftDirty
@@ -135,26 +136,6 @@ export function App() {
             : executedRequest.mode === "live"
               ? "[ runtime_live ]"
               : "[ runtime_static ]",
-        saveQuery: loading
-          ? "[ loading_trace ]"
-          : isDraftDirty
-            ? "[ run_trace ]"
-            : "[ refresh_trace ]",
-        traceResultsMeta: loading
-          ? "collecting provider response"
-          : isDraftDirty
-            ? "selection changed while result pane still shows last execution"
-            : traceError
-              ? "latest execution reported an error"
-              : "last executed trace is loaded",
-        activeSelection: isDraftDirty ? "PENDING SELECTION" : "ACTIVE SELECTION",
-        telemetry: loading
-          ? "FETCHING"
-          : traceError
-            ? "DEGRADED"
-            : localizedTrace?.mode === "live"
-              ? "LIVE"
-              : "STATIC",
         runPrimary: loading
           ? "[ loading_trace ]"
           : isDraftDirty
@@ -162,23 +143,23 @@ export function App() {
             : "[ refresh_trace ]",
         rerun: loading ? "[ loading ]" : "[ rerun_last ]"
       };
-  const consoleText = locale === "ko"
-    ? {
-        command: "lab@spring-lite:~$ inspect trace --sort=scenario",
-        title: "SPRING LITE VISUAL LAB",
-        subtitle: "Complete through Jul 31, 2026",
-        queryLocked: "// TRACE CONTROLS",
-        traceResults: "TRACE RESULTS",
-        ...dynamicConsoleText
-      }
-    : {
-        command: "lab@spring-lite:~$ inspect trace --sort=scenario",
-        title: "SPRING LITE VISUAL LAB",
-        subtitle: "Complete through Jul 31, 2026",
-        queryLocked: "// TRACE CONTROLS",
-        traceResults: "TRACE RESULTS",
-        ...dynamicConsoleText
-      };
+  const consoleText = {
+    command: "lab@spring-lite:~$ inspect trace --focus=question",
+    title: "SPRING LITE VISUAL LAB",
+    subtitle: text.heroText,
+    queryLocked: "// LEARNING CONTROLS",
+    ...dynamicConsoleText
+  };
+
+  function difficultyLabel(level: string) {
+    if (level === "beginner") {
+      return text.difficultyBeginner;
+    }
+    if (level === "advanced") {
+      return text.difficultyAdvanced;
+    }
+    return text.difficultyIntermediate;
+  }
 
   function runSelectedTrace() {
     setExecutedRequest(draftRequest);
@@ -191,14 +172,15 @@ export function App() {
     setLastRunLabel(formatRunTime(new Date(), locale));
   }
 
-  function focusLab(labId: LabId | "all") {
-    setSelectedLab(labId);
-    if (labId === "all") {
+  function chooseQuestion(questionId: string) {
+    const question = questionCards.find((candidate) => candidate.id === questionId);
+    if (!question) {
       return;
     }
-    const firstLabPreset = tracePresetOptions.find((option) => option.labId === labId);
-    if (firstLabPreset) {
-      setSelectedPresetKey(toPresetKey(firstLabPreset.labId, firstLabPreset.scenario));
+    setSelectedLab(question.labId);
+    setSelectedPresetKey(toPresetKey(question.labId, question.scenario));
+    if (!question.supportsLive && mode === "live") {
+      setMode("static");
     }
   }
 
@@ -230,6 +212,20 @@ export function App() {
             <p className="command-line">{consoleText.command}</p>
             <h1>{consoleText.title}</h1>
             <p className="hero-text">{consoleText.subtitle}</p>
+            <div className="hero-guides">
+              <div className="guide-card">
+                <strong>{text.questionGuide}</strong>
+                <p>{text.questionGuideBody}</p>
+              </div>
+              <div className="guide-card">
+                <strong>{text.quickRun}</strong>
+                <p>{text.quickRunBody}</p>
+              </div>
+              <div className="guide-card">
+                <strong>{text.resultGuide}</strong>
+                <p>{text.resultGuideBody}</p>
+              </div>
+            </div>
           </div>
           <div className="hero-actions">
             <div className="locale-switch">
@@ -241,8 +237,8 @@ export function App() {
               </button>
             </div>
             <div className="hero-status-stack">
-              <span className={isDraftDirty ? "status-pill warning" : "status-pill success"}>
-                {isDraftDirty ? text.selectionChanged : text.selectionSynced}
+              <span className={selectedQuestion.supportsLive ? "status-pill info" : "status-pill neutral"}>
+                {selectedQuestion.supportsLive ? text.liveReady : text.staticOnly}
               </span>
               <span className={activeTraceModeTone}>{activeTraceModeLabel}</span>
             </div>
@@ -252,8 +248,55 @@ export function App() {
         <main className="workspace-layout" id="app-main">
           <section className="panel query-panel">
             <div className="panel-label">{consoleText.queryLocked}</div>
+
             <div className="control-block">
-              <span className="control-step">1. {text.runtimeMode}</span>
+              <span className="control-step">1. {text.selectedQuestion}</span>
+              <div className="question-grid">
+                {localizedQuestions.map((question) => {
+                  const isActive = selectedQuestion.id === question.id;
+                  return (
+                    <button
+                      className={isActive ? "question-card active" : "question-card"}
+                      key={question.id}
+                      type="button"
+                      onClick={() => chooseQuestion(question.id)}
+                    >
+                      <div className="question-card-head">
+                        <span className="status-pill neutral">{question.moduleLabel}</span>
+                        <span className={question.supportsLive ? "status-pill info" : "status-pill neutral"}>
+                          {question.supportsLive ? text.liveReady : text.staticOnly}
+                        </span>
+                      </div>
+                      <strong>{question.question}</strong>
+                      <p>{question.goal}</p>
+                      <div className="question-card-meta">
+                        <span>{difficultyLabel(question.difficulty)}</span>
+                        <span>{question.readPath}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="control-block">
+              <span className="control-step">2. {text.executionTarget}</span>
+              <div className="selection-brief">
+                <div className="request-card">
+                  <strong>{selectedQuestion.question}</strong>
+                  <p>{selectedQuestion.goal}</p>
+                </div>
+                <div className="request-card">
+                  <strong>{text.howToUse}</strong>
+                  <p>1. {text.howToUseStep1}</p>
+                  <p>2. {text.howToUseStep2}</p>
+                  <p>3. {text.howToUseStep3}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="control-block">
+              <span className="control-step">3. {text.runtimeMode}</span>
               <div className="query-mode-row">
                 <button
                   className={mode === "static" ? "filter-chip active" : "filter-chip"}
@@ -266,6 +309,7 @@ export function App() {
                   className={mode === "live" ? "filter-chip active" : "filter-chip"}
                   type="button"
                   onClick={() => setMode("live")}
+                  disabled={!selectedQuestion.supportsLive}
                 >
                   {text.liveRuntime}
                 </button>
@@ -273,26 +317,7 @@ export function App() {
             </div>
 
             <div className="control-block">
-              <span className="control-step">2. {text.labModules}</span>
-              <div className="lab-tab-row" role="tablist" aria-label={text.labModules}>
-                {localizedCards.map((card) => (
-                  <button
-                    className={selectedLab === card.id ? "lab-tab active" : "lab-tab"}
-                    key={card.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={selectedLab === card.id}
-                    onClick={() => focusLab(card.id)}
-                  >
-                    <strong>{card.title}</strong>
-                    <span>{card.summary}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="control-block">
-              <span className="control-step">3. {text.tracePreset}</span>
+              <span className="control-step">4. {text.tracePreset}</span>
               <div className="scenario-panel">
                 <div className="scenario-panel-head">
                   <div>
@@ -322,12 +347,12 @@ export function App() {
 
             <div className="selection-preview">
               <div className="request-card">
-                <strong>4. {text.selectedRequest}</strong>
+                <strong>{text.selectedRequest}</strong>
                 <p>{draftRequest.labId} / {draftRequest.scenario} / {localizeModeLabel(draftRequest.mode, locale)}</p>
               </div>
               <div className="request-card">
-                <strong>{text.lastExecuted}</strong>
-                <p>{executedRequest.labId} / {executedRequest.scenario} / {localizeModeLabel(executedRequest.mode, locale)}</p>
+                <strong>{text.lastSuccessfulRun}</strong>
+                <p>{lastRunLabel}</p>
               </div>
             </div>
 
@@ -339,26 +364,32 @@ export function App() {
                 {consoleText.rerun}
               </button>
             </div>
+
+            {isDraftDirty ? (
+              <div className="info-box warning-box compact-info-box">
+                <strong>{text.selectionChanged}</strong>
+                <p>{text.rerunHint}</p>
+              </div>
+            ) : null}
           </section>
 
           <section className="result-column">
             <section className="panel result-panel">
               <div className="results-header">
                 <div>
-                  <p className="eyebrow">{consoleText.traceResults}</p>
-                  <p className="results-meta">{consoleText.traceResultsMeta}</p>
+                  <p className="eyebrow">{text.runFocus}</p>
+                  <p className="results-meta">{activeQuestion.question}</p>
                 </div>
-                <span className="badge">{mode === "static" ? text.staticProvider : text.liveProvider}</span>
+                <span className="badge">{executedRequest.mode === "static" ? text.staticProvider : text.liveProvider}</span>
               </div>
 
               <div className="runtime-strip table-strip">
-                <span className="table-head-cell">{consoleText.activeSelection}</span>
+                <span className="table-head-cell">{text.executionTarget}</span>
                 <span className={isDraftDirty ? "status-pill warning" : "status-pill success"}>
-                  {draftRequest.labId}:{draftRequest.scenario}
+                  {executedRequest.labId}:{executedRequest.scenario}
                 </span>
                 <span className={activeTraceModeTone}>{activeTraceModeLabel}</span>
                 <span className="status-pill neutral">{text.lastRun} {lastRunLabel}</span>
-                <span className="status-pill neutral">{consoleText.telemetry}</span>
               </div>
 
               <div className="console-strip">
@@ -373,24 +404,47 @@ export function App() {
                 </div>
               </div>
 
-              <div className="request-summary">
+              <div className="focus-summary">
                 <div className="request-card">
-                  <strong>{text.selectedRequest}</strong>
-                  <p>{draftRequest.labId} / {draftRequest.scenario} / {localizeModeLabel(draftRequest.mode, locale)}</p>
+                  <strong>{text.thisRunAnswers}</strong>
+                  <p>{executedQuestion.question}</p>
                 </div>
                 <div className="request-card">
-                  <strong>{text.lastExecuted}</strong>
+                  <strong>{text.recommendedReading}</strong>
+                  <p>{executedQuestion.readPath}</p>
+                </div>
+                <div className="request-card">
+                  <strong>{text.executionTarget}</strong>
                   <p>{executedRequest.labId} / {executedRequest.scenario} / {localizeModeLabel(executedRequest.mode, locale)}</p>
-                </div>
-                <div className="request-card">
-                  <strong>{text.runtimeMode}</strong>
-                  <p>{mode === "static" ? text.staticModeNote : text.liveModeNote}</p>
                 </div>
                 <div className="request-card">
                   <strong>endpoint</strong>
                   <p>{executedRequest.mode === "live" ? endpointLabel : text.localStaticProvider}</p>
                 </div>
               </div>
+
+              {traceStatus ? (
+                <div className={`run-focus-card tone-${traceStatus.tone}`}>
+                  <div className="trace-head">
+                    <div>
+                      <p className="eyebrow">{text.resultGuide}</p>
+                      <h3>{traceStatus.label}</h3>
+                    </div>
+                    <span className={`status-pill ${traceStatus.tone}`}>{traceStatus.label}</span>
+                  </div>
+                  <p className="run-focus-detail">{traceStatus.detail}</p>
+                  <div className="run-focus-grid">
+                    <div className="trace-item info">
+                      <strong>{text.thisRunAnswers}</strong>
+                      <p>{executedQuestion.goal}</p>
+                    </div>
+                    <div className="trace-item info">
+                      <strong>{text.recommendedReading}</strong>
+                      <p>{executedQuestion.readPath}</p>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
 
               <label className="field">
                 <span>{text.requestPayload}</span>
