@@ -877,6 +877,25 @@ code {
   background: rgba(9, 15, 10, 0.96);
 }
 
+.flow-compare-focus-rail {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.flow-compare-focus-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.flow-compare-focus-grid .metric-mini {
+  gap: 8px;
+}
+
+.flow-compare-focus-grid .metric-mini p {
+  margin: 0;
+  color: var(--muted);
+}
+
 .flow-compare-column,
 .flow-compare-head {
   display: grid;

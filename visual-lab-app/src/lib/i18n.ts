@@ -125,6 +125,7 @@ export interface UiText {
   flowCompareWhyDiffers: string;
   flowCompareInspectCode: string;
   flowCompareBriefing: string;
+  flowCompareFocusRail: string;
   flowComparePrimarySurface: string;
   flowCompareSupportingSurface: string;
   flowCompareClassFocus: string;
@@ -135,6 +136,10 @@ export interface UiText {
   flowCompareAssertionFocus: string;
   flowCompareChecklist: string;
   flowCompareSequence: string;
+  flowCompareDifferences: string;
+  flowCompareCodeSurfaces: string;
+  flowCompareAligned: string;
+  flowCompareLaneCountSuffix: string;
   flowCompareReasonShape: string;
   flowCompareReasonRuntime: string;
   flowCompareReasonStatic: string;
@@ -286,6 +291,7 @@ const uiTextByLocale: Record<Locale, UiText> = {
     flowCompareWhyDiffers: "why this differs",
     flowCompareInspectCode: "inspect code",
     flowCompareBriefing: "comparison briefing",
+    flowCompareFocusRail: "focus context",
     flowComparePrimarySurface: "primary surface",
     flowCompareSupportingSurface: "supporting surface",
     flowCompareClassFocus: "class focus",
@@ -296,6 +302,10 @@ const uiTextByLocale: Record<Locale, UiText> = {
     flowCompareAssertionFocus: "assertion focus",
     flowCompareChecklist: "verification checklist",
     flowCompareSequence: "steps",
+    flowCompareDifferences: "difference signals",
+    flowCompareCodeSurfaces: "code surfaces",
+    flowCompareAligned: "aligned",
+    flowCompareLaneCountSuffix: "lanes",
     flowCompareReasonShape: "The two traces do not expose the same number of steps at this position, so the comparison is aligning the nearest matching stage.",
     flowCompareReasonRuntime: "The live run captures runtime-specific verification or observed values that the static baseline compresses into a simpler teaching step.",
     flowCompareReasonStatic: "The static baseline keeps the concept compact, while the live trace expands details such as verification or extra lane events.",
@@ -445,6 +455,7 @@ const uiTextByLocale: Record<Locale, UiText> = {
     flowCompareWhyDiffers: "왜 차이가 나는가",
     flowCompareInspectCode: "관련 코드 보기",
     flowCompareBriefing: "비교 브리핑",
+    flowCompareFocusRail: "포커스 맥락",
     flowComparePrimarySurface: "핵심 진입 코드",
     flowCompareSupportingSurface: "보조 추적 코드",
     flowCompareClassFocus: "클래스 포커스",
@@ -455,6 +466,10 @@ const uiTextByLocale: Record<Locale, UiText> = {
     flowCompareAssertionFocus: "검증 포인트",
     flowCompareChecklist: "검증 체크리스트",
     flowCompareSequence: "단계 수",
+    flowCompareDifferences: "차이 신호",
+    flowCompareCodeSurfaces: "연결 코드 표면",
+    flowCompareAligned: "정렬됨",
+    flowCompareLaneCountSuffix: "개 레인",
     flowCompareReasonShape: "두 trace가 이 위치에서 같은 개수의 단계를 노출하지 않기 때문에, 비교는 가장 가까운 대응 단계를 기준으로 정렬됩니다.",
     flowCompareReasonRuntime: "live 실행은 정적 기준선이 축약한 단계를 실제 검증 단계나 관찰된 값까지 포함해 더 자세히 보여줍니다.",
     flowCompareReasonStatic: "static 기준선은 개념을 짧게 유지하고, live trace는 검증 단계나 lane 이벤트 같은 세부 정보를 더 펼쳐 보여줍니다.",

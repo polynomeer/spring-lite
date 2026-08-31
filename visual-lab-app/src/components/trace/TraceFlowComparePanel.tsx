@@ -17,6 +17,7 @@ interface TraceFlowComparePanelProps {
   whyDiffersLabel: string;
   inspectCodeLabel: string;
   briefingLabel: string;
+  focusRailLabel: string;
   primarySurfaceLabel: string;
   supportingSurfaceLabel: string;
   classFocusLabel: string;
@@ -30,6 +31,10 @@ interface TraceFlowComparePanelProps {
   watchLabel: string;
   whyLabel: string;
   nextLabel: string;
+  differencesLabel: string;
+  codeSurfacesLabel: string;
+  alignedLabel: string;
+  laneCountSuffix: string;
   reasonShapeLabel: string;
   reasonRuntimeLabel: string;
   reasonStaticLabel: string;
@@ -73,6 +78,7 @@ export function TraceFlowComparePanel({
   whyDiffersLabel,
   inspectCodeLabel,
   briefingLabel,
+  focusRailLabel,
   primarySurfaceLabel,
   supportingSurfaceLabel,
   classFocusLabel,
@@ -86,6 +92,10 @@ export function TraceFlowComparePanel({
   watchLabel,
   whyLabel,
   nextLabel,
+  differencesLabel,
+  codeSurfacesLabel,
+  alignedLabel,
+  laneCountSuffix,
   reasonShapeLabel,
   reasonRuntimeLabel,
   reasonStaticLabel,
@@ -147,6 +157,12 @@ export function TraceFlowComparePanel({
     ? `${classFocusLabel} ${primaryCard.classFocus} -> ${methodFocusLabel} ${primaryCard.methodFocus}`
     : liveTrace.snapshot.next;
   const briefingWhy = reasonLines[0] ?? liveTrace.snapshot.why;
+  const differenceBadges = [
+    stepDiff.missingOnOneSide ? stepShapeDiffLabel : null,
+    stepDiff.titleChanged ? titleDiffLabel : null,
+    stepDiff.markerChanged ? markerDiffLabel : null,
+    stepDiff.detailChanged ? detailDiffLabel : null
+  ].filter((item): item is string => Boolean(item));
 
   return (
     <article className="trace-panel flow-compare-panel">
@@ -174,6 +190,43 @@ export function TraceFlowComparePanel({
           <div className="metric-mini">
             <span>{nextLabel}</span>
             <strong>{briefingNext}</strong>
+          </div>
+        </div>
+      </section>
+
+      <section className="flow-compare-focus-rail">
+        <div className="flow-reference-checklist-head">
+          <strong>{focusRailLabel}</strong>
+          <span className="status-pill neutral">
+            {selectedStepLabel} {String(live.index + 1).padStart(2, "0")}
+          </span>
+        </div>
+        <div className="metric-mini-grid flow-compare-focus-grid">
+          <div className="metric-mini">
+            <span>{selectedStepLabel}</span>
+            <strong>{live.step?.title ?? baseline.step?.title ?? "-"}</strong>
+            <p>{live.step?.marker ?? baseline.step?.marker ?? "-"}</p>
+          </div>
+              <div className="metric-mini">
+            <span>{differencesLabel}</span>
+            <strong>{differenceBadges.length === 0 ? "0" : String(differenceBadges.length).padStart(2, "0")}</strong>
+            <div className="lane-focus-summary">
+              {differenceBadges.length === 0 ? (
+                <span className="status-pill success">{alignedLabel}</span>
+              ) : (
+                differenceBadges.map((badge) => <span className="status-pill warning" key={badge}>{badge}</span>)
+              )}
+            </div>
+          </div>
+          <div className="metric-mini">
+            <span>{relatedLanesLabel}</span>
+            <strong>{activeKinds.length === 0 ? "-" : activeKinds.join(" / ")}</strong>
+            <p>{activeKinds.length === 0 ? "-" : `${activeKinds.length} ${laneCountSuffix}`}</p>
+          </div>
+          <div className="metric-mini">
+            <span>{codeSurfacesLabel}</span>
+            <strong>{String(referenceCards.length).padStart(2, "0")}</strong>
+            <p>{primaryCard?.classFocus ?? "-"}</p>
           </div>
         </div>
       </section>

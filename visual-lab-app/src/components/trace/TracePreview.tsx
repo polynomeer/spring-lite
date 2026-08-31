@@ -41,6 +41,7 @@ interface TracePreviewProps {
     flowCompareWhyDiffers: string;
     flowCompareInspectCode: string;
     flowCompareBriefing: string;
+    flowCompareFocusRail: string;
     flowComparePrimarySurface: string;
     flowCompareSupportingSurface: string;
     flowCompareClassFocus: string;
@@ -51,6 +52,10 @@ interface TracePreviewProps {
     flowCompareAssertionFocus: string;
     flowCompareChecklist: string;
     flowCompareSequence: string;
+    flowCompareDifferences: string;
+    flowCompareCodeSurfaces: string;
+    flowCompareAligned: string;
+    flowCompareLaneCountSuffix: string;
     flowCompareReasonShape: string;
     flowCompareReasonRuntime: string;
     flowCompareReasonStatic: string;
@@ -366,6 +371,7 @@ export function TracePreview({ trace, baselineTrace, insight, runtimeDiffRows, r
                 whyDiffersLabel={labels.flowCompareWhyDiffers}
                 inspectCodeLabel={labels.flowCompareInspectCode}
                 briefingLabel={labels.flowCompareBriefing}
+                focusRailLabel={labels.flowCompareFocusRail}
                 primarySurfaceLabel={labels.flowComparePrimarySurface}
                 supportingSurfaceLabel={labels.flowCompareSupportingSurface}
                 classFocusLabel={labels.flowCompareClassFocus}
@@ -379,6 +385,10 @@ export function TracePreview({ trace, baselineTrace, insight, runtimeDiffRows, r
                 watchLabel={labels.watch}
                 whyLabel={labels.why}
                 nextLabel={labels.nextLabel}
+                differencesLabel={labels.flowCompareDifferences}
+                codeSurfacesLabel={labels.flowCompareCodeSurfaces}
+                alignedLabel={labels.flowCompareAligned}
+                laneCountSuffix={labels.flowCompareLaneCountSuffix}
                 reasonShapeLabel={labels.flowCompareReasonShape}
                 reasonRuntimeLabel={labels.flowCompareReasonRuntime}
                 reasonStaticLabel={labels.flowCompareReasonStatic}
