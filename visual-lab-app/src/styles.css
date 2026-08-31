@@ -658,6 +658,10 @@ code {
   grid-column: 1 / -1;
 }
 
+.runtime-diff-panel {
+  grid-column: 1 / -1;
+}
+
 .execution-path-subtitle {
   margin: 6px 0 0;
   color: #b5e8c0;
@@ -803,6 +807,51 @@ code {
 .comparison-side-list {
   display: grid;
   gap: 12px;
+}
+
+.runtime-diff-table {
+  display: grid;
+  gap: 10px;
+}
+
+.runtime-diff-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.3fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid rgba(37, 197, 97, 0.14);
+  background: rgba(8, 14, 9, 0.94);
+}
+
+.runtime-diff-row.changed {
+  border-color: rgba(200, 255, 121, 0.24);
+  box-shadow: inset 0 0 0 1px rgba(200, 255, 121, 0.08);
+}
+
+.runtime-diff-header {
+  background: rgba(12, 18, 13, 0.98);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 11px;
+  color: #8ab298;
+}
+
+.runtime-diff-metric {
+  display: grid;
+  gap: 6px;
+}
+
+.runtime-diff-metric p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.runtime-diff-value {
+  display: inline-flex;
+  align-items: center;
+  min-height: 100%;
+  color: #effff2;
 }
 
 .state-node {
@@ -1150,6 +1199,7 @@ code {
   .execution-path-rail,
   .state-transition-rail,
   .comparison-diff-layout,
+  .runtime-diff-row,
   .execution-branch-grid,
   .flow-timeline,
   .run-focus-grid,

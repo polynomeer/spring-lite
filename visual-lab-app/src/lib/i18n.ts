@@ -79,6 +79,10 @@ export interface UiText {
   traceNarrativeMode: string;
   traceNarrativeBranch: string;
   traceNarrativeNext: string;
+  runtimeDiff: string;
+  runtimeDiffSubtitle: string;
+  staticBaseline: string;
+  liveObserved: string;
   lastSuccessfulRun: string;
   requestedModeLabel: string;
   resolvedSourceLabel: string;
@@ -205,6 +209,10 @@ const uiTextByLocale: Record<Locale, UiText> = {
     traceNarrativeMode: "Mode reading",
     traceNarrativeBranch: "Branch meaning",
     traceNarrativeNext: "Next comparison",
+    runtimeDiff: "Runtime Diff",
+    runtimeDiffSubtitle: "Static baseline vs observed live trace",
+    staticBaseline: "static baseline",
+    liveObserved: "live observed",
     lastSuccessfulRun: "Last successful run",
     requestedModeLabel: "Requested mode",
     resolvedSourceLabel: "Resolved source",
@@ -329,6 +337,10 @@ const uiTextByLocale: Record<Locale, UiText> = {
     traceNarrativeMode: "모드 해석",
     traceNarrativeBranch: "분기 의미",
     traceNarrativeNext: "다음 비교",
+    runtimeDiff: "런타임 차이",
+    runtimeDiffSubtitle: "정적 기준선과 실제 live trace 비교",
+    staticBaseline: "정적 기준선",
+    liveObserved: "실제 live 결과",
     lastSuccessfulRun: "마지막 성공 실행",
     requestedModeLabel: "요청 모드",
     resolvedSourceLabel: "실제 소스",

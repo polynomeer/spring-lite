@@ -14,6 +14,7 @@ import {
   translateUiError
 } from "../lib/i18n";
 import { liveApiBaseUrl, liveTraceEndpointPath } from "../lib/runtime-config";
+import { staticTraceCatalog } from "../lib/lab-trace-data";
 import { deriveTraceStatusSummary } from "../lib/trace-presentation";
 import { labCards, questionCards, tracePresetOptions } from "../lib/static-data";
 import type { LabId, LabTraceRequest, RuntimeMode } from "../lib/types";
@@ -87,6 +88,13 @@ export function App() {
 
   const { trace, error: traceError, loading, requestedMode, resolvedSource } = useLabTrace(executedRequest, reloadKey);
   const localizedTrace = useMemo(() => (trace ? localizeTrace(trace, locale) : null), [locale, trace]);
+  const localizedStaticBaseline = useMemo(() => {
+    if (executedRequest.labId !== "example-flow" || executedRequest.mode !== "live") {
+      return null;
+    }
+    const baseline = staticTraceCatalog[`${executedRequest.labId}:${executedRequest.scenario}`];
+    return baseline ? localizeTrace(baseline, locale) : null;
+  }, [executedRequest.labId, executedRequest.mode, executedRequest.scenario, locale]);
   const traceInsight = useMemo(() => (localizedTrace ? adaptTrace(localizedTrace, locale) : null), [localizedTrace, locale]);
   const traceStatus = localizedTrace ? deriveTraceStatusSummary(localizedTrace, locale) : null;
   const endpointLabel = liveApiBaseUrl
@@ -183,6 +191,27 @@ export function App() {
     ?? (locale === "ko"
       ? "다음 단계에서는 흐름 탭에서 step replay를 실행하고, references 탭에서 관련 문서를 함께 보세요."
       : "Next, run the step replay in the flow tab and open the related references side by side.");
+  const runtimeDiffRows = useMemo(() => {
+    if (!localizedTrace || !localizedStaticBaseline || resolvedSource !== "live-api") {
+      return [];
+    }
+
+    const staticMetrics = new Map(localizedStaticBaseline.metrics.map((metric) => [metric.label, metric]));
+    const liveMetrics = new Map(localizedTrace.metrics.map((metric) => [metric.label, metric]));
+    const labels = Array.from(new Set([...staticMetrics.keys(), ...liveMetrics.keys()]));
+
+    return labels.map((label) => {
+      const staticMetric = staticMetrics.get(label);
+      const liveMetric = liveMetrics.get(label);
+      return {
+        label,
+        staticValue: staticMetric?.value ?? "-",
+        liveValue: liveMetric?.value ?? "-",
+        detail: liveMetric?.detail ?? staticMetric?.detail ?? "",
+        changed: (staticMetric?.value ?? "-") !== (liveMetric?.value ?? "-")
+      };
+    });
+  }, [localizedStaticBaseline, localizedTrace, resolvedSource]);
 
   function difficultyLabel(level: string) {
     if (level === "beginner") {
@@ -575,8 +604,13 @@ export function App() {
                 springSide: text.springSide,
                 watch: text.watch,
                 why: text.why,
-                nextLabel: text.nextLabel
+                nextLabel: text.nextLabel,
+                runtimeDiff: text.runtimeDiff,
+                runtimeDiffSubtitle: text.runtimeDiffSubtitle,
+                staticBaseline: text.staticBaseline,
+                liveObserved: text.liveObserved
                   }}
+                  runtimeDiffRows={runtimeDiffRows}
                 />
               ) : null}
             </section>

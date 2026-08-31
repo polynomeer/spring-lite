@@ -7,6 +7,7 @@ import { TraceExecutionPathPanel } from "./TraceExecutionPathPanel";
 import { TraceInsightPanel } from "./TraceInsightPanel";
 import { TraceLanesPanel } from "./TraceLanesPanel";
 import { TraceMetricsPanel } from "./TraceMetricsPanel";
+import { TraceRuntimeDiffPanel } from "./TraceRuntimeDiffPanel";
 import { TraceReferencesPanel } from "./TraceReferencesPanel";
 import { TraceSnapshotPanel } from "./TraceSnapshotPanel";
 import { TraceStateTransitionPanel } from "./TraceStateTransitionPanel";
@@ -49,14 +50,25 @@ interface TracePreviewProps {
     watch: string;
     why: string;
     nextLabel: string;
+    runtimeDiff: string;
+    runtimeDiffSubtitle: string;
+    staticBaseline: string;
+    liveObserved: string;
   };
   trace: LabTrace;
   insight: TraceAdapterResult | null;
+  runtimeDiffRows?: Array<{
+    label: string;
+    staticValue: string;
+    liveValue: string;
+    detail: string;
+    changed: boolean;
+  }>;
   runSequence: number;
   loading: boolean;
 }
 
-export function TracePreview({ trace, insight, runSequence, loading, locale, labels }: TracePreviewProps) {
+export function TracePreview({ trace, insight, runtimeDiffRows, runSequence, loading, locale, labels }: TracePreviewProps) {
   const [activeTab, setActiveTab] = useState<"overview" | "flow" | "references">("overview");
   const [activeStepId, setActiveStepId] = useState<string>(trace.steps[0]?.id ?? "");
   const [isReplaying, setIsReplaying] = useState(false);
@@ -176,6 +188,15 @@ export function TracePreview({ trace, insight, runSequence, loading, locale, lab
                 sharedCoreLabel={labels.sharedCore}
                 liteSideLabel={labels.liteSide}
                 springSideLabel={labels.springSide}
+              />
+            ) : null}
+            {runtimeDiffRows && runtimeDiffRows.length > 0 ? (
+              <TraceRuntimeDiffPanel
+                title={labels.runtimeDiff}
+                subtitle={labels.runtimeDiffSubtitle}
+                staticLabel={labels.staticBaseline}
+                liveLabel={labels.liveObserved}
+                rows={runtimeDiffRows}
               />
             ) : null}
             <TraceMetricsPanel trace={trace} locale={locale} loadedTraceLabel={labels.loadedTrace} />
