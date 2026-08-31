@@ -17,7 +17,7 @@ import { liveApiBaseUrl, liveTraceEndpointPath } from "../lib/runtime-config";
 import { staticTraceCatalog } from "../lib/lab-trace-data";
 import { deriveTraceStatusSummary } from "../lib/trace-presentation";
 import { labCards, questionCards, tracePresetOptions } from "../lib/static-data";
-import type { LabId, LabTraceRequest, RuntimeMode } from "../lib/types";
+import type { LabId, LabLane, LabStep, LabTraceRequest, RuntimeMode } from "../lib/types";
 
 function toPresetKey(labId: LabId, scenario: string): string {
   return `${labId}:${scenario}`;
@@ -30,6 +30,29 @@ function buildRequest(presetKey: string, mode: RuntimeMode): LabTraceRequest {
     scenario: preset.scenario,
     mode
   };
+}
+
+function normalizeStepSignature(step: LabStep): string {
+  return step.marker.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+function summarizeStep(step: LabStep): string {
+  return `${step.marker} ${step.title}`;
+}
+
+function summarizeLaneDifference(staticLane: LabLane | undefined, liveLane: LabLane | undefined, locale: Locale): string {
+  if (staticLane && liveLane) {
+    if (staticLane.events.length === liveLane.events.length) {
+      return locale === "ko" ? "이 lane의 이벤트 수는 동일합니다." : "This lane keeps the same event count.";
+    }
+    return locale === "ko"
+      ? `live trace가 ${Math.abs(liveLane.events.length - staticLane.events.length)}개의 이벤트를 더 자세히 드러냅니다.`
+      : `The live trace exposes ${Math.abs(liveLane.events.length - staticLane.events.length)} more event(s) in this lane.`;
+  }
+  if (liveLane) {
+    return locale === "ko" ? "이 lane은 live trace에서만 관찰됩니다." : "This lane appears only in the live trace.";
+  }
+  return locale === "ko" ? "이 lane은 static baseline에서만 단순화되어 남아 있습니다." : "This lane only remains in the static baseline simplification.";
 }
 
 export function App() {
@@ -212,6 +235,46 @@ export function App() {
       };
     });
   }, [localizedStaticBaseline, localizedTrace, resolvedSource]);
+  const runtimeFlowDiff = useMemo(() => {
+    if (!localizedTrace || !localizedStaticBaseline || resolvedSource !== "live-api") {
+      return undefined;
+    }
+
+    const staticSignatures = new Map(localizedStaticBaseline.steps.map((step) => [normalizeStepSignature(step), step]));
+    const liveSignatures = new Map(localizedTrace.steps.map((step) => [normalizeStepSignature(step), step]));
+    const sharedSteps = localizedTrace.steps
+      .filter((step) => staticSignatures.has(normalizeStepSignature(step)))
+      .map(summarizeStep);
+    const liveOnlySteps = localizedTrace.steps
+      .filter((step) => !staticSignatures.has(normalizeStepSignature(step)))
+      .map(summarizeStep);
+    const staticOnlySteps = localizedStaticBaseline.steps
+      .filter((step) => !liveSignatures.has(normalizeStepSignature(step)))
+      .map(summarizeStep);
+
+    const laneKinds = Array.from(new Set([
+      ...localizedStaticBaseline.lanes.map((lane) => lane.kind),
+      ...localizedTrace.lanes.map((lane) => lane.kind)
+    ]));
+    const laneRows = laneKinds.map((laneKind) => {
+      const staticLane = localizedStaticBaseline.lanes.find((lane) => lane.kind === laneKind);
+      const liveLane = localizedTrace.lanes.find((lane) => lane.kind === laneKind);
+      return {
+        lane: liveLane?.label ?? staticLane?.label ?? laneKind,
+        staticCount: staticLane?.events.length ?? 0,
+        liveCount: liveLane?.events.length ?? 0,
+        note: summarizeLaneDifference(staticLane, liveLane, locale),
+        changed: (staticLane?.events.length ?? 0) !== (liveLane?.events.length ?? 0)
+      };
+    });
+
+    return {
+      sharedSteps,
+      liveOnlySteps,
+      staticOnlySteps,
+      laneRows
+    };
+  }, [localizedStaticBaseline, localizedTrace, locale, resolvedSource]);
 
   function difficultyLabel(level: string) {
     if (level === "beginner") {
@@ -607,10 +670,17 @@ export function App() {
                 nextLabel: text.nextLabel,
                 runtimeDiff: text.runtimeDiff,
                 runtimeDiffSubtitle: text.runtimeDiffSubtitle,
+                runtimeFlowDiff: text.runtimeFlowDiff,
+                runtimeFlowDiffSubtitle: text.runtimeFlowDiffSubtitle,
+                runtimeSharedSpine: text.runtimeSharedSpine,
+                runtimeLiveOnly: text.runtimeLiveOnly,
+                runtimeStaticOnly: text.runtimeStaticOnly,
+                runtimeLaneCoverage: text.runtimeLaneCoverage,
                 staticBaseline: text.staticBaseline,
                 liveObserved: text.liveObserved
                   }}
                   runtimeDiffRows={runtimeDiffRows}
+                  runtimeFlowDiff={runtimeFlowDiff}
                 />
               ) : null}
             </section>

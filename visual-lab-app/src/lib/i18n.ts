@@ -81,6 +81,12 @@ export interface UiText {
   traceNarrativeNext: string;
   runtimeDiff: string;
   runtimeDiffSubtitle: string;
+  runtimeFlowDiff: string;
+  runtimeFlowDiffSubtitle: string;
+  runtimeSharedSpine: string;
+  runtimeLiveOnly: string;
+  runtimeStaticOnly: string;
+  runtimeLaneCoverage: string;
   staticBaseline: string;
   liveObserved: string;
   lastSuccessfulRun: string;
@@ -211,6 +217,12 @@ const uiTextByLocale: Record<Locale, UiText> = {
     traceNarrativeNext: "Next comparison",
     runtimeDiff: "Runtime Diff",
     runtimeDiffSubtitle: "Static baseline vs observed live trace",
+    runtimeFlowDiff: "Flow Diff",
+    runtimeFlowDiffSubtitle: "Which parts stayed shared, became richer live, or remained simplified in static replay",
+    runtimeSharedSpine: "shared spine",
+    runtimeLiveOnly: "live-only detail",
+    runtimeStaticOnly: "static-only simplification",
+    runtimeLaneCoverage: "lane coverage",
     staticBaseline: "static baseline",
     liveObserved: "live observed",
     lastSuccessfulRun: "Last successful run",
@@ -339,6 +351,12 @@ const uiTextByLocale: Record<Locale, UiText> = {
     traceNarrativeNext: "다음 비교",
     runtimeDiff: "런타임 차이",
     runtimeDiffSubtitle: "정적 기준선과 실제 live trace 비교",
+    runtimeFlowDiff: "흐름 차이",
+    runtimeFlowDiffSubtitle: "어떤 단계가 공통 축이고, live에서 더 풍부해졌으며, static에서 단순화되었는지 비교",
+    runtimeSharedSpine: "공통 축",
+    runtimeLiveOnly: "live 전용 상세",
+    runtimeStaticOnly: "static 전용 단순화",
+    runtimeLaneCoverage: "lane 범위",
     staticBaseline: "정적 기준선",
     liveObserved: "실제 live 결과",
     lastSuccessfulRun: "마지막 성공 실행",

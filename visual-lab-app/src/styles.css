@@ -662,6 +662,10 @@ code {
   grid-column: 1 / -1;
 }
 
+.runtime-flow-diff-panel {
+  grid-column: 1 / -1;
+}
+
 .execution-path-subtitle {
   margin: 6px 0 0;
   color: #b5e8c0;
@@ -810,6 +814,36 @@ code {
 }
 
 .runtime-diff-table {
+  display: grid;
+  gap: 10px;
+}
+
+.runtime-flow-diff-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.runtime-flow-card {
+  padding: 14px;
+  border: 1px solid rgba(37, 197, 97, 0.14);
+  background: rgba(8, 14, 9, 0.94);
+  display: grid;
+  gap: 10px;
+}
+
+.runtime-flow-step-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.runtime-flow-empty {
+  margin: 0;
+  color: var(--muted);
+}
+
+.runtime-lane-diff-table {
   display: grid;
   gap: 10px;
 }
@@ -1199,6 +1233,7 @@ code {
   .execution-path-rail,
   .state-transition-rail,
   .comparison-diff-layout,
+  .runtime-flow-diff-grid,
   .runtime-diff-row,
   .execution-branch-grid,
   .flow-timeline,

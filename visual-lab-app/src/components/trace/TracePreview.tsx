@@ -7,6 +7,7 @@ import { TraceExecutionPathPanel } from "./TraceExecutionPathPanel";
 import { TraceInsightPanel } from "./TraceInsightPanel";
 import { TraceLanesPanel } from "./TraceLanesPanel";
 import { TraceMetricsPanel } from "./TraceMetricsPanel";
+import { TraceRuntimeFlowDiffPanel } from "./TraceRuntimeFlowDiffPanel";
 import { TraceRuntimeDiffPanel } from "./TraceRuntimeDiffPanel";
 import { TraceReferencesPanel } from "./TraceReferencesPanel";
 import { TraceSnapshotPanel } from "./TraceSnapshotPanel";
@@ -52,6 +53,12 @@ interface TracePreviewProps {
     nextLabel: string;
     runtimeDiff: string;
     runtimeDiffSubtitle: string;
+    runtimeFlowDiff: string;
+    runtimeFlowDiffSubtitle: string;
+    runtimeSharedSpine: string;
+    runtimeLiveOnly: string;
+    runtimeStaticOnly: string;
+    runtimeLaneCoverage: string;
     staticBaseline: string;
     liveObserved: string;
   };
@@ -64,11 +71,23 @@ interface TracePreviewProps {
     detail: string;
     changed: boolean;
   }>;
+  runtimeFlowDiff?: {
+    sharedSteps: string[];
+    liveOnlySteps: string[];
+    staticOnlySteps: string[];
+    laneRows: Array<{
+      lane: string;
+      staticCount: number;
+      liveCount: number;
+      note: string;
+      changed: boolean;
+    }>;
+  };
   runSequence: number;
   loading: boolean;
 }
 
-export function TracePreview({ trace, insight, runtimeDiffRows, runSequence, loading, locale, labels }: TracePreviewProps) {
+export function TracePreview({ trace, insight, runtimeDiffRows, runtimeFlowDiff, runSequence, loading, locale, labels }: TracePreviewProps) {
   const [activeTab, setActiveTab] = useState<"overview" | "flow" | "references">("overview");
   const [activeStepId, setActiveStepId] = useState<string>(trace.steps[0]?.id ?? "");
   const [isReplaying, setIsReplaying] = useState(false);
@@ -197,6 +216,20 @@ export function TracePreview({ trace, insight, runtimeDiffRows, runSequence, loa
                 staticLabel={labels.staticBaseline}
                 liveLabel={labels.liveObserved}
                 rows={runtimeDiffRows}
+              />
+            ) : null}
+            {runtimeFlowDiff ? (
+              <TraceRuntimeFlowDiffPanel
+                title={labels.runtimeFlowDiff}
+                subtitle={labels.runtimeFlowDiffSubtitle}
+                sharedLabel={labels.runtimeSharedSpine}
+                liveOnlyLabel={labels.runtimeLiveOnly}
+                staticOnlyLabel={labels.runtimeStaticOnly}
+                laneLabel={labels.runtimeLaneCoverage}
+                sharedSteps={runtimeFlowDiff.sharedSteps}
+                liveOnlySteps={runtimeFlowDiff.liveOnlySteps}
+                staticOnlySteps={runtimeFlowDiff.staticOnlySteps}
+                laneRows={runtimeFlowDiff.laneRows}
               />
             ) : null}
             <TraceMetricsPanel trace={trace} locale={locale} loadedTraceLabel={labels.loadedTrace} />
