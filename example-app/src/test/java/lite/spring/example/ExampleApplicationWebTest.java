@@ -46,6 +46,10 @@ class ExampleApplicationWebTest {
         assertThat(response.body()).contains("\"scenario\":\"create\"");
         assertThat(response.body()).contains("\"mode\":\"live\"");
         assertThat(response.body()).contains("\"Created Order\"");
+        assertThat(response.body()).contains("\"Created Status\"");
+        assertThat(response.body()).contains("\"Net Change\"");
+        assertThat(response.body()).contains("\"Duration (µs)\"");
+        assertThat(response.body()).contains("\"created order id=");
         assertThat(response.body()).contains("\"title\":\"Example Flow Trace\"");
     }
 
@@ -107,6 +111,9 @@ class ExampleApplicationWebTest {
         assertThat(response.body()).contains("\"scenario\":\"rollback\"");
         assertThat(response.body()).contains("\"Orders Before\"");
         assertThat(response.body()).contains("\"Orders After\"");
+        assertThat(response.body()).contains("\"Net Change\"");
+        assertThat(response.body()).contains("\"Exception Message\"");
+        assertThat(response.body()).contains("Lab rollback after order");
     }
 
     @Test

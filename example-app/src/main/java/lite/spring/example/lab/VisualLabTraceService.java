@@ -28,8 +28,11 @@ public class VisualLabTraceService {
     }
 
     private LabTraceResponse runCreateScenario() {
+        int beforeCount = orderService.listOrders().size();
+        long startedAt = System.nanoTime();
         Order created = orderService.createOrder("lab-trace-book", 2);
-        int orderCount = orderService.listOrders().size();
+        int afterCount = orderService.listOrders().size();
+        long durationMicros = (System.nanoTime() - startedAt) / 1_000;
 
         return new LabTraceResponse(
             "live-example-flow-create-" + created.id(),
@@ -43,7 +46,11 @@ public class VisualLabTraceService {
                 new LabMetric("Tx Outcome", "commit", "The transactional service boundary committed the new order."),
                 new LabMetric("DB Effect", "insert", "The repository inserted a new order row."),
                 new LabMetric("Created Order", "#" + created.id(), "The actual order id created during this run."),
-                new LabMetric("Visible Orders", String.valueOf(orderCount), "Seeded rows plus newly created lab orders currently visible.")
+                new LabMetric("Created Status", created.status(), "The created order reflects the service default status value."),
+                new LabMetric("Orders Before", String.valueOf(beforeCount), "Visible row count before the live create request executes."),
+                new LabMetric("Orders After", String.valueOf(afterCount), "Visible row count after commit includes the newly created order."),
+                new LabMetric("Net Change", String.valueOf(afterCount - beforeCount), "A committed create flow should increase the visible row count by one."),
+                new LabMetric("Duration (µs)", String.valueOf(durationMicros), "Approximate live execution time for this trace scenario.")
             ),
             List.of(
                 new LabStep(
@@ -51,6 +58,13 @@ public class VisualLabTraceService {
                     "Trace request enters lab controller",
                     "The frontend live-mode request reaches the example app trace endpoint.",
                     "dispatch",
+                    "info"
+                ),
+                new LabStep(
+                    "pre-read",
+                    "Existing orders counted",
+                    "The trace records the visible order count before the transactional create call.",
+                    "count",
                     "info"
                 ),
                 new LabStep(
@@ -75,10 +89,24 @@ public class VisualLabTraceService {
                     "success"
                 ),
                 new LabStep(
+                    "jdbc-readback",
+                    "Inserted order read back",
+                    "The repository reloads the latest order row so the trace can expose the actual created id and status.",
+                    "select",
+                    "success"
+                ),
+                new LabStep(
                     "tx-commit",
                     "Transaction commits",
                     "The outer boundary commits the connection after successful service completion.",
                     "commit()",
+                    "success"
+                ),
+                new LabStep(
+                    "post-verify",
+                    "Committed row count verified",
+                    "After commit, the trace checks that one additional order is now visible.",
+                    "verify",
                     "success"
                 ),
                 new LabStep(
@@ -98,7 +126,8 @@ public class VisualLabTraceService {
                     List.of(
                         new LabLaneEvent("web-1", "POST /lab/run/trace", "info"),
                         new LabLaneEvent("web-2", "VisualLabTraceController", "success"),
-                        new LabLaneEvent("web-3", "200 JSON response", "success")
+                        new LabLaneEvent("web-3", "scenario=create", "info"),
+                        new LabLaneEvent("web-4", "200 JSON response", "success")
                     )
                 ),
                 new LabLane(
@@ -108,7 +137,8 @@ public class VisualLabTraceService {
                     "service",
                     List.of(
                         new LabLaneEvent("service-1", "createOrder(lab-trace-book, 2)", "success"),
-                        new LabLaneEvent("service-2", "status=PENDING_APPROVAL", "info")
+                        new LabLaneEvent("service-2", "status=" + created.status(), "info"),
+                        new LabLaneEvent("service-3", "created order id=" + created.id(), "success")
                     )
                 ),
                 new LabLane(
@@ -118,7 +148,8 @@ public class VisualLabTraceService {
                     "tx",
                     List.of(
                         new LabLaneEvent("tx-1", "begin depth=1", "success"),
-                        new LabLaneEvent("tx-2", "commit", "success")
+                        new LabLaneEvent("tx-2", "commit", "success"),
+                        new LabLaneEvent("tx-3", "duration=" + durationMicros + "µs", "info")
                     )
                 ),
                 new LabLane(
@@ -127,8 +158,10 @@ public class VisualLabTraceService {
                     "Repository persistence and row mapping.",
                     "jdbc",
                     List.of(
+                        new LabLaneEvent("jdbc-0", "visible rows before=" + beforeCount, "info"),
                         new LabLaneEvent("jdbc-1", "insert into orders ...", "success"),
-                        new LabLaneEvent("jdbc-2", "selected row id=" + created.id(), "success")
+                        new LabLaneEvent("jdbc-2", "selected row id=" + created.id(), "success"),
+                        new LabLaneEvent("jdbc-3", "visible rows after=" + afterCount, "success")
                     )
                 )
             ),
@@ -315,12 +348,14 @@ public class VisualLabTraceService {
 
     private LabTraceResponse runRollbackScenario() {
         int beforeCount = orderService.listOrders().size();
+        long startedAt = System.nanoTime();
 
         try {
             orderService.createOrderAndFail("lab-rollback-book", 1);
             throw new IllegalStateException("Expected rollback scenario to fail");
         } catch (IllegalStateException exception) {
             int afterCount = orderService.listOrders().size();
+            long durationMicros = (System.nanoTime() - startedAt) / 1_000;
             return new LabTraceResponse(
                 "live-example-flow-rollback",
                 "example-flow",
@@ -333,34 +368,43 @@ public class VisualLabTraceService {
                     new LabMetric("Tx Outcome", "rollback", "The transaction is rolled back after the service throws."),
                     new LabMetric("DB Effect", "insert rolled back", "The repository performs an insert, but the row is not committed."),
                     new LabMetric("Orders Before", String.valueOf(beforeCount), "Visible row count before the failing transaction starts."),
-                    new LabMetric("Orders After", String.valueOf(afterCount), "Visible row count after rollback proves no net new row remained.")
+                    new LabMetric("Orders After", String.valueOf(afterCount), "Visible row count after rollback proves no net new row remained."),
+                    new LabMetric("Net Change", String.valueOf(afterCount - beforeCount), "A rollback branch should leave the visible row count unchanged."),
+                    new LabMetric("Exception Message", exception.getMessage(), "The thrown message includes the transient order id that never becomes durable."),
+                    new LabMetric("Duration (µs)", String.valueOf(durationMicros), "Approximate live execution time for the rollback scenario.")
                 ),
                 List.of(
                     new LabStep("dispatch", "Trace request enters backend", "The live lab endpoint starts the rollback branch.", "dispatch", "info"),
+                    new LabStep("pre-read", "Existing orders counted", "The trace captures the visible row count before the failing transaction begins.", "count", "info"),
                     new LabStep("service-proxy", "Transactional service proxy invoked", "The trace service calls a real proxied service method.", "proxy", "success"),
                     new LabStep("tx-begin", "Transaction boundary opens", "The interceptor binds a transaction-aware connection.", "begin()", "success"),
                     new LabStep("jdbc-insert", "Repository inserts order", "JdbcOrderRepository writes a row inside the open transaction.", "insert", "success"),
                     new LabStep("service-throw", "Service fails after insert", "The method throws after persistence to force rollback.", "throw", "error"),
                     new LabStep("tx-rollback", "Transaction rolls back", "The interceptor rolls back the connection and discards the inserted row.", "rollback()", "error"),
+                    new LabStep("post-verify", "Rollback effect verified", "After rollback, the trace checks that the visible row count returned to its original value.", "verify", "success"),
                     new LabStep("trace-response", "Lab trace serialized", "The backend returns a normalized rollback trace for the UI.", "json", "success")
                 ),
                 List.of(
                     new LabLane("lane-web", "Web", "Trace endpoint dispatch and response writing.", "web", List.of(
                         new LabLaneEvent("web-1", "POST /lab/run/trace", "info"),
                         new LabLaneEvent("web-2", "trace controller", "success"),
-                        new LabLaneEvent("web-3", "rollback trace JSON", "success")
+                        new LabLaneEvent("web-3", "scenario=rollback", "info"),
+                        new LabLaneEvent("web-4", "rollback trace JSON", "success")
                     )),
                     new LabLane("lane-service", "Service", "Transactional create-and-fail service method.", "service", List.of(
                         new LabLaneEvent("service-1", "createOrderAndFail(...)", "success"),
-                        new LabLaneEvent("service-2", "IllegalStateException", "error")
+                        new LabLaneEvent("service-2", exception.getMessage(), "error")
                     )),
                     new LabLane("lane-tx", "Transaction", "Full begin -> rollback lifecycle.", "tx", List.of(
                         new LabLaneEvent("tx-1", "begin depth=1", "success"),
-                        new LabLaneEvent("tx-2", "rollback", "error")
+                        new LabLaneEvent("tx-2", "rollback", "error"),
+                        new LabLaneEvent("tx-3", "duration=" + durationMicros + "µs", "info")
                     )),
                     new LabLane("lane-jdbc", "JDBC", "Insert executes but is later discarded by rollback.", "jdbc", List.of(
+                        new LabLaneEvent("jdbc-0", "visible rows before=" + beforeCount, "info"),
                         new LabLaneEvent("jdbc-1", "insert into orders ...", "success"),
-                        new LabLaneEvent("jdbc-2", "row not committed", "error")
+                        new LabLaneEvent("jdbc-2", "row not committed", "error"),
+                        new LabLaneEvent("jdbc-3", "visible rows after=" + afterCount, "success")
                     ))
                 ),
                 new LabSnapshot(
