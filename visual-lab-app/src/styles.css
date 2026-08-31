@@ -952,6 +952,16 @@ code {
   cursor: pointer;
 }
 
+.flow-compare-disclosure-copy {
+  display: grid;
+  gap: 6px;
+}
+
+.flow-compare-disclosure-copy p {
+  margin: 0;
+  color: var(--muted);
+}
+
 .flow-compare-disclosure-summary::-webkit-details-marker {
   display: none;
 }

@@ -323,7 +323,10 @@ export function TraceFlowComparePanel({
       <div className="flow-compare-context">
         <details className="runtime-flow-card flow-compare-disclosure" open>
           <summary className="flow-compare-disclosure-summary">
-            <strong>{whyDiffersLabel}</strong>
+            <div className="flow-compare-disclosure-copy">
+              <strong>{whyDiffersLabel}</strong>
+              <p>{reasonLines[0] ?? briefingWhy}</p>
+            </div>
             <div className="lane-focus-summary">
               <span className="status-pill info">{reasonLines.length} {reasonCountSuffix}</span>
               <span className="status-pill neutral">{detailsLabel}</span>
@@ -340,7 +343,10 @@ export function TraceFlowComparePanel({
 
         <details className="runtime-flow-card flow-compare-disclosure">
           <summary className="flow-compare-disclosure-summary">
-            <strong>{inspectCodeLabel}</strong>
+            <div className="flow-compare-disclosure-copy">
+              <strong>{inspectCodeLabel}</strong>
+              <p>{primaryCard ? `${primaryCard.classFocus} / ${primaryCard.methodFocus}` : "-"}</p>
+            </div>
             <div className="lane-focus-summary">
               <span className="status-pill success">{referenceCards.length} {surfaceCountSuffix}</span>
               <span className="status-pill neutral">{detailsLabel}</span>
