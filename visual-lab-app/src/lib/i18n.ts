@@ -144,6 +144,7 @@ export interface UiText {
   flowCompareOtherLaneCount: string;
   flowCompareOtherLanes: string;
   flowCompareChangedLaneCount: string;
+  flowCompareRelatedEventCount: string;
   flowCompareDetails: string;
   flowCompareReasonCountSuffix: string;
   flowCompareSurfaceCountSuffix: string;
@@ -317,6 +318,7 @@ const uiTextByLocale: Record<Locale, UiText> = {
     flowCompareOtherLaneCount: "other",
     flowCompareOtherLanes: "other lanes",
     flowCompareChangedLaneCount: "changed",
+    flowCompareRelatedEventCount: "related events",
     flowCompareDetails: "details",
     flowCompareReasonCountSuffix: "reasons",
     flowCompareSurfaceCountSuffix: "surfaces",
@@ -488,6 +490,7 @@ const uiTextByLocale: Record<Locale, UiText> = {
     flowCompareOtherLaneCount: "기타",
     flowCompareOtherLanes: "기타 레인",
     flowCompareChangedLaneCount: "변화",
+    flowCompareRelatedEventCount: "관련 이벤트",
     flowCompareDetails: "상세 보기",
     flowCompareReasonCountSuffix: "개 이유",
     flowCompareSurfaceCountSuffix: "개 표면",

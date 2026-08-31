@@ -40,6 +40,7 @@ interface TraceFlowComparePanelProps {
   otherLaneCountLabel: string;
   otherLanesLabel: string;
   changedLaneCountLabel: string;
+  relatedEventCountLabel: string;
   reasonCountSuffix: string;
   surfaceCountSuffix: string;
   reasonShapeLabel: string;
@@ -108,6 +109,7 @@ export function TraceFlowComparePanel({
   otherLaneCountLabel,
   otherLanesLabel,
   changedLaneCountLabel,
+  relatedEventCountLabel,
   reasonCountSuffix,
   surfaceCountSuffix,
   reasonShapeLabel,
@@ -290,11 +292,18 @@ export function TraceFlowComparePanel({
               return left.eventCountChanged ? -1 : 1;
             });
           const changedOtherLaneCount = otherLanes.filter((item) => item.eventCountChanged).length;
+          const changedLaneCount = sortedLanes.filter((lane) => {
+            const counterpartLane = counterpartTrace.lanes.find((item) => item.kind === lane.kind);
+            return (counterpartLane?.events.length ?? 0) !== lane.events.length;
+          }).length;
+          const relatedEventCount = relatedLanes.reduce((count, lane) => count + lane.events.length, 0);
           return (
             <section className={`flow-compare-column ${columnTone}`} key={column.label}>
               <div className="flow-compare-head">
                 <span className={columnTone === "live" ? "status-pill success" : "status-pill neutral"}>{column.label}</span>
                 {column.step ? <span className="tag">{column.step.marker}</span> : null}
+                <span className="status-pill neutral">{relatedEventCountLabel} {relatedEventCount}</span>
+                {changedLaneCount > 0 ? <span className="status-pill warning">{changedLaneCountLabel} {changedLaneCount}</span> : null}
                 {stepDiff.missingOnOneSide ? <span className="status-pill warning">{stepShapeDiffLabel}</span> : null}
               </div>
 

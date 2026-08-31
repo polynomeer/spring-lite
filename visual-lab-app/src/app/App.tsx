@@ -676,6 +676,7 @@ export function App() {
                 flowCompareOtherLaneCount: text.flowCompareOtherLaneCount,
                 flowCompareOtherLanes: text.flowCompareOtherLanes,
                 flowCompareChangedLaneCount: text.flowCompareChangedLaneCount,
+                flowCompareRelatedEventCount: text.flowCompareRelatedEventCount,
                 flowCompareDetails: text.flowCompareDetails,
                 flowCompareReasonCountSuffix: text.flowCompareReasonCountSuffix,
                 flowCompareSurfaceCountSuffix: text.flowCompareSurfaceCountSuffix,
