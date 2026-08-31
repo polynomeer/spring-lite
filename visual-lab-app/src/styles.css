@@ -970,6 +970,21 @@ code {
   gap: 10px;
 }
 
+.replay-control-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.replay-control {
+  min-width: 96px;
+}
+
+.replay-control.primary {
+  border-color: rgba(49, 255, 132, 0.34);
+  box-shadow: inset 0 0 0 1px rgba(49, 255, 132, 0.12);
+}
+
 .flow-timeline-step {
   text-align: left;
   padding: 12px;

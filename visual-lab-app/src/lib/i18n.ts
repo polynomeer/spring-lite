@@ -93,6 +93,13 @@ export interface UiText {
   overview: string;
   flowView: string;
   flowTimeline: string;
+  replayControls: string;
+  replayPlay: string;
+  replayPause: string;
+  replayPrevious: string;
+  replayNext: string;
+  replayAuto: string;
+  replayManual: string;
   selectedStep: string;
   relatedLanes: string;
   deepLinks: string;
@@ -201,6 +208,13 @@ const uiTextByLocale: Record<Locale, UiText> = {
     overview: "Overview",
     flowView: "Flow",
     flowTimeline: "Flow Timeline",
+    replayControls: "Replay Controls",
+    replayPlay: "Play",
+    replayPause: "Pause",
+    replayPrevious: "Previous",
+    replayNext: "Next",
+    replayAuto: "auto replay",
+    replayManual: "manual focus",
     selectedStep: "Selected step",
     relatedLanes: "Related lanes",
     deepLinks: "References",
@@ -307,6 +321,13 @@ const uiTextByLocale: Record<Locale, UiText> = {
     overview: "개요",
     flowView: "흐름",
     flowTimeline: "흐름 타임라인",
+    replayControls: "재생 컨트롤",
+    replayPlay: "재생",
+    replayPause: "정지",
+    replayPrevious: "이전",
+    replayNext: "다음",
+    replayAuto: "자동 재생",
+    replayManual: "수동 탐색",
     selectedStep: "선택 단계",
     relatedLanes: "관련 레인",
     deepLinks: "참고",

@@ -5,25 +5,69 @@ interface TraceStepsPanelProps {
   locale: Locale;
   stepsLabel: string;
   flowTimelineLabel: string;
+  replayControlsLabel: string;
+  replayPlayLabel: string;
+  replayPauseLabel: string;
+  replayPreviousLabel: string;
+  replayNextLabel: string;
+  replayAutoLabel: string;
+  replayManualLabel: string;
   selectedStepLabel: string;
   trace: LabTrace;
   activeStepId: string;
+  isReplaying: boolean;
   onSelectStep: (stepId: string) => void;
+  onToggleReplay: () => void;
+  onReplayPrevious: () => void;
+  onReplayNext: () => void;
 }
 
 export function TraceStepsPanel({
   trace,
   stepsLabel,
   flowTimelineLabel,
+  replayControlsLabel,
+  replayPlayLabel,
+  replayPauseLabel,
+  replayPreviousLabel,
+  replayNextLabel,
+  replayAutoLabel,
+  replayManualLabel,
   selectedStepLabel,
   activeStepId,
-  onSelectStep
+  isReplaying,
+  onSelectStep,
+  onToggleReplay,
+  onReplayPrevious,
+  onReplayNext
 }: TraceStepsPanelProps) {
-  const activeStep = trace.steps.find((step) => step.id === activeStepId) ?? trace.steps[0];
+  const activeStepIndex = trace.steps.findIndex((step) => step.id === activeStepId);
+  const activeStep = trace.steps[activeStepIndex] ?? trace.steps[0];
 
   return (
     <article className="trace-panel">
-      <p className="eyebrow">{flowTimelineLabel}</p>
+      <div className="trace-head">
+        <div>
+          <p className="eyebrow">{flowTimelineLabel}</p>
+          <h3>{replayControlsLabel}</h3>
+        </div>
+        <span className={isReplaying ? "status-pill success" : "status-pill neutral"}>
+          {isReplaying ? replayAutoLabel : replayManualLabel}
+        </span>
+      </div>
+
+      <div className="replay-control-row">
+        <button className="ghost-button replay-control" type="button" onClick={onReplayPrevious}>
+          {replayPreviousLabel}
+        </button>
+        <button className="ghost-button replay-control primary" type="button" onClick={onToggleReplay}>
+          {isReplaying ? replayPauseLabel : replayPlayLabel}
+        </button>
+        <button className="ghost-button replay-control" type="button" onClick={onReplayNext}>
+          {replayNextLabel}
+        </button>
+      </div>
+
       <div className="flow-timeline" role="list" aria-label={stepsLabel}>
         {trace.steps.map((step, index) => (
           <button
@@ -43,6 +87,9 @@ export function TraceStepsPanel({
         <div className={`trace-item trace-step focus-step ${activeStep.kind}`}>
           <div className="trace-step-top">
             <span className="trace-step-index">{selectedStepLabel}</span>
+            <span className="trace-step-index">
+              {String((activeStepIndex >= 0 ? activeStepIndex : 0) + 1).padStart(2, "0")} / {String(trace.steps.length).padStart(2, "0")}
+            </span>
             <span className="trace-step-marker">{activeStep.marker}</span>
           </div>
           <strong>{activeStep.title}</strong>

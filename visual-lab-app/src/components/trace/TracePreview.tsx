@@ -27,6 +27,13 @@ interface TracePreviewProps {
     overview: string;
     flowView: string;
     flowTimeline: string;
+    replayControls: string;
+    replayPlay: string;
+    replayPause: string;
+    replayPrevious: string;
+    replayNext: string;
+    replayAuto: string;
+    replayManual: string;
     selectedStep: string;
     relatedLanes: string;
     deepLinks: string;
@@ -52,11 +59,59 @@ interface TracePreviewProps {
 export function TracePreview({ trace, insight, runSequence, loading, locale, labels }: TracePreviewProps) {
   const [activeTab, setActiveTab] = useState<"overview" | "flow" | "references">("overview");
   const [activeStepId, setActiveStepId] = useState<string>(trace.steps[0]?.id ?? "");
+  const [isReplaying, setIsReplaying] = useState(false);
 
   useEffect(() => {
     setActiveTab("overview");
     setActiveStepId(trace.steps[0]?.id ?? "");
+    setIsReplaying(false);
   }, [trace.id, runSequence]);
+
+  useEffect(() => {
+    if (!isReplaying || trace.steps.length <= 1) {
+      return;
+    }
+
+    const currentIndex = trace.steps.findIndex((step) => step.id === activeStepId);
+    const safeIndex = currentIndex >= 0 ? currentIndex : 0;
+    const timer = window.setTimeout(() => {
+      if (safeIndex >= trace.steps.length - 1) {
+        setIsReplaying(false);
+        return;
+      }
+      setActiveStepId(trace.steps[safeIndex + 1]?.id ?? trace.steps[safeIndex].id);
+    }, 1200);
+
+    return () => window.clearTimeout(timer);
+  }, [activeStepId, isReplaying, trace.steps]);
+
+  function selectStep(stepId: string) {
+    setIsReplaying(false);
+    setActiveStepId(stepId);
+  }
+
+  function moveReplay(offset: -1 | 1) {
+    const currentIndex = trace.steps.findIndex((step) => step.id === activeStepId);
+    const safeIndex = currentIndex >= 0 ? currentIndex : 0;
+    const nextIndex = Math.min(trace.steps.length - 1, Math.max(0, safeIndex + offset));
+    setIsReplaying(false);
+    setActiveStepId(trace.steps[nextIndex]?.id ?? trace.steps[0]?.id ?? "");
+  }
+
+  function toggleReplay() {
+    if (trace.steps.length <= 1) {
+      return;
+    }
+
+    const currentIndex = trace.steps.findIndex((step) => step.id === activeStepId);
+    if (currentIndex >= trace.steps.length - 1) {
+      setActiveStepId(trace.steps[0]?.id ?? "");
+      setIsReplaying(true);
+      return;
+    }
+
+    setIsReplaying((current) => !current);
+  }
 
   return (
     <section className="trace-workspace" key={`${trace.id}:${runSequence}`}>
@@ -136,9 +191,20 @@ export function TracePreview({ trace, insight, runSequence, loading, locale, lab
               locale={locale}
               stepsLabel={labels.steps}
               flowTimelineLabel={labels.flowTimeline}
+              replayControlsLabel={labels.replayControls}
+              replayPlayLabel={labels.replayPlay}
+              replayPauseLabel={labels.replayPause}
+              replayPreviousLabel={labels.replayPrevious}
+              replayNextLabel={labels.replayNext}
+              replayAutoLabel={labels.replayAuto}
+              replayManualLabel={labels.replayManual}
               selectedStepLabel={labels.selectedStep}
               activeStepId={activeStepId}
-              onSelectStep={setActiveStepId}
+              isReplaying={isReplaying}
+              onSelectStep={selectStep}
+              onToggleReplay={toggleReplay}
+              onReplayPrevious={() => moveReplay(-1)}
+              onReplayNext={() => moveReplay(1)}
             />
             <TraceLanesPanel
               trace={trace}
