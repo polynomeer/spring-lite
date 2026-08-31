@@ -873,17 +873,23 @@ code {
   gap: 12px;
   margin-bottom: 14px;
   padding: 12px;
-  border: 1px solid rgba(37, 197, 97, 0.14);
-  background: rgba(9, 15, 10, 0.96);
+  border: 1px solid rgba(37, 197, 97, 0.1);
+  background: rgba(8, 12, 8, 0.9);
 }
 
 .flow-compare-briefing-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.flow-compare-section-head strong {
+  letter-spacing: 0.04em;
+}
+
 .flow-compare-briefing-card {
   padding: 10px;
   gap: 6px;
+  border-color: rgba(37, 197, 97, 0.08);
+  background: rgba(7, 10, 7, 0.92);
 }
 
 .flow-compare-briefing-card strong {
@@ -894,6 +900,10 @@ code {
   display: grid;
   gap: 12px;
   margin-bottom: 14px;
+  padding: 12px;
+  border: 1px solid rgba(49, 255, 132, 0.18);
+  background: linear-gradient(180deg, rgba(12, 21, 13, 0.96), rgba(8, 14, 9, 0.94));
+  box-shadow: inset 0 0 0 1px rgba(49, 255, 132, 0.06);
 }
 
 .flow-compare-focus-grid {

@@ -188,7 +188,7 @@ export function TraceFlowComparePanel({
       </div>
 
       <section className="flow-compare-briefing">
-        <div className="flow-reference-checklist-head">
+        <div className="flow-reference-checklist-head flow-compare-section-head">
           <strong>{briefingLabel}</strong>
           {live.step ? <span className="status-pill info">{live.step.marker}</span> : null}
         </div>
@@ -209,7 +209,7 @@ export function TraceFlowComparePanel({
       </section>
 
       <section className="flow-compare-focus-rail">
-        <div className="flow-reference-checklist-head">
+        <div className="flow-reference-checklist-head flow-compare-section-head">
           <strong>{focusRailLabel}</strong>
           <span className="status-pill neutral">
             {selectedStepLabel} {String(live.index + 1).padStart(2, "0")}
