@@ -58,6 +58,7 @@ interface TracePreviewProps {
     flowCompareLaneCountSuffix: string;
     flowCompareRelatedLaneCount: string;
     flowCompareOtherLaneCount: string;
+    flowCompareOtherLanes: string;
     flowCompareDetails: string;
     flowCompareReasonCountSuffix: string;
     flowCompareSurfaceCountSuffix: string;
@@ -396,6 +397,7 @@ export function TracePreview({ trace, baselineTrace, insight, runtimeDiffRows, r
                 laneCountSuffix={labels.flowCompareLaneCountSuffix}
                 relatedLaneCountLabel={labels.flowCompareRelatedLaneCount}
                 otherLaneCountLabel={labels.flowCompareOtherLaneCount}
+                otherLanesLabel={labels.flowCompareOtherLanes}
                 detailsLabel={labels.flowCompareDetails}
                 reasonCountSuffix={labels.flowCompareReasonCountSuffix}
                 surfaceCountSuffix={labels.flowCompareSurfaceCountSuffix}

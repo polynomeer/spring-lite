@@ -38,6 +38,7 @@ interface TraceFlowComparePanelProps {
   laneCountSuffix: string;
   relatedLaneCountLabel: string;
   otherLaneCountLabel: string;
+  otherLanesLabel: string;
   reasonCountSuffix: string;
   surfaceCountSuffix: string;
   reasonShapeLabel: string;
@@ -104,6 +105,7 @@ export function TraceFlowComparePanel({
   laneCountSuffix,
   relatedLaneCountLabel,
   otherLaneCountLabel,
+  otherLanesLabel,
   reasonCountSuffix,
   surfaceCountSuffix,
   reasonShapeLabel,
@@ -268,6 +270,8 @@ export function TraceFlowComparePanel({
           });
           const relatedLaneCount = sortedLanes.filter((lane) => isLaneRelatedToStep(lane, column.step)).length;
           const otherLaneCount = sortedLanes.length - relatedLaneCount;
+          const relatedLanes = sortedLanes.filter((lane) => isLaneRelatedToStep(lane, column.step));
+          const otherLanes = sortedLanes.filter((lane) => !isLaneRelatedToStep(lane, column.step));
           return (
             <section className={`flow-compare-column ${columnTone}`} key={column.label}>
               <div className="flow-compare-head">
@@ -306,7 +310,7 @@ export function TraceFlowComparePanel({
               </div>
 
               <div className="trace-list">
-                {sortedLanes.map((lane) => {
+                {relatedLanes.map((lane) => {
                   const isRelated = isLaneRelatedToStep(lane, column.step);
                   const counterpartLane = counterpartTrace.lanes.find((item) => item.kind === lane.kind);
                   const eventCountChanged = (counterpartLane?.events.length ?? 0) !== lane.events.length;
@@ -332,6 +336,46 @@ export function TraceFlowComparePanel({
                     </div>
                   );
                 })}
+                {otherLanes.length > 0 ? (
+                  <details className="lane-card flow-compare-lane-disclosure">
+                    <summary className="flow-compare-disclosure-summary">
+                      <div className="flow-compare-disclosure-copy">
+                        <strong>{otherLanesLabel}</strong>
+                        <p>{otherLanes.map((lane) => lane.label).join(", ")}</p>
+                      </div>
+                      <div className="lane-focus-summary">
+                        <span className="status-pill neutral">{otherLaneCountLabel} {otherLaneCount}</span>
+                        <span className="status-pill neutral">{detailsLabel}</span>
+                      </div>
+                    </summary>
+                    <div className="trace-list">
+                      {otherLanes.map((lane) => {
+                        const counterpartLane = counterpartTrace.lanes.find((item) => item.kind === lane.kind);
+                        const eventCountChanged = (counterpartLane?.events.length ?? 0) !== lane.events.length;
+                        return (
+                          <div className="lane-card subdued" key={`${column.label}-${lane.id}`}>
+                            <div className="lane-head">
+                              <strong>{lane.label}</strong>
+                              <div className="flow-compare-lane-meta">
+                                <span className="lane-kind">{lane.kind}</span>
+                                {eventCountChanged ? <span className="status-pill warning">{eventCountDiffLabel}</span> : null}
+                              </div>
+                            </div>
+                            <p>{lane.detail}</p>
+                            <div className="lane-track" aria-label={lane.label}>
+                              {lane.events.map((laneEvent, eventIndex) => (
+                                <div className={`lane-stop ${laneEvent.kind}`} key={`${column.label}-${laneEvent.id}`}>
+                                  <span className="lane-stop-index">{String(eventIndex + 1).padStart(2, "0")}</span>
+                                  <span className={`lane-event ${laneEvent.kind}`}>{laneEvent.text}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </details>
+                ) : null}
               </div>
             </section>
           );

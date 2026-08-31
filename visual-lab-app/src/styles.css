@@ -966,6 +966,14 @@ code {
   display: none;
 }
 
+.flow-compare-lane-disclosure {
+  gap: 12px;
+}
+
+.flow-compare-lane-disclosure .trace-list {
+  margin-top: 12px;
+}
+
 .flow-reference-card,
 .flow-reference-head {
   display: grid;
