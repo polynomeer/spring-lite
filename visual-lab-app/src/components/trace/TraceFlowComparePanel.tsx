@@ -245,15 +245,16 @@ export function TraceFlowComparePanel({
         }].map((column) => {
           const relatedKinds = column.step ? inferRelatedLaneKinds(column.step) : [];
           const counterpartTrace = column.label === currentRunLabel ? staticTrace : liveTrace;
+          const columnTone = column.label === currentRunLabel ? "live" : "static";
           return (
-            <section className="flow-compare-column" key={column.label}>
+            <section className={`flow-compare-column ${columnTone}`} key={column.label}>
               <div className="flow-compare-head">
-                <span className="status-pill info">{column.label}</span>
+                <span className={columnTone === "live" ? "status-pill success" : "status-pill neutral"}>{column.label}</span>
                 {column.step ? <span className="tag">{column.step.marker}</span> : null}
                 {stepDiff.missingOnOneSide ? <span className="status-pill warning">{stepShapeDiffLabel}</span> : null}
               </div>
 
-              <div className="trace-item trace-step focus-step">
+              <div className={`trace-item trace-step focus-step ${columnTone}`}>
                 <div className="trace-step-top">
                   <span className="trace-step-index">{selectedStepLabel}</span>
                   <span className="trace-step-index">
@@ -272,8 +273,11 @@ export function TraceFlowComparePanel({
               </div>
 
               <div className="lane-focus-summary">
+                <span className={columnTone === "live" ? "status-pill success" : "status-pill neutral"}>
+                  {columnTone === "live" ? currentRunLabel : staticBaselineLabel}
+                </span>
                 {relatedKinds.map((kind) => (
-                  <span className="status-pill neutral" key={`${column.label}-${kind}`}>{kind}</span>
+                  <span className={columnTone === "live" ? "status-pill info" : "status-pill neutral"} key={`${column.label}-${kind}`}>{kind}</span>
                 ))}
               </div>
 
@@ -283,11 +287,12 @@ export function TraceFlowComparePanel({
                   const counterpartLane = counterpartTrace.lanes.find((item) => item.kind === lane.kind);
                   const eventCountChanged = (counterpartLane?.events.length ?? 0) !== lane.events.length;
                   return (
-                    <div className={isRelated ? `lane-card lane-${lane.kind} active` : `lane-card lane-${lane.kind} subdued`} key={`${column.label}-${lane.id}`}>
+                    <div className={isRelated ? `lane-card lane-${lane.kind} active ${columnTone}` : `lane-card lane-${lane.kind} subdued`} key={`${column.label}-${lane.id}`}>
                       <div className="lane-head">
                         <strong>{lane.label}</strong>
                         <div className="flow-compare-lane-meta">
                           <span className="lane-kind">{lane.kind}</span>
+                          {isRelated ? <span className={columnTone === "live" ? "status-pill success" : "status-pill neutral"}>{selectedStepLabel}</span> : null}
                           {eventCountChanged ? <span className="status-pill warning">{eventCountDiffLabel}</span> : null}
                         </div>
                       </div>

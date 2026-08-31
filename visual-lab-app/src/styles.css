@@ -902,6 +902,27 @@ code {
   gap: 10px;
 }
 
+.flow-compare-column.live,
+.flow-compare-column.static {
+  position: relative;
+}
+
+.flow-compare-column.live::before,
+.flow-compare-column.static::before {
+  content: "";
+  display: block;
+  height: 2px;
+  border-radius: 999px;
+}
+
+.flow-compare-column.live::before {
+  background: linear-gradient(90deg, rgba(49, 255, 132, 0.8), rgba(49, 255, 132, 0.12));
+}
+
+.flow-compare-column.static::before {
+  background: linear-gradient(90deg, rgba(138, 178, 152, 0.72), rgba(138, 178, 152, 0.1));
+}
+
 .flow-compare-step-head,
 .flow-compare-badges,
 .flow-compare-lane-meta {
@@ -1236,6 +1257,16 @@ code {
   box-shadow: inset 0 0 0 1px rgba(49, 255, 132, 0.18);
 }
 
+.focus-step.live {
+  background: linear-gradient(180deg, rgba(18, 32, 20, 0.98), rgba(8, 14, 9, 0.95));
+}
+
+.focus-step.static {
+  border-color: rgba(138, 178, 152, 0.24);
+  box-shadow: inset 0 0 0 1px rgba(138, 178, 152, 0.12);
+  background: linear-gradient(180deg, rgba(12, 18, 13, 0.98), rgba(8, 14, 9, 0.95));
+}
+
 .trace-item.success,
 .lane-event.success {
   border-color: rgba(49, 255, 132, 0.26);
@@ -1259,6 +1290,16 @@ code {
 .lane-card.active {
   border-color: var(--line-strong);
   box-shadow: inset 0 0 0 1px rgba(49, 255, 132, 0.18);
+}
+
+.lane-card.active.live {
+  background: linear-gradient(180deg, rgba(14, 23, 15, 0.98), rgba(8, 14, 9, 0.95));
+}
+
+.lane-card.active.static {
+  border-color: rgba(138, 178, 152, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(138, 178, 152, 0.1);
+  background: linear-gradient(180deg, rgba(11, 17, 12, 0.98), rgba(8, 14, 9, 0.95));
 }
 
 .lane-card.subdued {
