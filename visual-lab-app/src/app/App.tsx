@@ -85,7 +85,7 @@ export function App() {
     || draftRequest.mode !== executedRequest.mode;
   const activeQuestion = isDraftDirty ? selectedQuestion : executedQuestion;
 
-  const { trace, error: traceError, loading } = useLabTrace(executedRequest, reloadKey);
+  const { trace, error: traceError, loading, requestedMode, resolvedSource } = useLabTrace(executedRequest, reloadKey);
   const localizedTrace = useMemo(() => (trace ? localizeTrace(trace, locale) : null), [locale, trace]);
   const traceInsight = useMemo(() => (localizedTrace ? adaptTrace(localizedTrace, locale) : null), [localizedTrace, locale]);
   const traceStatus = localizedTrace ? deriveTraceStatusSummary(localizedTrace, locale) : null;
@@ -95,6 +95,12 @@ export function App() {
   const activeTraceModeLabel = executedRequest.mode === "live" ? text.liveSignal : text.staticReplay;
   const activeTraceModeTone = executedRequest.mode === "live" ? "status-pill info" : "status-pill neutral";
   const displayError = translateUiError(traceError, locale);
+  const requestedModeLabel = requestedMode === "live" ? text.liveRuntime : text.staticSimulation;
+  const resolvedSourceLabel = resolvedSource === "live-api"
+    ? text.sourceLiveApi
+    : resolvedSource === "live-fallback"
+      ? text.sourceLiveFallback
+      : text.sourceStaticCatalog;
   const requestPreview = isDraftDirty ? draftRequest : executedRequest;
   const pipelineTitle = loading
     ? text.tracePipelineActive
@@ -160,9 +166,13 @@ export function App() {
       ? localizedTrace.summary
       : pipelineDetail;
   const narrativeModeDetail = executedRequest.mode === "live"
-    ? locale === "ko"
-      ? `현재 결과는 live provider 기준입니다. API 응답과 실제 런타임 상태를 따라가며, endpoint는 ${endpointLabel} 입니다.`
-      : `This result comes from the live provider. It follows API-backed runtime output, and the endpoint is ${endpointLabel}.`
+    ? resolvedSource === "live-fallback"
+      ? locale === "ko"
+        ? `live 실행을 요청했지만 현재는 fallback placeholder가 렌더링되었습니다. endpoint는 ${endpointLabel} 이며, 백엔드 연결이 복구되면 실제 runtime trace로 대체됩니다.`
+        : `A live run was requested, but the rendered result is the fallback placeholder. The endpoint is ${endpointLabel}, and it will switch to real runtime traces once the backend is reachable.`
+      : locale === "ko"
+        ? `현재 결과는 live provider 기준입니다. API 응답과 실제 런타임 상태를 따라가며, endpoint는 ${endpointLabel} 입니다.`
+        : `This result comes from the live provider. It follows API-backed runtime output, and the endpoint is ${endpointLabel}.`
     : locale === "ko"
       ? "현재 결과는 static replay 기준입니다. 미리 정규화된 trace를 통해 개념을 안정적으로 학습하는 데 적합합니다."
       : "This result comes from the static replay provider. It is optimized for stable concept learning through normalized traces.";
@@ -412,8 +422,18 @@ export function App() {
                   {executedRequest.labId}:{executedRequest.scenario}
                 </span>
                 <span className={activeTraceModeTone}>{activeTraceModeLabel}</span>
+                <span className={resolvedSource === "live-fallback" ? "status-pill warning" : "status-pill neutral"}>
+                  {text.resolvedSourceLabel} {resolvedSourceLabel}
+                </span>
                 <span className="status-pill neutral">{text.lastRun} {lastRunLabel}</span>
               </div>
+
+              {resolvedSource === "live-fallback" ? (
+                <div className="info-box warning-box compact-info-box">
+                  <strong>{text.sourceFallbackWarning}</strong>
+                  <p>{text.sourceFallbackBody}</p>
+                </div>
+              ) : null}
 
               <div className="console-strip">
                 <div className="console-leds" aria-hidden="true">
@@ -439,6 +459,14 @@ export function App() {
                 <div className="request-card">
                   <strong>{text.executionTarget}</strong>
                   <p>{executedRequest.labId} / {executedRequest.scenario} / {localizeModeLabel(executedRequest.mode, locale)}</p>
+                </div>
+                <div className="request-card">
+                  <strong>{text.requestedModeLabel}</strong>
+                  <p>{requestedModeLabel}</p>
+                </div>
+                <div className="request-card">
+                  <strong>{text.resolvedSourceLabel}</strong>
+                  <p>{resolvedSourceLabel}</p>
                 </div>
                 <div className="request-card">
                   <strong>endpoint</strong>

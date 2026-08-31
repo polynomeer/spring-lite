@@ -80,6 +80,13 @@ export interface UiText {
   traceNarrativeBranch: string;
   traceNarrativeNext: string;
   lastSuccessfulRun: string;
+  requestedModeLabel: string;
+  resolvedSourceLabel: string;
+  sourceStaticCatalog: string;
+  sourceLiveApi: string;
+  sourceLiveFallback: string;
+  sourceFallbackWarning: string;
+  sourceFallbackBody: string;
   projectLayout: string;
   frontendStructure: string;
   loadedTrace: string;
@@ -199,6 +206,13 @@ const uiTextByLocale: Record<Locale, UiText> = {
     traceNarrativeBranch: "Branch meaning",
     traceNarrativeNext: "Next comparison",
     lastSuccessfulRun: "Last successful run",
+    requestedModeLabel: "Requested mode",
+    resolvedSourceLabel: "Resolved source",
+    sourceStaticCatalog: "static catalog",
+    sourceLiveApi: "live api",
+    sourceLiveFallback: "live fallback",
+    sourceFallbackWarning: "Live endpoint unavailable",
+    sourceFallbackBody: "The app requested a live trace, but the rendered result is the fallback placeholder. Start the backend or configure a reachable API base URL.",
     projectLayout: "Project Layout",
     frontendStructure: "Frontend Structure",
     loadedTrace: "Loaded Trace",
@@ -316,6 +330,13 @@ const uiTextByLocale: Record<Locale, UiText> = {
     traceNarrativeBranch: "분기 의미",
     traceNarrativeNext: "다음 비교",
     lastSuccessfulRun: "마지막 성공 실행",
+    requestedModeLabel: "요청 모드",
+    resolvedSourceLabel: "실제 소스",
+    sourceStaticCatalog: "정적 카탈로그",
+    sourceLiveApi: "라이브 API",
+    sourceLiveFallback: "라이브 대체 결과",
+    sourceFallbackWarning: "라이브 엔드포인트에 연결하지 못했습니다",
+    sourceFallbackBody: "앱은 live trace를 요청했지만, 현재 화면은 fallback placeholder 결과를 렌더링하고 있습니다. 백엔드를 실행하거나 접근 가능한 API 기준 URL을 설정하세요.",
     projectLayout: "프로젝트 구조",
     frontendStructure: "프런트엔드 구조",
     loadedTrace: "로드된 Trace",
