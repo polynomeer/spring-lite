@@ -874,6 +874,15 @@ code {
   gap: 10px;
 }
 
+.flow-compare-step-head,
+.flow-compare-badges,
+.flow-compare-lane-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .runtime-diff-row {
   display: grid;
   grid-template-columns: minmax(180px, 1.3fr) minmax(0, 1fr) minmax(0, 1fr);

@@ -117,6 +117,11 @@ export interface UiText {
   focusCurrentRun: string;
   focusStaticBaseline: string;
   focusSplitCompare: string;
+  flowCompareStepShapeDiff: string;
+  flowCompareTitleDiff: string;
+  flowCompareMarkerDiff: string;
+  flowCompareDetailDiff: string;
+  flowCompareEventCountDiff: string;
   flowTimeline: string;
   replayControls: string;
   replayPlay: string;
@@ -257,6 +262,11 @@ const uiTextByLocale: Record<Locale, UiText> = {
     focusCurrentRun: "current run",
     focusStaticBaseline: "static baseline",
     focusSplitCompare: "split compare",
+    flowCompareStepShapeDiff: "step shape differs",
+    flowCompareTitleDiff: "title diff",
+    flowCompareMarkerDiff: "marker diff",
+    flowCompareDetailDiff: "detail diff",
+    flowCompareEventCountDiff: "event count diff",
     flowTimeline: "Flow Timeline",
     replayControls: "Replay Controls",
     replayPlay: "Play",
@@ -395,6 +405,11 @@ const uiTextByLocale: Record<Locale, UiText> = {
     focusCurrentRun: "현재 실행",
     focusStaticBaseline: "정적 기준선",
     focusSplitCompare: "좌우 비교",
+    flowCompareStepShapeDiff: "단계 구조 차이",
+    flowCompareTitleDiff: "제목 차이",
+    flowCompareMarkerDiff: "마커 차이",
+    flowCompareDetailDiff: "설명 차이",
+    flowCompareEventCountDiff: "이벤트 수 차이",
     flowTimeline: "흐름 타임라인",
     replayControls: "재생 컨트롤",
     replayPlay: "재생",

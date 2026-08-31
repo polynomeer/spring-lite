@@ -33,6 +33,11 @@ interface TracePreviewProps {
     focusCurrentRun: string;
     focusStaticBaseline: string;
     focusSplitCompare: string;
+    flowCompareStepShapeDiff: string;
+    flowCompareTitleDiff: string;
+    flowCompareMarkerDiff: string;
+    flowCompareDetailDiff: string;
+    flowCompareEventCountDiff: string;
     flowTimeline: string;
     replayControls: string;
     replayPlay: string;
@@ -336,6 +341,11 @@ export function TracePreview({ trace, baselineTrace, insight, runtimeDiffRows, r
                 staticBaselineLabel={labels.focusStaticBaseline}
                 selectedStepLabel={labels.selectedStep}
                 relatedLanesLabel={labels.relatedLanes}
+                stepShapeDiffLabel={labels.flowCompareStepShapeDiff}
+                titleDiffLabel={labels.flowCompareTitleDiff}
+                markerDiffLabel={labels.flowCompareMarkerDiff}
+                detailDiffLabel={labels.flowCompareDetailDiff}
+                eventCountDiffLabel={labels.flowCompareEventCountDiff}
                 liveTrace={trace}
                 staticTrace={baselineTrace}
                 activeIndex={compareIndex}
