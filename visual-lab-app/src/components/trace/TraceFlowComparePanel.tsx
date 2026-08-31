@@ -12,6 +12,11 @@ interface TraceFlowComparePanelProps {
   markerDiffLabel: string;
   detailDiffLabel: string;
   eventCountDiffLabel: string;
+  whyDiffersLabel: string;
+  inspectCodeLabel: string;
+  reasonShapeLabel: string;
+  reasonRuntimeLabel: string;
+  reasonStaticLabel: string;
   liveTrace: LabTrace;
   staticTrace: LabTrace;
   activeIndex: number;
@@ -48,6 +53,11 @@ export function TraceFlowComparePanel({
   markerDiffLabel,
   detailDiffLabel,
   eventCountDiffLabel,
+  whyDiffersLabel,
+  inspectCodeLabel,
+  reasonShapeLabel,
+  reasonRuntimeLabel,
+  reasonStaticLabel,
   liveTrace,
   staticTrace,
   activeIndex
@@ -55,6 +65,12 @@ export function TraceFlowComparePanel({
   const live = clampedStep(liveTrace, activeIndex);
   const baseline = clampedStep(staticTrace, activeIndex);
   const stepDiff = compareStepState(liveTrace, staticTrace, activeIndex);
+  const matchingReferences = Array.from(new Set([...liveTrace.references, ...staticTrace.references])).slice(0, 4);
+  const reasonLines = [
+    stepDiff.missingOnOneSide ? reasonShapeLabel : null,
+    stepDiff.titleChanged || stepDiff.markerChanged || stepDiff.detailChanged ? reasonRuntimeLabel : null,
+    stepDiff.missingOnOneSide || stepDiff.detailChanged ? reasonStaticLabel : null
+  ].filter((line): line is string => Boolean(line));
 
   return (
     <article className="trace-panel flow-compare-panel">
@@ -141,6 +157,30 @@ export function TraceFlowComparePanel({
             </section>
           );
         })}
+      </div>
+
+      <div className="flow-compare-context">
+        <section className="runtime-flow-card">
+          <strong>{whyDiffersLabel}</strong>
+          <div className="trace-list">
+            {reasonLines.map((line) => (
+              <div className="trace-item info" key={line}>
+                <p>{line}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="runtime-flow-card">
+          <strong>{inspectCodeLabel}</strong>
+          <div className="trace-list">
+            {matchingReferences.map((reference) => (
+              <div className="trace-item info" key={reference}>
+                <p><code>{reference}</code></p>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
     </article>
   );

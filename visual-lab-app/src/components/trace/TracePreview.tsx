@@ -38,6 +38,11 @@ interface TracePreviewProps {
     flowCompareMarkerDiff: string;
     flowCompareDetailDiff: string;
     flowCompareEventCountDiff: string;
+    flowCompareWhyDiffers: string;
+    flowCompareInspectCode: string;
+    flowCompareReasonShape: string;
+    flowCompareReasonRuntime: string;
+    flowCompareReasonStatic: string;
     flowTimeline: string;
     replayControls: string;
     replayPlay: string;
@@ -346,6 +351,11 @@ export function TracePreview({ trace, baselineTrace, insight, runtimeDiffRows, r
                 markerDiffLabel={labels.flowCompareMarkerDiff}
                 detailDiffLabel={labels.flowCompareDetailDiff}
                 eventCountDiffLabel={labels.flowCompareEventCountDiff}
+                whyDiffersLabel={labels.flowCompareWhyDiffers}
+                inspectCodeLabel={labels.flowCompareInspectCode}
+                reasonShapeLabel={labels.flowCompareReasonShape}
+                reasonRuntimeLabel={labels.flowCompareReasonRuntime}
+                reasonStaticLabel={labels.flowCompareReasonStatic}
                 liveTrace={trace}
                 staticTrace={baselineTrace}
                 activeIndex={compareIndex}

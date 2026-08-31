@@ -883,6 +883,13 @@ code {
   gap: 8px;
 }
 
+.flow-compare-context {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
 .runtime-diff-row {
   display: grid;
   grid-template-columns: minmax(180px, 1.3fr) minmax(0, 1fr) minmax(0, 1fr);
@@ -1270,6 +1277,7 @@ code {
   .comparison-diff-layout,
   .runtime-flow-diff-grid,
   .flow-compare-grid,
+  .flow-compare-context,
   .runtime-diff-row,
   .execution-branch-grid,
   .flow-timeline,

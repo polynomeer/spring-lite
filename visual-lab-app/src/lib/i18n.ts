@@ -122,6 +122,11 @@ export interface UiText {
   flowCompareMarkerDiff: string;
   flowCompareDetailDiff: string;
   flowCompareEventCountDiff: string;
+  flowCompareWhyDiffers: string;
+  flowCompareInspectCode: string;
+  flowCompareReasonShape: string;
+  flowCompareReasonRuntime: string;
+  flowCompareReasonStatic: string;
   flowTimeline: string;
   replayControls: string;
   replayPlay: string;
@@ -267,6 +272,11 @@ const uiTextByLocale: Record<Locale, UiText> = {
     flowCompareMarkerDiff: "marker diff",
     flowCompareDetailDiff: "detail diff",
     flowCompareEventCountDiff: "event count diff",
+    flowCompareWhyDiffers: "why this differs",
+    flowCompareInspectCode: "inspect code",
+    flowCompareReasonShape: "The two traces do not expose the same number of steps at this position, so the comparison is aligning the nearest matching stage.",
+    flowCompareReasonRuntime: "The live run captures runtime-specific verification or observed values that the static baseline compresses into a simpler teaching step.",
+    flowCompareReasonStatic: "The static baseline keeps the concept compact, while the live trace expands details such as verification or extra lane events.",
     flowTimeline: "Flow Timeline",
     replayControls: "Replay Controls",
     replayPlay: "Play",
@@ -410,6 +420,11 @@ const uiTextByLocale: Record<Locale, UiText> = {
     flowCompareMarkerDiff: "마커 차이",
     flowCompareDetailDiff: "설명 차이",
     flowCompareEventCountDiff: "이벤트 수 차이",
+    flowCompareWhyDiffers: "왜 차이가 나는가",
+    flowCompareInspectCode: "관련 코드 보기",
+    flowCompareReasonShape: "두 trace가 이 위치에서 같은 개수의 단계를 노출하지 않기 때문에, 비교는 가장 가까운 대응 단계를 기준으로 정렬됩니다.",
+    flowCompareReasonRuntime: "live 실행은 정적 기준선이 축약한 단계를 실제 검증 단계나 관찰된 값까지 포함해 더 자세히 보여줍니다.",
+    flowCompareReasonStatic: "static 기준선은 개념을 짧게 유지하고, live trace는 검증 단계나 lane 이벤트 같은 세부 정보를 더 펼쳐 보여줍니다.",
     flowTimeline: "흐름 타임라인",
     replayControls: "재생 컨트롤",
     replayPlay: "재생",
