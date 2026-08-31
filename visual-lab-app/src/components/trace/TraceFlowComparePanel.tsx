@@ -36,6 +36,8 @@ interface TraceFlowComparePanelProps {
   codeSurfacesLabel: string;
   alignedLabel: string;
   laneCountSuffix: string;
+  relatedLaneCountLabel: string;
+  otherLaneCountLabel: string;
   reasonCountSuffix: string;
   surfaceCountSuffix: string;
   reasonShapeLabel: string;
@@ -100,6 +102,8 @@ export function TraceFlowComparePanel({
   codeSurfacesLabel,
   alignedLabel,
   laneCountSuffix,
+  relatedLaneCountLabel,
+  otherLaneCountLabel,
   reasonCountSuffix,
   surfaceCountSuffix,
   reasonShapeLabel,
@@ -252,6 +256,18 @@ export function TraceFlowComparePanel({
           const relatedKinds = column.step ? inferRelatedLaneKinds(column.step) : [];
           const counterpartTrace = column.label === currentRunLabel ? staticTrace : liveTrace;
           const columnTone = column.label === currentRunLabel ? "live" : "static";
+          const sortedLanes = [...column.trace.lanes].sort((left, right) => {
+            const leftRelated = isLaneRelatedToStep(left, column.step);
+            const rightRelated = isLaneRelatedToStep(right, column.step);
+
+            if (leftRelated === rightRelated) {
+              return left.label.localeCompare(right.label);
+            }
+
+            return leftRelated ? -1 : 1;
+          });
+          const relatedLaneCount = sortedLanes.filter((lane) => isLaneRelatedToStep(lane, column.step)).length;
+          const otherLaneCount = sortedLanes.length - relatedLaneCount;
           return (
             <section className={`flow-compare-column ${columnTone}`} key={column.label}>
               <div className="flow-compare-head">
@@ -285,10 +301,12 @@ export function TraceFlowComparePanel({
                 {relatedKinds.map((kind) => (
                   <span className={columnTone === "live" ? "status-pill info" : "status-pill neutral"} key={`${column.label}-${kind}`}>{kind}</span>
                 ))}
+                <span className="status-pill neutral">{relatedLaneCountLabel} {relatedLaneCount}</span>
+                {otherLaneCount > 0 ? <span className="status-pill neutral">{otherLaneCountLabel} {otherLaneCount}</span> : null}
               </div>
 
               <div className="trace-list">
-                {column.trace.lanes.map((lane) => {
+                {sortedLanes.map((lane) => {
                   const isRelated = isLaneRelatedToStep(lane, column.step);
                   const counterpartLane = counterpartTrace.lanes.find((item) => item.kind === lane.kind);
                   const eventCountChanged = (counterpartLane?.events.length ?? 0) !== lane.events.length;
