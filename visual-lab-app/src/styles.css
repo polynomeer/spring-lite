@@ -984,6 +984,28 @@ code {
   text-transform: uppercase;
 }
 
+.flow-compare-summary-chip.live {
+  border-color: rgba(49, 255, 132, 0.2);
+  background: rgba(14, 24, 15, 0.92);
+  color: #c8ffd5;
+}
+
+.flow-compare-summary-chip.static {
+  border-color: rgba(138, 178, 152, 0.18);
+  background: rgba(11, 15, 12, 0.92);
+  color: #c6d9cc;
+}
+
+.flow-compare-summary-chip.changed {
+  border-color: rgba(200, 255, 121, 0.28);
+  background: rgba(27, 29, 10, 0.92);
+  color: #e7ffb4;
+}
+
+.flow-compare-summary-chip.muted {
+  opacity: 0.72;
+}
+
 .flow-compare-context {
   margin-top: 14px;
   display: grid;

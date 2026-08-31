@@ -309,9 +309,9 @@ export function TraceFlowComparePanel({
                 {stepDiff.missingOnOneSide ? <span className="status-pill warning">{stepShapeDiffLabel}</span> : null}
               </div>
               <div className="flow-compare-column-summary">
-                <span className="flow-compare-summary-chip">{stepsLabel} {column.trace.steps.length}</span>
-                <span className="flow-compare-summary-chip">{relatedLaneCountLabel} {relatedLaneCount}</span>
-                <span className="flow-compare-summary-chip">{changedLaneCountLabel} {changedLaneCount}</span>
+                <span className="flow-compare-summary-chip neutral">{stepsLabel} {column.trace.steps.length}</span>
+                <span className={columnTone === "live" ? "flow-compare-summary-chip live" : "flow-compare-summary-chip static"}>{relatedLaneCountLabel} {relatedLaneCount}</span>
+                <span className={changedLaneCount > 0 ? "flow-compare-summary-chip changed" : "flow-compare-summary-chip muted"}>{changedLaneCountLabel} {changedLaneCount}</span>
               </div>
 
               <div className={`trace-item trace-step focus-step ${columnTone}`}>
