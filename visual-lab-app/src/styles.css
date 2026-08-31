@@ -896,6 +896,12 @@ code {
   gap: 8px;
 }
 
+.flow-reference-focus {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .runtime-diff-row {
   display: grid;
   grid-template-columns: minmax(180px, 1.3fr) minmax(0, 1fr) minmax(0, 1fr);

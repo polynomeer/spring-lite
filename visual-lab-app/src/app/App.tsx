@@ -658,6 +658,8 @@ export function App() {
                 flowCompareInspectCode: text.flowCompareInspectCode,
                 flowComparePrimarySurface: text.flowComparePrimarySurface,
                 flowCompareSupportingSurface: text.flowCompareSupportingSurface,
+                flowCompareClassFocus: text.flowCompareClassFocus,
+                flowCompareMethodFocus: text.flowCompareMethodFocus,
                 flowCompareReasonShape: text.flowCompareReasonShape,
                 flowCompareReasonRuntime: text.flowCompareReasonRuntime,
                 flowCompareReasonStatic: text.flowCompareReasonStatic,
