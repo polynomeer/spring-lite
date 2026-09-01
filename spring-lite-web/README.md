@@ -10,6 +10,7 @@
 - JSON 및 plain text 메시지 변환과 역직렬화
 - 입력 검증과 예외 응답 변환
 - 로컬 `@ExceptionHandler`, 전역 `@ControllerAdvice` 지원
+- 예외 타입/handler method의 `@ResponseStatus` 기반 HTTP 상태 선언
 - controller 매핑 이후 `classpath:/static` 정적 리소스 fallback, ETag 조건부 요청
 - 요청 method/status별 counter와 누적 duration metrics 기록
 

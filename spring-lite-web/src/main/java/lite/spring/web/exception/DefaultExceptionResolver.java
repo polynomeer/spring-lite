@@ -10,6 +10,7 @@ import lite.spring.core.validation.ConstraintViolation;
 import lite.spring.core.validation.ValidationException;
 import lite.spring.web.annotation.ControllerAdvice;
 import lite.spring.web.annotation.ExceptionHandler;
+import lite.spring.web.annotation.ResponseStatus;
 import lite.spring.web.handler.HandlerMethodMatch;
 
 public class DefaultExceptionResolver implements ExceptionResolver {
@@ -42,17 +43,22 @@ public class DefaultExceptionResolver implements ExceptionResolver {
         if (exception instanceof IllegalArgumentException) {
             return new ExceptionHandlingResult(400, Map.of("error", exception.getMessage()));
         }
-        return new ExceptionHandlingResult(500, Map.of("error", exception.getMessage()));
+        return new ExceptionHandlingResult(resolveStatus(exception.getClass(), 500), Map.of("error", exception.getMessage()));
     }
 
     private ExceptionHandlingResult invokeHandler(Object target, Method handler, Exception exception) {
         try {
             handler.setAccessible(true);
             Object body = handler.invoke(target, exception);
-            return new ExceptionHandlingResult(400, body);
+            return new ExceptionHandlingResult(resolveStatus(handler, resolveStatus(exception.getClass(), 400)), body);
         } catch (IllegalAccessException | InvocationTargetException invocationException) {
             throw new IllegalStateException("Failed to invoke exception handler", invocationException);
         }
+    }
+
+    private int resolveStatus(java.lang.reflect.AnnotatedElement source, int defaultStatus) {
+        ResponseStatus responseStatus = source.getAnnotation(ResponseStatus.class);
+        return responseStatus == null ? defaultStatus : responseStatus.value();
     }
 
     private List<Map<String, Object>> toViolationPayload(List<ConstraintViolation> violations) {

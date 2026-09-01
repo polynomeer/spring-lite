@@ -33,6 +33,7 @@ import lite.spring.web.annotation.PostMapping;
 import lite.spring.web.annotation.RequestBody;
 import lite.spring.web.annotation.RequestMapping;
 import lite.spring.web.annotation.RequestParam;
+import lite.spring.web.annotation.ResponseStatus;
 import lite.spring.web.annotation.RestController;
 import lite.spring.web.http.ResponseEntity;
 import lite.spring.web.json.JsonMapper;
@@ -182,6 +183,19 @@ class DispatcherServletTest {
     }
 
     @Test
+    void resolvesStatusDeclaredOnUnhandledExceptionType() throws Exception {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
+            DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
+            StubHttpExchange exchange = new StubHttpExchange("GET", URI.create("/greetings/missing-resource"), "");
+
+            dispatcherServlet.handle(exchange);
+
+            assertThat(exchange.statusCode()).isEqualTo(404);
+            assertThat(exchange.responseBodyAsString()).contains("resource missing");
+        }
+    }
+
+    @Test
     void usesExceptionHandlerMethodWhenPresent() throws Exception {
         try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
             DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
@@ -189,7 +203,7 @@ class DispatcherServletTest {
 
             dispatcherServlet.handle(exchange);
 
-            assertThat(exchange.statusCode()).isEqualTo(400);
+            assertThat(exchange.statusCode()).isEqualTo(409);
             assertThat(exchange.responseBodyAsString()).isEqualTo("{\"message\":\"handled by controller\"}");
         }
     }
@@ -393,6 +407,11 @@ class DispatcherServletTest {
             throw new CustomWebException("boom");
         }
 
+        @GetMapping("/missing-resource")
+        public Response missingResource() {
+            throw new MissingResourceException("resource missing");
+        }
+
         @GetMapping("/global")
         public Response global() {
             throw new IllegalStateException("global failure");
@@ -446,6 +465,7 @@ class DispatcherServletTest {
         }
 
         @ExceptionHandler(CustomWebException.class)
+        @ResponseStatus(409)
         public Response handleCustom(CustomWebException exception) {
             return new Response("handled by controller");
         }
@@ -488,7 +508,7 @@ class DispatcherServletTest {
 
             dispatcherServlet.handle(exchange);
 
-            assertThat(exchange.statusCode()).isEqualTo(400);
+            assertThat(exchange.statusCode()).isEqualTo(409);
             assertThat(exchange.responseBodyAsString()).isEqualTo("{\"message\":\"handled by controller\"}");
         }
     }
@@ -504,6 +524,13 @@ class DispatcherServletTest {
 
     static class CustomWebException extends RuntimeException {
         CustomWebException(String message) {
+            super(message);
+        }
+    }
+
+    @ResponseStatus(404)
+    static class MissingResourceException extends RuntimeException {
+        MissingResourceException(String message) {
             super(message);
         }
     }
