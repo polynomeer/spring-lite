@@ -134,6 +134,22 @@ class ExampleApplicationWebTest {
     }
 
     @Test
+    void returnsLivePlaygroundTraceFromActualRuntimePath(MockMvc mockMvc) {
+        MockHttpResponse response = mockMvc.perform(
+            MockHttpRequest.post("/lab/run/trace")
+                .contentType("application/json")
+                .body("{\"labId\":\"playground\",\"scenario\":\"aop-rollback\",\"mode\":\"live\"}")
+                .build()
+        );
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).contains("\"labId\":\"playground\"");
+        assertThat(response.body()).contains("\"title\":\"Playground Runtime Trace\"");
+        assertThat(response.body()).contains("\"scenario\":\"aop-rollback\"");
+        assertThat(response.body()).contains("\"Tx Outcome\",\"value\":\"rollback\"");
+    }
+
+    @Test
     void rejectsUnsupportedLiveLabScenario(MockMvc mockMvc) {
         MockHttpResponse response = mockMvc.perform(
             MockHttpRequest.post("/lab/run/trace")

@@ -29,8 +29,32 @@ public class VisualLabTraceService {
                 default -> throw new IllegalArgumentException("Unsupported example-flow scenario: " + request.scenario());
             };
             case "container" -> runContainerScenario(request.scenario());
+            case "playground" -> runPlaygroundScenario(request.scenario());
             default -> throw new IllegalArgumentException("Unsupported lab id: " + request.labId());
         };
+    }
+
+    private LabTraceResponse runPlaygroundScenario(String scenario) {
+        LabTraceResponse delegate = switch (scenario) {
+            case "aop-success" -> runCreateScenario();
+            case "aop-rollback" -> runRollbackScenario();
+            case "mvc-validation" -> runValidationScenario();
+            default -> throw new IllegalArgumentException("Unsupported playground scenario: " + scenario);
+        };
+
+        return new LabTraceResponse(
+            "live-playground-" + scenario,
+            "playground",
+            "Playground Runtime Trace",
+            "live",
+            scenario,
+            "Live playground trace backed by the real example application path: " + delegate.summary(),
+            delegate.metrics(),
+            delegate.steps(),
+            delegate.lanes(),
+            delegate.snapshot(),
+            delegate.references()
+        );
     }
 
     private LabTraceResponse runContainerScenario(String scenario) {
