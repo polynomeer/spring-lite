@@ -15,6 +15,7 @@ import lite.spring.aop.support.AspectBeanPostProcessor;
 import lite.spring.boot.annotation.SpringLiteBootApplication;
 import lite.spring.boot.actuate.ActuatorController;
 import lite.spring.boot.actuate.ApiDocumentationController;
+import lite.spring.boot.actuate.DatabaseActuatorController;
 import lite.spring.boot.diagnostics.ApplicationDiagnostics;
 import lite.spring.context.support.AnnotationConfigApplicationContext;
 import lite.spring.core.annotation.Bean;
@@ -121,9 +122,12 @@ class SpringLiteApplicationTest {
     void registersJdbcTemplateOnlyWhenDataSourceExists() {
         try (AnnotationConfigApplicationContext withoutDataSource = runWithRandomPort(BootTestApplication.class)) {
             assertThat(withoutDataSource.containsBeanOfType(lite.spring.jdbc.JdbcTemplate.class)).isFalse();
+            assertThat(withoutDataSource.containsBeanOfType(DatabaseActuatorController.class)).isFalse();
         }
         try (AnnotationConfigApplicationContext withDataSource = runWithRandomPort(DataSourceApplication.class)) {
             assertThat(withDataSource.containsBeanOfType(lite.spring.jdbc.JdbcTemplate.class)).isTrue();
+            assertThat(withDataSource.containsBeanOfType(DatabaseActuatorController.class)).isTrue();
+            assertThat(withDataSource.getBean(DatabaseActuatorController.class).database()).containsKey("status");
         }
     }
 

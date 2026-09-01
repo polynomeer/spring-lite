@@ -2,12 +2,15 @@ package lite.spring.boot.support.autoconfigure;
 
 import lite.spring.boot.actuate.ActuatorController;
 import lite.spring.boot.actuate.ApiDocumentationController;
+import lite.spring.boot.actuate.DatabaseActuatorController;
+import javax.sql.DataSource;
 import lite.spring.boot.support.ApplicationProperties;
 import lite.spring.context.ApplicationContext;
 import lite.spring.core.annotation.Bean;
 import lite.spring.core.annotation.Configuration;
 import lite.spring.core.metrics.MetricsRegistry;
 import lite.spring.core.annotation.ConditionalOnMissingBean;
+import lite.spring.core.annotation.ConditionalOnBean;
 
 @Configuration
 public class ActuatorAutoConfiguration {
@@ -21,5 +24,12 @@ public class ActuatorAutoConfiguration {
     @ConditionalOnMissingBean(ApiDocumentationController.class)
     ApiDocumentationController apiDocumentationController(ApplicationContext applicationContext) {
         return new ApiDocumentationController(applicationContext);
+    }
+
+    @Bean
+    @ConditionalOnBean(DataSource.class)
+    @ConditionalOnMissingBean(DatabaseActuatorController.class)
+    DatabaseActuatorController databaseActuatorController(DataSource dataSource) {
+        return new DatabaseActuatorController(dataSource);
     }
 }

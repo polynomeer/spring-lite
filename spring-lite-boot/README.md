@@ -9,6 +9,7 @@
 - profile-aware 프로퍼티 로딩과 런타임 오버라이드 연동
 - 내장 JDK HTTP 서버 기동
 - `/actuator/health`, `/actuator/info`, `/actuator/metrics` actuator-lite endpoint 제공
+- DataSource 존재 시 `/actuator/database` 연결 상태 endpoint 제공
 - `/api-docs` runtime API catalogue 제공
 
 ## 핵심 패키지
@@ -42,6 +43,8 @@
 ## Metrics endpoint
 
 `@Timed`가 붙은 빈의 호출과 모든 Dispatcher 요청은 `MetricsRegistry`에 기록된다. HTTP 요청 metric 이름은 `http.server.requests.<METHOD>.<STATUS>`와 `http.server.duration.<METHOD>.<STATUS>` 형식이다. `GET /actuator/metrics`는 `counters`와 `timers`를 반환하며, timer 값은 호출 횟수(`count`)와 누적 나노초(`totalNanos`)를 포함한다. 이 endpoint는 교육용 in-memory 관측성 계약이며 영속 저장소나 관리 endpoint 보안은 제공하지 않는다.
+
+DataSource가 등록된 경우에만 `GET /actuator/database`가 생성된다. endpoint는 새 연결을 짧게 열어 DB product, URL, read-only 상태를 반환하고, 연결 실패는 `status: DOWN`으로 표현한다.
 
 ## Static files and API catalogue
 
