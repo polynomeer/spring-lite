@@ -13,7 +13,14 @@ public final class SpringLiteApplication {
     }
 
     public static AnnotationConfigApplicationContext run(Class<?> applicationClass, String... args) {
-        AnnotationConfigApplicationContext context = PropertyResolver.withOverrides(parseCommandLineArgs(args), () -> {
+        AnnotationConfigApplicationContext context = bootstrap(applicationClass, args);
+        context.getBean(WebServer.class).start();
+        return context;
+    }
+
+    /** Creates a fully configured context without starting the embedded web server. */
+    public static AnnotationConfigApplicationContext bootstrap(Class<?> applicationClass, String... args) {
+        return PropertyResolver.withOverrides(parseCommandLineArgs(args), () -> {
             AnnotationConfigApplicationContext createdContext = new AnnotationConfigApplicationContext();
             createdContext.register(applicationClass);
             createdContext.registerSingleton("commandLineApplicationProperties", ApplicationProperties.from(PropertyResolver.loadApplicationProperties()));
@@ -21,8 +28,6 @@ public final class SpringLiteApplication {
             createdContext.refresh();
             return createdContext;
         });
-        context.getBean(WebServer.class).start();
-        return context;
     }
 
     private static Map<String, String> parseCommandLineArgs(String[] args) {

@@ -47,6 +47,10 @@
 
 `DispatcherServlet`은 controller 매핑이 없을 때 `classpath:/static`에서 `GET`과 `HEAD` 파일 요청을 처리한다. 상위 경로 탐색은 거부하고, 응답에는 적절한 Content-Type과 한 시간 cache header를 설정한다. `GET /api-docs`는 현재 컨텍스트에 등록된 `@RestController`의 GET/POST endpoint와 handler 이름을 JSON으로 반환한다. 이는 OpenAPI를 대체하는 사양이 아니라 학습과 런타임 점검을 위한 최소 카탈로그다.
 
+## CLI diagnostics
+
+`SpringLiteApplication.bootstrap(...)`은 웹 서버를 시작하지 않고 Boot 컨텍스트만 조립한다. `SpringLiteDiagnostics <application-class> [--property=value]`는 이를 이용해 bean 수, 프록시 수, 빈 정의 종류와 인스턴스 상태를 JSON으로 출력한다.
+
 ## 호출 흐름
 
 1. `SpringLiteApplication.run(...)`이 실행된다.

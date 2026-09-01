@@ -15,6 +15,7 @@ import lite.spring.aop.support.AspectBeanPostProcessor;
 import lite.spring.boot.annotation.SpringLiteBootApplication;
 import lite.spring.boot.actuate.ActuatorController;
 import lite.spring.boot.actuate.ApiDocumentationController;
+import lite.spring.boot.diagnostics.ApplicationDiagnostics;
 import lite.spring.context.support.AnnotationConfigApplicationContext;
 import lite.spring.core.annotation.Bean;
 import lite.spring.core.annotation.ConditionalOnClass;
@@ -76,6 +77,15 @@ class SpringLiteApplicationTest {
             assertThat((List<?>) apiDocs.apiDocs().get("endpoints"))
                 .anySatisfy(endpoint -> assertThat(endpoint.toString()).contains("/api-docs"))
                 .anySatisfy(endpoint -> assertThat(endpoint.toString()).contains("/actuator/health"));
+        }
+    }
+
+    @Test
+    void bootstrapsDiagnosticsWithoutStartingTheWebServer() {
+        try (AnnotationConfigApplicationContext context = SpringLiteApplication.bootstrap(BootTestApplication.class, "--server.port=0")) {
+            assertThat(ApplicationDiagnostics.report(context))
+                .containsEntry("beanCount", context.getBeanRuntimeDescriptors().size());
+            assertThat(((Number) ApplicationDiagnostics.report(context).get("proxiedBeanCount")).longValue()).isPositive();
         }
     }
 

@@ -9,6 +9,7 @@ import lite.spring.context.support.AnnotationConfigApplicationContext;
 import lite.spring.core.annotation.Bean;
 import lite.spring.core.annotation.Configuration;
 import lite.spring.jdbc.datasource.DriverManagerDataSource;
+import lite.spring.jdbc.datasource.DataSourceDiagnostics;
 import lite.spring.jdbc.repository.JdbcRepository;
 import lite.spring.tx.annotation.Transactional;
 import lite.spring.tx.support.TransactionManager;
@@ -63,6 +64,17 @@ class JdbcIntegrationTest {
             assertThat(repository.deleteById(id)).isTrue();
             assertThat(repository.findAll()).isEmpty();
         }
+    }
+
+    @Test
+    void reportsDataSourceConnectivityAndDatabaseMetadata() {
+        DriverManagerDataSource dataSource = new DriverManagerDataSource("jdbc:h2:mem:diagnostics", "sa", "");
+
+        assertThat(DataSourceDiagnostics.inspect(dataSource))
+            .containsEntry("status", "UP")
+            .containsEntry("database", "H2")
+            .containsEntry("url", "jdbc:h2:mem:diagnostics");
+        assertThat(dataSource.username()).isEqualTo("sa");
     }
 
     @Configuration

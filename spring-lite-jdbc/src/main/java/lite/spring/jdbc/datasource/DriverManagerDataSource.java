@@ -19,6 +19,14 @@ public class DriverManagerDataSource implements DataSource {
         this.password = password;
     }
 
+    public String url() {
+        return url;
+    }
+
+    public String username() {
+        return username;
+    }
+
     @Override
     public Connection getConnection() throws SQLException {
         return DriverManager.getConnection(url, username, password);
@@ -62,4 +70,3 @@ public class DriverManagerDataSource implements DataSource {
         return false;
     }
 }
-

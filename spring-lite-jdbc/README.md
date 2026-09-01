@@ -20,6 +20,7 @@
 - `JdbcTemplate`
 - `RowMapper`
 - `DriverManagerDataSource`
+- `DataSourceDiagnostics`
 - `JdbcRepository`
 
 ## 내부 핵심 클래스
@@ -30,6 +31,8 @@
   - 트랜잭션 문맥의 커넥션을 닫히지 않도록 감싼다.
 - `DriverManagerDataSource`
   - 간단한 JDBC 데이터소스 구현이다.
+- `DataSourceDiagnostics`
+  - 연결을 짧게 열어 DB product, URL, read-only 상태와 연결 실패를 구조화해 반환한다.
 - `JdbcRepository`
   - 공통 findById/findAll/deleteById SQL을 재사용한다. insert/update 도메인 규칙은 각 repository에 남긴다.
 
