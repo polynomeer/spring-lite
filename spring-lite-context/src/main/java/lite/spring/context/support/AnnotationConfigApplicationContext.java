@@ -62,6 +62,7 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
     private final Map<String, ConditionMetadata> conditionMetadata = new LinkedHashMap<>();
     private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
     private final Set<String> beansInCreation = new LinkedHashSet<>();
+    private final List<String> beanCreationPath = new ArrayList<>();
     private final ClassPathScanner classPathScanner = new ClassPathScanner();
     private final PropertyResolver propertyResolver = PropertyResolver.loadApplicationProperties();
     private final ConversionService conversionService = new DefaultConversionService();
@@ -342,8 +343,9 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
             return singletons.get(beanName);
         }
         if (!beansInCreation.add(beanName)) {
-            throw new BeansException("Circular dependency detected while creating " + beanName);
+            throw new BeansException("Circular dependency detected: " + describeCircularDependency(beanName));
         }
+        beanCreationPath.add(beanName);
         try {
             Object instance = switch (beanDefinition.kind()) {
                 case COMPONENT, CONFIGURATION, INFRASTRUCTURE -> instantiateClass(beanDefinition.beanType());
@@ -361,7 +363,17 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
             return initialized;
         } finally {
             beansInCreation.remove(beanName);
+            beanCreationPath.remove(beanName);
         }
+    }
+
+    private String describeCircularDependency(String beanName) {
+        int cycleStart = beanCreationPath.indexOf(beanName);
+        List<String> cycle = cycleStart >= 0
+            ? new ArrayList<>(beanCreationPath.subList(cycleStart, beanCreationPath.size()))
+            : new ArrayList<>(beanCreationPath);
+        cycle.add(beanName);
+        return String.join(" -> ", cycle);
     }
 
     private Object instantiateClass(Class<?> beanType) {

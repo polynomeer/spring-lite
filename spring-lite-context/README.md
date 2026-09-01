@@ -82,5 +82,5 @@ Spring Lite에서는 이 책임들이 더 적은 클래스에 압축되어 있�
 
 - 고급 스코프 request/session 미지원
 - `BeanFactoryPostProcessor`, `ImportSelector` 계열 미지원
-- 순환 참조는 fail-fast 위주로 처리
+- 생성자 순환 참조는 fail-fast 처리하며 `a -> b -> a` 의존 경로를 메시지에 포함
 - 컬렉션/지연 주입 같은 고급 의존성 해석은 제한적

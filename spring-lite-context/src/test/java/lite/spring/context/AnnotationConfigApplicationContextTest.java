@@ -194,7 +194,8 @@ class AnnotationConfigApplicationContextTest {
     void detectsCircularDependencies() {
         assertThatThrownBy(() -> new AnnotationConfigApplicationContext(CircularConfig.class))
             .isInstanceOf(BeansException.class)
-            .hasMessageContaining("Circular dependency");
+            .hasMessageContaining("Circular dependency")
+            .hasMessageMatching("(?s).*circular[AB] -> circular[AB] -> circular[AB].*");
     }
 
     @Test
