@@ -975,6 +975,7 @@ code {
 .flow-compare-summary-chip {
   display: inline-flex;
   align-items: center;
+  gap: 7px;
   padding: 5px 8px;
   border: 1px solid rgba(37, 197, 97, 0.12);
   background: rgba(8, 12, 8, 0.88);
@@ -982,6 +983,20 @@ code {
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.flow-compare-summary-chip > span {
+  white-space: nowrap;
+}
+
+.flow-compare-summary-chip > strong {
+  display: inline-grid;
+  min-width: 1.6em;
+  place-items: center;
+  color: #e8fff0;
+  font-size: 13px;
+  letter-spacing: 0;
+  line-height: 1;
 }
 
 .flow-compare-summary-chip.live {
@@ -1000,6 +1015,10 @@ code {
   border-color: rgba(200, 255, 121, 0.28);
   background: rgba(27, 29, 10, 0.92);
   color: #e7ffb4;
+}
+
+.flow-compare-summary-chip.changed > strong {
+  color: #f1ffc9;
 }
 
 .flow-compare-summary-chip.muted {
