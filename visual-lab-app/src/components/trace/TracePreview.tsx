@@ -6,6 +6,7 @@ import { TraceComparisonDiffPanel } from "./TraceComparisonDiffPanel";
 import { TraceExecutionPathPanel } from "./TraceExecutionPathPanel";
 import { TraceFlowComparePanel } from "./TraceFlowComparePanel";
 import { TraceInsightPanel } from "./TraceInsightPanel";
+import { TraceInstructorPanel } from "./TraceInstructorPanel";
 import { TraceLanesPanel } from "./TraceLanesPanel";
 import { TraceMetricsPanel } from "./TraceMetricsPanel";
 import { TraceRuntimeFlowDiffPanel } from "./TraceRuntimeFlowDiffPanel";
@@ -450,7 +451,24 @@ export function TracePreview({ trace, baselineTrace, insight, runtimeDiffRows, r
         ) : null}
 
         {activeTab === "references" ? (
-          <TraceReferencesPanel trace={trace} locale={locale} referencesLabel={labels.references} relatedFilesLabel={labels.relatedFiles} refsLabel={labels.refs} />
+          <>
+            <TraceInstructorPanel
+              trace={trace}
+              activeStepId={activeStepId}
+              locale={locale}
+              labels={{
+                title: labels.flowCompareInspectCode,
+                classFocus: labels.flowCompareClassFocus,
+                methodFocus: labels.flowCompareMethodFocus,
+                docFocus: labels.flowCompareDocFocus,
+                testFocus: labels.flowCompareTestFocus,
+                testMethodFocus: labels.flowCompareTestMethodFocus,
+                assertionFocus: labels.flowCompareAssertionFocus,
+                checklist: labels.flowCompareChecklist
+              }}
+            />
+            <TraceReferencesPanel trace={trace} locale={locale} referencesLabel={labels.references} relatedFilesLabel={labels.relatedFiles} refsLabel={labels.refs} />
+          </>
         ) : null}
       </div>
     </section>

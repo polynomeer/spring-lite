@@ -1137,6 +1137,14 @@ code {
   color: var(--muted);
 }
 
+.instructor-panel { margin-bottom: 12px; }
+.instructor-focus-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.instructor-focus-grid .trace-item { display: grid; gap: 5px; }
+.instructor-focus-grid span,
+.instructor-detail > strong { color: var(--muted); font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; }
+.instructor-detail { padding: 10px 12px; border: 1px solid rgba(37, 197, 97, 0.12); background: rgba(8, 14, 9, 0.76); }
+.instructor-detail p { margin: 6px 0 0; color: var(--text); }
+
 .runtime-diff-row {
   display: grid;
   grid-template-columns: minmax(180px, 1.3fr) minmax(0, 1fr) minmax(0, 1fr);
