@@ -16,3 +16,9 @@ function configuredUrl(value: string | undefined) {
 export const springLiteCompareApiBaseUrl = configuredUrl(import.meta.env.VITE_SPRING_LITE_COMPARE_API_BASE_URL);
 export const springBootCompareApiBaseUrl = configuredUrl(import.meta.env.VITE_SPRING_BOOT_COMPARE_API_BASE_URL);
 export const comparisonTracePath = "/lab/compare/di";
+export const springLiteCompareEndpoint = springLiteCompareApiBaseUrl
+  ? `${springLiteCompareApiBaseUrl}${comparisonTracePath}`
+  : `/compare-lite${comparisonTracePath}`;
+export const springBootCompareEndpoint = springBootCompareApiBaseUrl
+  ? `${springBootCompareApiBaseUrl}${comparisonTracePath}`
+  : `/compare-boot${comparisonTracePath}`;

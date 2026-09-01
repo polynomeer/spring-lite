@@ -1,4 +1,4 @@
-import { comparisonTracePath, liveTraceEndpoint, springBootCompareApiBaseUrl, springLiteCompareApiBaseUrl } from "./runtime-config";
+import { liveTraceEndpoint, springBootCompareEndpoint, springLiteCompareEndpoint } from "./runtime-config";
 import type { LabTrace, LabTraceRequest } from "./types";
 
 export async function fetchLiveLabTrace(request: LabTraceRequest): Promise<LabTrace> {
@@ -21,11 +21,8 @@ export async function fetchLiveLabTrace(request: LabTraceRequest): Promise<LabTr
   return (await response.json()) as LabTrace;
 }
 
-async function fetchComparisonTrace(baseUrl: string, runtime: string): Promise<LabTrace> {
-  if (!baseUrl) {
-    throw new Error(`${runtime} comparison API base URL is not configured`);
-  }
-  const response = await fetch(`${baseUrl}${comparisonTracePath}`);
+async function fetchComparisonTrace(endpoint: string, runtime: string): Promise<LabTrace> {
+  const response = await fetch(endpoint);
   if (!response.ok) {
     throw new Error(`${runtime} comparison trace failed: ${response.status} ${response.statusText}`);
   }
@@ -34,7 +31,7 @@ async function fetchComparisonTrace(baseUrl: string, runtime: string): Promise<L
 
 export function fetchDualRuntimeDiTraces() {
   return Promise.allSettled([
-    fetchComparisonTrace(springLiteCompareApiBaseUrl, "Spring Lite"),
-    fetchComparisonTrace(springBootCompareApiBaseUrl, "Spring Boot")
+    fetchComparisonTrace(springLiteCompareEndpoint, "Spring Lite"),
+    fetchComparisonTrace(springBootCompareEndpoint, "Spring Boot")
   ]);
 }

@@ -15,7 +15,8 @@
 - `한국어 / English` UI 전환
 - playground, container, example-flow, comparison 전체를 고를 수 있는 공통 trace explorer
 - metrics, steps, lanes, snapshot, references를 공통 스키마로 렌더링하는 trace UI
-- `example-flow` live runtime 연동과 나머지 랩의 static parity trace
+- `example-flow`, `container`, `playground` live runtime 연동
+- Spring Lite와 Spring Boot DI 결과를 나란히 조회하는 dual-runtime comparison
 
 ## 실행 예정 방법
 
@@ -34,7 +35,16 @@ npm run dev
 ./scripts/run_visual_lab_stack.sh
 ```
 
-기본 포트가 사용 중이면 스크립트가 다음 사용 가능한 포트를 자동으로 선택하고, 프론트의 `/lab` 프록시도 같은 백엔드 포트를 따라간다.
+기본 포트가 사용 중이면 스크립트가 다음 사용 가능한 포트를 자동으로 선택한다. 시작되는 구성 요소와 기본 포트는 다음과 같다.
+
+| 구성 요소 | 기본 포트 | 역할 |
+| --- | ---: | --- |
+| `example-app` | `8080` | Visual Lab의 일반 live trace API |
+| `comparison-spring-lite-app` | `18081` | Spring Lite DI comparison trace API |
+| `comparison-spring-boot-app` | `18082` | Spring Boot DI comparison trace API |
+| `visual-lab-app` | `4173` | 브라우저 UI와 개발 프록시 |
+
+프론트는 `/lab`, `/compare-lite`, `/compare-boot` 상대 경로를 각각 해당 백엔드로 프록시한다. 따라서 기본 로컬 실행에서는 별도 CORS 설정이 필요하지 않다.
 
 live mode를 실서버와 연결하려면 환경변수를 지정한다.
 
@@ -43,6 +53,14 @@ VITE_LAB_API_BASE_URL=http://127.0.0.1:18080 npm run dev
 ```
 
 환경변수를 주지 않으면 개발 서버에서 상대경로 `/lab/run/trace`를 사용하고, Vite 프록시가 `http://127.0.0.1:8080`의 `example-app`으로 전달한다.
+
+비교 서버를 독립적으로 배포했다면 아래 환경변수로 comparison endpoint를 직접 지정할 수 있다. 이 경우 대상 서버에서 해당 프론트 origin을 허용하는 CORS 설정이 필요하다.
+
+```bash
+VITE_SPRING_LITE_COMPARE_API_BASE_URL=https://lite.example.com \
+VITE_SPRING_BOOT_COMPARE_API_BASE_URL=https://boot.example.com \
+npm run dev
+```
 
 현재 프론트엔드는 `POST /lab/run/trace` 계약을 기대한다. 백엔드가 꺼져 있거나 응답하지 않으면 live mode는 에러를 설명하는 placeholder trace를 보여준다.
 
@@ -54,13 +72,19 @@ VITE_LAB_API_BASE_URL=http://127.0.0.1:18080 npm run dev
 - live mode에서는 실제 서버 응답 trace 또는 fallback placeholder trace를 같은 패널 구조로 렌더링
 - UI 셸, 주요 상태 메시지, 랩 카드, preset 라벨, trace 메타데이터는 한국어와 영어를 모두 지원
 
-현재 `example-app` 기준 live mode에서 바로 실행 가능한 시나리오는 다음과 같다.
+현재 live mode에서 바로 실행 가능한 시나리오는 다음과 같다.
 
 - `example-flow / create`
 - `example-flow / validation`
 - `example-flow / not-found`
 - `example-flow / service-error`
 - `example-flow / rollback`
+- `playground / aop-success`
+- `playground / aop-rollback`
+- `playground / mvc-validation`
+- `container / bootstrap-full`
+- `container / lifecycle-proxy`
+- `comparison / di` (Spring Lite와 Spring Boot 서버를 동시에 조회)
 
 이 시나리오들은 모두 같은 `LabTrace` 스키마로 내려오며, 일부는 실제 서비스/트랜잭션/JDBC 경로를 실행하고 일부는 컨트롤러 선행 검증 분기를 정규화해서 보여준다.
 
@@ -84,8 +108,10 @@ static mode에서 현재 포함된 랩 범위는 다음과 같다.
   - `mvc`
   - `tx`
 
+`comparison / mvc`, `comparison / tx`는 현재 static trace로 제공된다. 각 runtime의 동등한 live endpoint가 준비되면 dual-runtime panel에 같은 방식으로 연결한다.
+
 ## 다음 구현 순서
 
-1. `container`와 `comparison`에 대한 live trace contract를 설계한다.
-2. 비교 대시보드를 dual-runtime 실행형 UI로 확장한다.
-3. request form 편집, diff, replay 같은 상호작용을 더 풍부하게 만든다.
+1. `comparison / mvc`, `comparison / tx`의 live trace contract를 추가한다.
+2. 두 runtime 결과의 step, metric, outcome 차이를 강조하는 diff를 제공한다.
+3. request form 편집, replay, 저장 세션 같은 상호작용을 확장한다.
