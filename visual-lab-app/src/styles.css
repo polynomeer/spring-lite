@@ -1277,6 +1277,20 @@ code {
 .dual-runtime-card.static { border-top: 2px solid #8ab298; }
 .dual-runtime-metric { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 12px; }
 .dual-runtime-metric strong { color: var(--text); text-align: right; }
+.dual-runtime-diff,
+.dual-runtime-steps { display: grid; gap: 8px; padding-top: 4px; }
+.dual-runtime-diff-head { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; }
+.dual-runtime-diff-row { display: grid; grid-template-columns: minmax(110px, 1.2fr) minmax(80px, 1fr) minmax(80px, 1fr); gap: 10px; padding: 9px 10px; border: 1px solid var(--line); background: rgba(8, 14, 9, 0.76); font-size: 12px; }
+.dual-runtime-diff-row span { color: var(--muted); }
+.dual-runtime-diff-row strong { color: var(--text); text-align: right; }
+.dual-runtime-diff-row.match { border-left: 2px solid var(--accent); }
+.dual-runtime-diff-row.diff { border-left: 2px solid #c8ff79; }
+.dual-runtime-step-rail { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.dual-runtime-step { display: grid; gap: 5px; padding: 10px; border: 1px solid var(--line); background: rgba(8, 14, 9, 0.76); }
+.dual-runtime-step.shared { border-top: 2px solid var(--accent); }
+.dual-runtime-step.runtime-only { border-top: 2px solid #c8ff79; }
+.dual-runtime-step > span { color: var(--accent); font-size: 11px; letter-spacing: 0.06em; }
+.dual-runtime-step p { margin: 0; color: var(--muted); font-size: 12px; }
 
 .trace-panel::before {
   content: "";
