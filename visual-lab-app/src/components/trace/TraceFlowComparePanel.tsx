@@ -73,6 +73,10 @@ function compareStepState(liveTrace: LabTrace, staticTrace: LabTrace, index: num
   };
 }
 
+function formatSignedDelta(value: number) {
+  return value > 0 ? `+${value}` : String(value);
+}
+
 export function TraceFlowComparePanel({
   locale,
   title,
@@ -283,9 +287,11 @@ export function TraceFlowComparePanel({
             .filter((lane) => !isLaneRelatedToStep(lane, column.step))
             .map((lane) => {
               const counterpartLane = counterpartTrace.lanes.find((item) => item.kind === lane.kind);
+              const eventCountDelta = lane.events.length - (counterpartLane?.events.length ?? 0);
               return {
                 lane,
-                eventCountChanged: (counterpartLane?.events.length ?? 0) !== lane.events.length
+                eventCountChanged: eventCountDelta !== 0,
+                eventCountDelta
               };
             })
             .sort((left, right) => {
@@ -364,7 +370,8 @@ export function TraceFlowComparePanel({
                 {relatedLanes.map((lane) => {
                   const isRelated = isLaneRelatedToStep(lane, column.step);
                   const counterpartLane = counterpartTrace.lanes.find((item) => item.kind === lane.kind);
-                  const eventCountChanged = (counterpartLane?.events.length ?? 0) !== lane.events.length;
+                  const eventCountDelta = lane.events.length - (counterpartLane?.events.length ?? 0);
+                  const eventCountChanged = eventCountDelta !== 0;
                   return (
                     <div className={isRelated ? `lane-card lane-${lane.kind} active ${columnTone}` : `lane-card lane-${lane.kind} subdued`} key={`${column.label}-${lane.id}`}>
                       <div className="lane-head">
@@ -373,7 +380,11 @@ export function TraceFlowComparePanel({
                           <span className="lane-kind">{lane.kind}</span>
                           {isRelated ? <span className={columnTone === "live" ? "status-pill success" : "status-pill neutral"}>{selectedStepLabel}</span> : null}
                           <span className="status-pill neutral" aria-label={`${eventCountLabel}: ${lane.events.length}`}>{eventCountLabel} {lane.events.length}</span>
-                          {eventCountChanged ? <span className="status-pill warning">{eventCountDiffLabel}</span> : null}
+                          {eventCountChanged ? (
+                            <span className="status-pill warning" aria-label={`${eventCountDiffLabel}: ${formatSignedDelta(eventCountDelta)}`}>
+                              {eventCountDiffLabel} {formatSignedDelta(eventCountDelta)}
+                            </span>
+                          ) : null}
                         </div>
                       </div>
                       <p>{lane.detail}</p>
@@ -402,14 +413,19 @@ export function TraceFlowComparePanel({
                       </div>
                     </summary>
                     <div className="trace-list">
-                      {otherLanes.map(({ lane, eventCountChanged }) => {
+                      {otherLanes.map(({ lane, eventCountChanged, eventCountDelta }) => {
                         return (
                           <div className="lane-card subdued" key={`${column.label}-${lane.id}`}>
                             <div className="lane-head">
                               <strong>{lane.label}</strong>
                               <div className="flow-compare-lane-meta">
                                 <span className="lane-kind">{lane.kind}</span>
-                                {eventCountChanged ? <span className="status-pill warning">{eventCountDiffLabel}</span> : null}
+                                <span className="status-pill neutral" aria-label={`${eventCountLabel}: ${lane.events.length}`}>{eventCountLabel} {lane.events.length}</span>
+                                {eventCountChanged ? (
+                                  <span className="status-pill warning" aria-label={`${eventCountDiffLabel}: ${formatSignedDelta(eventCountDelta)}`}>
+                                    {eventCountDiffLabel} {formatSignedDelta(eventCountDelta)}
+                                  </span>
+                                ) : null}
                               </div>
                             </div>
                             <p>{lane.detail}</p>
