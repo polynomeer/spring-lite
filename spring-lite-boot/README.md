@@ -41,7 +41,7 @@
 
 ## Metrics endpoint
 
-`@Timed`가 붙은 빈의 호출은 `MetricsRegistry`에 기록된다. `GET /actuator/metrics`는 `counters`와 `timers`를 반환하며, timer 값은 호출 횟수(`count`)와 누적 나노초(`totalNanos`)를 포함한다. 이 endpoint는 교육용 in-memory 관측성 계약이며 영속 저장소나 관리 endpoint 보안은 제공하지 않는다.
+`@Timed`가 붙은 빈의 호출과 모든 Dispatcher 요청은 `MetricsRegistry`에 기록된다. HTTP 요청 metric 이름은 `http.server.requests.<METHOD>.<STATUS>`와 `http.server.duration.<METHOD>.<STATUS>` 형식이다. `GET /actuator/metrics`는 `counters`와 `timers`를 반환하며, timer 값은 호출 횟수(`count`)와 누적 나노초(`totalNanos`)를 포함한다. 이 endpoint는 교육용 in-memory 관측성 계약이며 영속 저장소나 관리 endpoint 보안은 제공하지 않는다.
 
 ## Static files and API catalogue
 

@@ -8,6 +8,7 @@ import java.util.Map;
 import lite.spring.context.ApplicationContext;
 import lite.spring.core.validation.SimpleValidator;
 import lite.spring.core.validation.Validator;
+import lite.spring.core.metrics.MetricsRegistry;
 import lite.spring.web.bind.HandlerMethodArgumentResolver;
 import lite.spring.web.bind.HttpExchangeArgumentResolver;
 import lite.spring.web.bind.PathVariableArgumentResolver;
@@ -32,15 +33,17 @@ public class DispatcherServlet implements HttpHandler {
     private final ReturnValueHandler returnValueHandler;
     private final ExceptionResolver exceptionResolver;
     private final StaticResourceHandler staticResourceHandler;
+    private final MetricsRegistry metrics;
 
     public DispatcherServlet(ApplicationContext applicationContext, JsonMapper jsonMapper) {
-        this(applicationContext, jsonMapper, new StaticResourceHandler());
+        this(applicationContext, jsonMapper, new StaticResourceHandler(), new MetricsRegistry());
     }
 
     public DispatcherServlet(
         ApplicationContext applicationContext,
         JsonMapper jsonMapper,
-        StaticResourceHandler staticResourceHandler
+        StaticResourceHandler staticResourceHandler,
+        MetricsRegistry metrics
     ) {
         TypeConverter typeConverter = new TypeConverter();
         Validator validator = new SimpleValidator();
@@ -57,11 +60,13 @@ public class DispatcherServlet implements HttpHandler {
         this.returnValueHandler = new JsonReturnValueHandler(jsonMapper);
         this.exceptionResolver = new DefaultExceptionResolver(applicationContext);
         this.staticResourceHandler = staticResourceHandler;
+        this.metrics = metrics;
     }
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         HandlerMethodMatch handlerMethodMatch = null;
+        long started = System.nanoTime();
         try {
             handlerMethodMatch = handlerMapping.getHandler(exchange);
             if (handlerMethodMatch == null) {
@@ -77,6 +82,9 @@ public class DispatcherServlet implements HttpHandler {
             ExceptionHandlingResult resolved = exceptionResolver.resolve(exception, handlerMethodMatch);
             returnValueHandler.handleReturnValue(resolved.body(), exchange, resolved.statusCode());
         } finally {
+            int status = exchange.getResponseCode();
+            metrics.increment("http.server.requests." + exchange.getRequestMethod() + "." + status);
+            metrics.recordNanos("http.server.duration." + exchange.getRequestMethod() + "." + status, System.nanoTime() - started);
             exchange.close();
         }
     }

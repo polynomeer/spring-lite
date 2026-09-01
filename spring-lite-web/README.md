@@ -11,6 +11,7 @@
 - 입력 검증과 예외 응답 변환
 - 로컬 `@ExceptionHandler`, 전역 `@ControllerAdvice` 지원
 - controller 매핑 이후 `classpath:/static` 정적 리소스 fallback
+- 요청 method/status별 counter와 누적 duration metrics 기록
 
 ## 핵심 패키지
 

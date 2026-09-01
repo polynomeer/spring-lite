@@ -22,6 +22,7 @@ import lite.spring.core.validation.Min;
 import lite.spring.core.validation.NotNull;
 import lite.spring.core.validation.Size;
 import lite.spring.core.validation.Valid;
+import lite.spring.core.metrics.MetricsRegistry;
 import lite.spring.web.annotation.ControllerAdvice;
 import lite.spring.web.annotation.GetMapping;
 import lite.spring.web.annotation.ExceptionHandler;
@@ -72,6 +73,20 @@ class DispatcherServletTest {
 
             assertThat(exchange.statusCode()).isEqualTo(404);
             assertThat(exchange.responseBodyAsString()).contains("Not Found");
+        }
+    }
+
+    @Test
+    void recordsRequestStatusAndDurationMetricsForEveryResponsePath() throws Exception {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
+            MetricsRegistry metrics = new MetricsRegistry();
+            DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper(), new StaticResourceHandler(), metrics);
+            dispatcherServlet.handle(new StubHttpExchange("GET", URI.create("/greetings/7?name=codex"), ""));
+            dispatcherServlet.handle(new StubHttpExchange("GET", URI.create("/missing"), ""));
+
+            assertThat(metrics.counters()).containsEntry("http.server.requests.GET.200", 1L);
+            assertThat(metrics.counters()).containsEntry("http.server.requests.GET.404", 1L);
+            assertThat(metrics.timers()).containsKeys("http.server.duration.GET.200", "http.server.duration.GET.404");
         }
     }
 
