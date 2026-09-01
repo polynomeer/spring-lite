@@ -11,7 +11,7 @@
 - `BeanPostProcessor`, `@PostConstruct`, `@PreDestroy` 지원
 - `BeanNameAware`, `ApplicationContextAware` callback 지원
 - `FactoryBean` product 조회와 `&beanName` factory dereference 지원
-- `ContextRefreshedEvent`, `ContextClosedEvent` 발행과 `ApplicationListener` / `@EventListener` 구독
+- `ContextRefreshedEvent`, `ContextClosedEvent` 발행과 `ApplicationListener` / `@EventListener` 구독, `@Order` 실행 순서
 
 ## 핵심 패키지
 

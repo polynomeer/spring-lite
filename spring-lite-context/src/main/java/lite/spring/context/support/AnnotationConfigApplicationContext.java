@@ -11,6 +11,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -47,6 +48,7 @@ import lite.spring.core.annotation.PreDestroy;
 import lite.spring.core.annotation.Qualifier;
 import lite.spring.core.annotation.Scope;
 import lite.spring.core.annotation.Value;
+import lite.spring.core.util.OrderUtils;
 import lite.spring.core.convert.ConversionService;
 import lite.spring.core.convert.DefaultConversionService;
 import lite.spring.core.exception.BeansException;
@@ -258,8 +260,14 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
 
     @Override
     public void publishEvent(Object event) {
-        getBeansOfType(ApplicationListener.class).values().forEach(listener -> notifyListener(listener, event));
-        singletons.values().forEach(bean -> notifyAnnotatedListeners(bean, event));
+        List<EventCallback> callbacks = new ArrayList<>();
+        getBeansOfType(ApplicationListener.class).values().forEach(listener -> {
+            if (supportsEvent(listener.getClass(), event)) {
+                callbacks.add(new EventCallback(OrderUtils.getOrder(listener), () -> notifyListener(listener, event)));
+            }
+        });
+        singletons.values().forEach(bean -> collectAnnotatedListeners(bean, event, callbacks));
+        callbacks.stream().sorted(Comparator.comparingInt(EventCallback::order)).forEach(EventCallback::invoke);
     }
 
     private boolean isProxy(Object instance) {
@@ -666,7 +674,7 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
         return true;
     }
 
-    private void notifyAnnotatedListeners(Object bean, Object event) {
+    private void collectAnnotatedListeners(Object bean, Object event, List<EventCallback> callbacks) {
         for (Method method : bean.getClass().getDeclaredMethods()) {
             if (!method.isAnnotationPresent(EventListener.class)) {
                 continue;
@@ -677,13 +685,26 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
             if (!method.getParameterTypes()[0].isAssignableFrom(event.getClass())) {
                 continue;
             }
-            try {
-                method.setAccessible(true);
-                method.invoke(bean, event);
-            } catch (IllegalAccessException | InvocationTargetException exception) {
-                Throwable cause = exception instanceof InvocationTargetException invocation ? invocation.getTargetException() : exception;
-                throw new IllegalStateException("Failed to invoke @EventListener method: " + method, cause);
-            }
+            callbacks.add(new EventCallback(
+                OrderUtils.getOrder(method, OrderUtils.getOrder(bean)),
+                () -> invokeAnnotatedListener(bean, method, event)
+            ));
+        }
+    }
+
+    private void invokeAnnotatedListener(Object bean, Method method, Object event) {
+        try {
+            method.setAccessible(true);
+            method.invoke(bean, event);
+        } catch (IllegalAccessException | InvocationTargetException exception) {
+            Throwable cause = exception instanceof InvocationTargetException invocation ? invocation.getTargetException() : exception;
+            throw new IllegalStateException("Failed to invoke @EventListener method: " + method, cause);
+        }
+    }
+
+    private record EventCallback(int order, Runnable invocation) {
+        private void invoke() {
+            invocation.run();
         }
     }
 

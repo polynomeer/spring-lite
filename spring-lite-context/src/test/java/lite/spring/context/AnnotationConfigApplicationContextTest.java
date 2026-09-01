@@ -20,6 +20,7 @@ import lite.spring.core.annotation.Component;
 import lite.spring.core.annotation.ConditionalOnBean;
 import lite.spring.core.annotation.ConditionalOnMissingBean;
 import lite.spring.core.annotation.Configuration;
+import lite.spring.core.annotation.Order;
 import lite.spring.core.annotation.PostConstruct;
 import lite.spring.core.annotation.PreDestroy;
 import lite.spring.core.annotation.Qualifier;
@@ -271,6 +272,16 @@ class AnnotationConfigApplicationContextTest {
     }
 
     @Test
+    void ordersInterfaceAndAnnotatedListenersUsingOrderMetadata() {
+        OrderedEventCollector.events.clear();
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(OrderedEventConfig.class)) {
+            context.publishEvent(new SampleEvent("ordered"));
+
+            assertThat(OrderedEventCollector.events).containsExactly("first", "second", "last");
+        }
+    }
+
+    @Test
     void appliesActiveProfileOverridesAndEnumValueConversion() {
         String previousProfiles = System.getProperty("spring.profiles.active");
         System.setProperty("spring.profiles.active", "local");
@@ -507,6 +518,13 @@ class AnnotationConfigApplicationContextTest {
         AnnotatedEventCollector annotatedEventCollector() {
             return new AnnotatedEventCollector();
         }
+    }
+
+    @Configuration
+    static class OrderedEventConfig {
+        @Bean FirstListener firstListener() { return new FirstListener(); }
+        @Bean OrderedAnnotatedListener orderedAnnotatedListener() { return new OrderedAnnotatedListener(); }
+        @Bean LastListener lastListener() { return new LastListener(); }
     }
 
     @Configuration
@@ -835,6 +853,26 @@ class AnnotationConfigApplicationContextTest {
     }
 
     record SampleEvent(String name) {
+    }
+
+    @Order(-10)
+    static class FirstListener implements ApplicationListener<SampleEvent> {
+        @Override public void onApplicationEvent(SampleEvent event) { OrderedEventCollector.events.add("first"); }
+    }
+
+    static class OrderedAnnotatedListener {
+        @EventListener
+        @Order(0)
+        void onSample(SampleEvent event) { OrderedEventCollector.events.add("second"); }
+    }
+
+    @Order(10)
+    static class LastListener implements ApplicationListener<SampleEvent> {
+        @Override public void onApplicationEvent(SampleEvent event) { OrderedEventCollector.events.add("last"); }
+    }
+
+    static class OrderedEventCollector {
+        private static final CopyOnWriteArrayList<String> events = new CopyOnWriteArrayList<>();
     }
 
     static class ProfileValueClient {
