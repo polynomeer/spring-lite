@@ -1,6 +1,7 @@
 package lite.spring.boot.support.autoconfigure;
 
 import lite.spring.boot.actuate.ActuatorController;
+import lite.spring.boot.actuate.ApiDocumentationController;
 import lite.spring.boot.support.ApplicationProperties;
 import lite.spring.context.ApplicationContext;
 import lite.spring.core.annotation.Bean;
@@ -14,5 +15,11 @@ public class ActuatorAutoConfiguration {
     @ConditionalOnMissingBean(ActuatorController.class)
     ActuatorController actuatorController(ApplicationContext applicationContext, ApplicationProperties properties, MetricsRegistry metricsRegistry) {
         return new ActuatorController(applicationContext, properties, metricsRegistry);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(ApiDocumentationController.class)
+    ApiDocumentationController apiDocumentationController(ApplicationContext applicationContext) {
+        return new ApiDocumentationController(applicationContext);
     }
 }

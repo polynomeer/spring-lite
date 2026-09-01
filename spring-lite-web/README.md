@@ -10,6 +10,7 @@
 - JSON 및 plain text 메시지 변환과 역직렬화
 - 입력 검증과 예외 응답 변환
 - 로컬 `@ExceptionHandler`, 전역 `@ControllerAdvice` 지원
+- controller 매핑 이후 `classpath:/static` 정적 리소스 fallback
 
 ## 핵심 패키지
 
@@ -40,6 +41,8 @@
   - negotiated `Content-Type`에 맞는 converter로 반환값을 기록한다.
 - `DefaultExceptionResolver`
   - 예외를 상태 코드와 응답 바디로 변환한다.
+- `StaticResourceHandler`
+  - GET/HEAD 정적 파일을 제공하고 경로 탐색을 차단한다.
 
 ## 호출 흐름
 
@@ -71,5 +74,5 @@
 ## 현재 한계
 
 - converter 확장 지점은 JSON과 plain text만 제공
-- 뷰 렌더링, 정적 리소스 처리 미지원
+- 뷰 렌더링, 압축/범위 요청/조건부 정적 리소스 처리 미지원
 - HTTP 메서드와 미디어 타입 확장 범위 제한

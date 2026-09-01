@@ -76,6 +76,33 @@ class DispatcherServletTest {
     }
 
     @Test
+    void servesClasspathStaticResourcesAfterNoControllerMappingMatches() throws Exception {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
+            DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
+            StubHttpExchange exchange = new StubHttpExchange("GET", URI.create("/hello.txt"), "");
+
+            dispatcherServlet.handle(exchange);
+
+            assertThat(exchange.statusCode()).isEqualTo(200);
+            assertThat(exchange.responseBodyAsString()).isEqualTo("hello from spring-lite\n");
+            assertThat(exchange.getResponseHeaders().getFirst("Content-Type")).isEqualTo("text/plain; charset=utf-8");
+            assertThat(exchange.getResponseHeaders().getFirst("Cache-Control")).isEqualTo("public, max-age=3600");
+        }
+    }
+
+    @Test
+    void rejectsTraversalAttemptsBeforeLoadingStaticResources() throws Exception {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
+            DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
+            StubHttpExchange exchange = new StubHttpExchange("GET", URI.create("/../hello.txt"), "");
+
+            dispatcherServlet.handle(exchange);
+
+            assertThat(exchange.statusCode()).isEqualTo(404);
+        }
+    }
+
+    @Test
     void mapsIllegalArgumentExceptionTo400() throws Exception {
         try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
             DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());

@@ -14,6 +14,7 @@ import lite.spring.aop.annotation.Timed;
 import lite.spring.aop.support.AspectBeanPostProcessor;
 import lite.spring.boot.annotation.SpringLiteBootApplication;
 import lite.spring.boot.actuate.ActuatorController;
+import lite.spring.boot.actuate.ApiDocumentationController;
 import lite.spring.context.support.AnnotationConfigApplicationContext;
 import lite.spring.core.annotation.Bean;
 import lite.spring.core.annotation.ConditionalOnClass;
@@ -61,9 +62,20 @@ class SpringLiteApplicationTest {
             assertThat(service.fail()).isEqualTo("failed");
             ActuatorController actuator = context.getBean(ActuatorController.class);
             java.util.Map<?, ?> timers = (java.util.Map<?, ?>) actuator.metrics().get("timers");
-            assertThat(timers)
-                .containsKey("timedService.call")
-                .containsKey("custom.failure");
+            assertThat(timers.containsKey("timedService.call")).isTrue();
+            assertThat(timers.containsKey("custom.failure")).isTrue();
+        }
+    }
+
+    @Test
+    void exposesRuntimeApiDocumentationForRegisteredControllers() {
+        try (AnnotationConfigApplicationContext context = runWithRandomPort(BootTestApplication.class)) {
+            ApiDocumentationController apiDocs = context.getBean(ApiDocumentationController.class);
+
+            assertThat(apiDocs.apiDocs()).containsEntry("title", "Spring Lite API");
+            assertThat((List<?>) apiDocs.apiDocs().get("endpoints"))
+                .anySatisfy(endpoint -> assertThat(endpoint.toString()).contains("/api-docs"))
+                .anySatisfy(endpoint -> assertThat(endpoint.toString()).contains("/actuator/health"));
         }
     }
 

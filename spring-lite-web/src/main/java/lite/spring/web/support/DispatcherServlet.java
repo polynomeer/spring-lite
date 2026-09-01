@@ -31,8 +31,17 @@ public class DispatcherServlet implements HttpHandler {
     private final HandlerAdapter handlerAdapter;
     private final ReturnValueHandler returnValueHandler;
     private final ExceptionResolver exceptionResolver;
+    private final StaticResourceHandler staticResourceHandler;
 
     public DispatcherServlet(ApplicationContext applicationContext, JsonMapper jsonMapper) {
+        this(applicationContext, jsonMapper, new StaticResourceHandler());
+    }
+
+    public DispatcherServlet(
+        ApplicationContext applicationContext,
+        JsonMapper jsonMapper,
+        StaticResourceHandler staticResourceHandler
+    ) {
         TypeConverter typeConverter = new TypeConverter();
         Validator validator = new SimpleValidator();
         this.handlerMapping = new RequestMappingHandlerMapping(applicationContext);
@@ -47,6 +56,7 @@ public class DispatcherServlet implements HttpHandler {
         );
         this.returnValueHandler = new JsonReturnValueHandler(jsonMapper);
         this.exceptionResolver = new DefaultExceptionResolver(applicationContext);
+        this.staticResourceHandler = staticResourceHandler;
     }
 
     @Override
@@ -55,6 +65,9 @@ public class DispatcherServlet implements HttpHandler {
         try {
             handlerMethodMatch = handlerMapping.getHandler(exchange);
             if (handlerMethodMatch == null) {
+                if (staticResourceHandler.handle(exchange)) {
+                    return;
+                }
                 returnValueHandler.handleReturnValue(Map.of("error", "Not Found"), exchange, 404);
                 return;
             }

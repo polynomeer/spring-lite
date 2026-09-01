@@ -9,6 +9,7 @@
 - profile-aware 프로퍼티 로딩과 런타임 오버라이드 연동
 - 내장 JDK HTTP 서버 기동
 - `/actuator/health`, `/actuator/info`, `/actuator/metrics` actuator-lite endpoint 제공
+- `/api-docs` runtime API catalogue 제공
 
 ## 핵심 패키지
 
@@ -41,6 +42,10 @@
 ## Metrics endpoint
 
 `@Timed`가 붙은 빈의 호출은 `MetricsRegistry`에 기록된다. `GET /actuator/metrics`는 `counters`와 `timers`를 반환하며, timer 값은 호출 횟수(`count`)와 누적 나노초(`totalNanos`)를 포함한다. 이 endpoint는 교육용 in-memory 관측성 계약이며 영속 저장소나 관리 endpoint 보안은 제공하지 않는다.
+
+## Static files and API catalogue
+
+`DispatcherServlet`은 controller 매핑이 없을 때 `classpath:/static`에서 `GET`과 `HEAD` 파일 요청을 처리한다. 상위 경로 탐색은 거부하고, 응답에는 적절한 Content-Type과 한 시간 cache header를 설정한다. `GET /api-docs`는 현재 컨텍스트에 등록된 `@RestController`의 GET/POST endpoint와 handler 이름을 JSON으로 반환한다. 이는 OpenAPI를 대체하는 사양이 아니라 학습과 런타임 점검을 위한 최소 카탈로그다.
 
 ## 호출 흐름
 
