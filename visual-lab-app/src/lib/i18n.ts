@@ -59,6 +59,12 @@ export interface UiText {
   tracePipelinePendingDetail: (selectedLabId: string, selectedScenario: string, selectedMode: string, executedLabId: string, executedScenario: string, executedMode: string) => string;
   tracePipelineReadyDetail: (labId: string, scenario: string, mode: string) => string;
   requestPayload: string;
+  requestEditor: string;
+  requestEditorHint: string;
+  product: string;
+  quantity: string;
+  invalidProduct: string;
+  invalidQuantity: string;
   loadingTrace: string;
   resolvingTrace: string;
   traceLoadingFailed: string;
@@ -234,6 +240,12 @@ const uiTextByLocale: Record<Locale, UiText> = {
       `Selected ${selectedLabId}:${selectedScenario} (${selectedMode}), but the result pane still shows the last run ${executedLabId}:${executedScenario} (${executedMode}). Run the selected trace to refresh it.`,
     tracePipelineReadyDetail: (labId, scenario, mode) => `Watching ${labId}:${scenario} from the ${mode} provider.`,
     requestPayload: "Request payload",
+    requestEditor: "Live request input",
+    requestEditorHint: "These values are sent to the live example-flow endpoint.",
+    product: "Product",
+    quantity: "Quantity",
+    invalidProduct: "Enter a product name.",
+    invalidQuantity: "Quantity must be a positive whole number.",
     loadingTrace: "Loading trace",
     resolvingTrace: "Resolving provider output for the last executed request.",
     traceLoadingFailed: "Trace loading failed",
@@ -407,6 +419,12 @@ const uiTextByLocale: Record<Locale, UiText> = {
       `선택한 값은 ${selectedLabId}:${selectedScenario} (${selectedMode})이지만, 결과 영역은 아직 마지막 실행 ${executedLabId}:${executedScenario} (${executedMode})를 보여주고 있습니다. 선택한 trace를 실행해야 결과가 갱신됩니다.`,
     tracePipelineReadyDetail: (labId, scenario, mode) => `${labId}:${scenario} 요청을 ${mode} provider 기준으로 관찰 중입니다.`,
     requestPayload: "요청 payload",
+    requestEditor: "라이브 요청 입력",
+    requestEditorHint: "이 값은 live example-flow 엔드포인트로 전달됩니다.",
+    product: "상품명",
+    quantity: "수량",
+    invalidProduct: "상품명을 입력하세요.",
+    invalidQuantity: "수량은 1 이상의 정수여야 합니다.",
     loadingTrace: "Trace 로딩 중",
     resolvingTrace: "마지막으로 실행한 요청에 대한 provider 결과를 불러오는 중입니다.",
     traceLoadingFailed: "Trace 로딩 실패",

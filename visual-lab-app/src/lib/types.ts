@@ -58,6 +58,8 @@ export interface LabTraceRequest {
   labId: LabId;
   scenario: string;
   mode: RuntimeMode;
+  product?: string;
+  quantity?: string;
 }
 
 export interface LabTraceProvider {

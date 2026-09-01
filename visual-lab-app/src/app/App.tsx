@@ -61,6 +61,8 @@ export function App() {
   const [mode, setMode] = useState<RuntimeMode>("static");
   const [selectedLab, setSelectedLab] = useState<LabId | "all">("example-flow");
   const [selectedPresetKey, setSelectedPresetKey] = useState<string>(toPresetKey(firstPreset.labId, firstPreset.scenario));
+  const [product, setProduct] = useState("lab-trace-book");
+  const [quantity, setQuantity] = useState("2");
   const [executedRequest, setExecutedRequest] = useState<LabTraceRequest>(() => buildRequest(toPresetKey(firstPreset.labId, firstPreset.scenario), "static"));
   const [reloadKey, setReloadKey] = useState(0);
   const [lastRunLabel, setLastRunLabel] = useState(getUiText("ko").notRunYet);
@@ -94,7 +96,16 @@ export function App() {
     return toPresetKey(fallback.labId, fallback.scenario);
   }, [filteredPresets, firstPreset, selectedPresetKey]);
 
-  const draftRequest = useMemo(() => buildRequest(activePresetKey, mode), [activePresetKey, mode]);
+  const isEditableLiveRequest = mode === "live"
+    && activePresetKey.startsWith("example-flow:")
+    && (activePresetKey.endsWith(":create") || activePresetKey.endsWith(":rollback"));
+  const productValid = product.trim().length > 0;
+  const quantityValid = /^[1-9][0-9]*$/.test(quantity);
+  const requestInputValid = !isEditableLiveRequest || (productValid && quantityValid);
+  const draftRequest = useMemo(() => {
+    const request = buildRequest(activePresetKey, mode);
+    return isEditableLiveRequest ? { ...request, product: product.trim(), quantity } : request;
+  }, [activePresetKey, isEditableLiveRequest, mode, product, quantity]);
   const activeLabCard = localizedCards.find((card) => card.id === draftRequest.labId)
     ?? localizedCards.find((card) => card.id === executedRequest.labId)
     ?? localizedCards[0];
@@ -470,6 +481,25 @@ export function App() {
               </div>
             </div>
 
+            {isEditableLiveRequest ? (
+              <div className="control-block request-editor">
+                <span className="control-step">5. {text.requestEditor}</span>
+                <p className="mode-note">{text.requestEditorHint}</p>
+                <div className="selection-brief">
+                  <label className="field">
+                    <span>{text.product}</span>
+                    <input value={product} onChange={(event) => setProduct(event.target.value)} aria-invalid={!productValid} />
+                    {!productValid ? <small className="field-error">{text.invalidProduct}</small> : null}
+                  </label>
+                  <label className="field">
+                    <span>{text.quantity}</span>
+                    <input value={quantity} inputMode="numeric" onChange={(event) => setQuantity(event.target.value)} aria-invalid={!quantityValid} />
+                    {!quantityValid ? <small className="field-error">{text.invalidQuantity}</small> : null}
+                  </label>
+                </div>
+              </div>
+            ) : null}
+
             <div className="selection-preview">
               <div className="request-card">
                 <strong>{text.selectedRequest}</strong>
@@ -482,7 +512,7 @@ export function App() {
             </div>
 
             <div className="run-actions query-actions">
-              <button className="run-button primary-run-button" type="button" onClick={runSelectedTrace} disabled={loading && !isDraftDirty}>
+              <button className="run-button primary-run-button" type="button" onClick={runSelectedTrace} disabled={(loading && !isDraftDirty) || !requestInputValid}>
                 {consoleText.runPrimary}
               </button>
               <button className="ghost-button" type="button" onClick={rerunLastTrace} disabled={loading}>
