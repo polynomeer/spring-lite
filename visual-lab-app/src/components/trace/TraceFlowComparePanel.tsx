@@ -42,6 +42,7 @@ interface TraceFlowComparePanelProps {
   otherLanesLabel: string;
   changedLaneCountLabel: string;
   relatedEventCountLabel: string;
+  eventCountLabel: string;
   reasonCountSuffix: string;
   surfaceCountSuffix: string;
   reasonShapeLabel: string;
@@ -112,6 +113,7 @@ export function TraceFlowComparePanel({
   otherLanesLabel,
   changedLaneCountLabel,
   relatedEventCountLabel,
+  eventCountLabel,
   reasonCountSuffix,
   surfaceCountSuffix,
   reasonShapeLabel,
@@ -370,6 +372,7 @@ export function TraceFlowComparePanel({
                         <div className="flow-compare-lane-meta">
                           <span className="lane-kind">{lane.kind}</span>
                           {isRelated ? <span className={columnTone === "live" ? "status-pill success" : "status-pill neutral"}>{selectedStepLabel}</span> : null}
+                          <span className="status-pill neutral" aria-label={`${eventCountLabel}: ${lane.events.length}`}>{eventCountLabel} {lane.events.length}</span>
                           {eventCountChanged ? <span className="status-pill warning">{eventCountDiffLabel}</span> : null}
                         </div>
                       </div>
