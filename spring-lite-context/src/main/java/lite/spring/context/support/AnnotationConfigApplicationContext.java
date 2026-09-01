@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,6 +19,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lite.spring.context.ApplicationContext;
+import lite.spring.context.BeanRuntimeDescriptor;
 import lite.spring.context.bean.BeanDefinition;
 import lite.spring.context.bean.BeanDefinition.Kind;
 import lite.spring.context.event.ApplicationListener;
@@ -197,8 +199,30 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
     }
 
     @Override
+    public List<BeanRuntimeDescriptor> getBeanRuntimeDescriptors() {
+        return beanDefinitions.values().stream()
+            .filter(definition -> isBeanEligible(definition.name()))
+            .map(definition -> {
+                Object instance = singletons.get(definition.name());
+                return new BeanRuntimeDescriptor(
+                    definition.name(),
+                    definition.beanType().getName(),
+                    definition.kind().name(),
+                    definition.singleton(),
+                    instance != null,
+                    instance != null && isProxy(instance)
+                );
+            })
+            .toList();
+    }
+
+    @Override
     public void publishEvent(Object event) {
         getBeansOfType(ApplicationListener.class).values().forEach(listener -> notifyListener(listener, event));
+    }
+
+    private boolean isProxy(Object instance) {
+        return Proxy.isProxyClass(instance.getClass()) || instance.getClass().getName().contains("$ByteBuddy$");
     }
 
     @Override

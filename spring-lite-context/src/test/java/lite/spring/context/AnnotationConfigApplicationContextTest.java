@@ -190,6 +190,25 @@ class AnnotationConfigApplicationContextTest {
     }
 
     @Test
+    void exposesReadOnlyBeanRuntimeDescriptorsWithoutCreatingPrototypes() {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(PrototypeConfig.class)) {
+            BeanRuntimeDescriptor prototype = context.getBeanRuntimeDescriptors().stream()
+                .filter(descriptor -> descriptor.name().equals("prototypeBean"))
+                .findFirst()
+                .orElseThrow();
+            BeanRuntimeDescriptor singleton = context.getBeanRuntimeDescriptors().stream()
+                .filter(descriptor -> descriptor.name().equals("singletonBean"))
+                .findFirst()
+                .orElseThrow();
+
+            assertThat(prototype.singleton()).isFalse();
+            assertThat(prototype.instantiated()).isFalse();
+            assertThat(singleton.singleton()).isTrue();
+            assertThat(singleton.instantiated()).isTrue();
+        }
+    }
+
+    @Test
     void publishesRefreshAndCloseEventsToListeners() {
         EventCollectorListener listener;
 

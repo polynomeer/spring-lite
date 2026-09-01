@@ -1,5 +1,6 @@
 package lite.spring.context;
 
+import java.util.List;
 import java.util.Map;
 
 public interface ApplicationContext extends AutoCloseable {
@@ -10,6 +11,8 @@ public interface ApplicationContext extends AutoCloseable {
     <T> Map<String, T> getBeansOfType(Class<T> type);
 
     Map<String, Object> getBeansWithAnnotation(Class<? extends java.lang.annotation.Annotation> annotationType);
+
+    List<BeanRuntimeDescriptor> getBeanRuntimeDescriptors();
 
     boolean containsBeanOfType(Class<?> type);
 
