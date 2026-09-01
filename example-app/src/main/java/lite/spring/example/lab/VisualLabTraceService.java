@@ -21,11 +21,11 @@ public class VisualLabTraceService {
     public LabTraceResponse run(LabTraceRequest request) {
         return switch (request.labId()) {
             case "example-flow" -> switch (request.scenario()) {
-                case "create" -> runCreateScenario();
+                case "create" -> runCreateScenario(request);
                 case "validation" -> runValidationScenario();
                 case "not-found" -> runNotFoundScenario();
                 case "service-error" -> runServiceErrorScenario();
-                case "rollback" -> runRollbackScenario();
+                case "rollback" -> runRollbackScenario(request);
                 default -> throw new IllegalArgumentException("Unsupported example-flow scenario: " + request.scenario());
             };
             case "container" -> runContainerScenario(request.scenario());
@@ -36,8 +36,8 @@ public class VisualLabTraceService {
 
     private LabTraceResponse runPlaygroundScenario(String scenario) {
         LabTraceResponse delegate = switch (scenario) {
-            case "aop-success" -> runCreateScenario();
-            case "aop-rollback" -> runRollbackScenario();
+            case "aop-success" -> runCreateScenario(new LabTraceRequest("playground", scenario, "live", null, null));
+            case "aop-rollback" -> runRollbackScenario(new LabTraceRequest("playground", scenario, "live", null, null));
             case "mvc-validation" -> runValidationScenario();
             default -> throw new IllegalArgumentException("Unsupported playground scenario: " + scenario);
         };
@@ -126,10 +126,12 @@ public class VisualLabTraceService {
         return separator < 0 ? typeName : typeName.substring(separator + 1);
     }
 
-    private LabTraceResponse runCreateScenario() {
+    private LabTraceResponse runCreateScenario(LabTraceRequest request) {
         int beforeCount = orderService.listOrders().size();
         long startedAt = System.nanoTime();
-        Order created = orderService.createOrder("lab-trace-book", 2);
+        String product = resolveProduct(request.product());
+        int quantity = resolveQuantity(request.quantity());
+        Order created = orderService.createOrder(product, quantity);
         int afterCount = orderService.listOrders().size();
         long durationMicros = (System.nanoTime() - startedAt) / 1_000;
 
@@ -146,6 +148,8 @@ public class VisualLabTraceService {
                 new LabMetric("DB Effect", "insert", "The repository inserted a new order row."),
                 new LabMetric("Created Order", "#" + created.id(), "The actual order id created during this run."),
                 new LabMetric("Created Status", created.status(), "The created order reflects the service default status value."),
+                new LabMetric("Requested Product", product, "The product supplied by the Visual Lab request editor."),
+                new LabMetric("Requested Quantity", String.valueOf(quantity), "The quantity supplied by the Visual Lab request editor."),
                 new LabMetric("Orders Before", String.valueOf(beforeCount), "Visible row count before the live create request executes."),
                 new LabMetric("Orders After", String.valueOf(afterCount), "Visible row count after commit includes the newly created order."),
                 new LabMetric("Net Change", String.valueOf(afterCount - beforeCount), "A committed create flow should increase the visible row count by one."),
@@ -235,7 +239,7 @@ public class VisualLabTraceService {
                     "Real application service invocation.",
                     "service",
                     List.of(
-                        new LabLaneEvent("service-1", "createOrder(lab-trace-book, 2)", "success"),
+                        new LabLaneEvent("service-1", "createOrder(" + product + ", " + quantity + ")", "success"),
                         new LabLaneEvent("service-2", "status=" + created.status(), "info"),
                         new LabLaneEvent("service-3", "created order id=" + created.id(), "success")
                     )
@@ -445,12 +449,14 @@ public class VisualLabTraceService {
         }
     }
 
-    private LabTraceResponse runRollbackScenario() {
+    private LabTraceResponse runRollbackScenario(LabTraceRequest request) {
         int beforeCount = orderService.listOrders().size();
         long startedAt = System.nanoTime();
+        String product = resolveProduct(request.product());
+        int quantity = resolveQuantity(request.quantity());
 
         try {
-            orderService.createOrderAndFail("lab-rollback-book", 1);
+            orderService.createOrderAndFail(product, quantity);
             throw new IllegalStateException("Expected rollback scenario to fail");
         } catch (IllegalStateException exception) {
             int afterCount = orderService.listOrders().size();
@@ -517,6 +523,19 @@ public class VisualLabTraceService {
                     "spring-lite-tx/src/main/java/lite/spring/tx/support/TransactionalBeanPostProcessor.java"
                 )
             );
+        }
+    }
+
+    private String resolveProduct(String product) {
+        return product == null || product.isBlank() ? "lab-trace-book" : product.trim();
+    }
+
+    private int resolveQuantity(String quantity) {
+        try {
+            int parsed = Integer.parseInt(quantity);
+            return parsed > 0 ? parsed : 2;
+        } catch (NumberFormatException | NullPointerException exception) {
+            return 2;
         }
     }
 }

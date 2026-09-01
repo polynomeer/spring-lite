@@ -54,6 +54,21 @@ class ExampleApplicationWebTest {
     }
 
     @Test
+    void usesOptionalRequestEditorValuesForLiveCreateTrace(MockMvc mockMvc) {
+        MockHttpResponse response = mockMvc.perform(
+            MockHttpRequest.post("/lab/run/trace")
+                .contentType("application/json")
+                .body("{\"labId\":\"example-flow\",\"scenario\":\"create\",\"mode\":\"live\",\"product\":\"custom-lab-book\",\"quantity\":\"3\"}")
+                .build()
+        );
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).contains("\"Requested Product\",\"value\":\"custom-lab-book\"");
+        assertThat(response.body()).contains("\"Requested Quantity\",\"value\":\"3\"");
+        assertThat(response.body()).contains("createOrder(custom-lab-book, 3)");
+    }
+
+    @Test
     void returnsLiveLabTraceForValidationScenario(MockMvc mockMvc) {
         MockHttpResponse response = mockMvc.perform(
             MockHttpRequest.post("/lab/run/trace")
