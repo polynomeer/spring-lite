@@ -305,6 +305,15 @@ code {
   margin-top: 18px;
 }
 
+.saved-runs { display: grid; gap: 8px; margin-top: 14px; padding: 12px; border: 1px solid var(--line); background: rgba(7, 15, 10, 0.72); }
+.saved-runs-head,
+.saved-run { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.saved-runs-head { color: var(--muted); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
+.saved-run { padding-top: 8px; border-top: 1px solid rgba(37, 197, 97, 0.14); }
+.saved-run > div:first-child { display: grid; gap: 3px; }
+.saved-run span { color: var(--muted); font-size: 11px; }
+.danger-button { color: #ff9b9b; }
+
 .control-step {
   display: block;
   margin-bottom: 10px;

@@ -175,6 +175,11 @@ export interface UiText {
   references: string;
   relatedFiles: string;
   refs: string;
+  savedRuns: string;
+  saveCurrentRun: string;
+  restoreRun: string;
+  removeSavedRun: string;
+  restoredRunHint: string;
   watch: string;
   why: string;
   nextLabel: string;
@@ -222,6 +227,11 @@ const uiTextByLocale: Record<Locale, UiText> = {
     providerPreview: "Provider Preview",
     staticProvider: "static provider",
     liveProvider: "live provider",
+    savedRuns: "Saved runs",
+    saveCurrentRun: "Save current run",
+    restoreRun: "Restore selection",
+    removeSavedRun: "Remove",
+    restoredRunHint: "Selection restored. Run it to request a fresh trace.",
     allLabs: "All Labs",
     tracePreset: "Trace preset",
     selectedRequest: "Selected Request",
@@ -401,6 +411,11 @@ const uiTextByLocale: Record<Locale, UiText> = {
     providerPreview: "Provider 미리보기",
     staticProvider: "정적 provider",
     liveProvider: "라이브 provider",
+    savedRuns: "저장한 실행",
+    saveCurrentRun: "현재 실행 저장",
+    restoreRun: "선택값 복원",
+    removeSavedRun: "삭제",
+    restoredRunHint: "선택값을 복원했습니다. 새 trace를 요청하려면 실행하세요.",
     allLabs: "전체 랩",
     tracePreset: "Trace 프리셋",
     selectedRequest: "선택한 요청",

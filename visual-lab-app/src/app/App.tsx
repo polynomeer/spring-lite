@@ -17,6 +17,7 @@ import {
 } from "../lib/i18n";
 import { liveApiBaseUrl, liveTraceEndpointPath } from "../lib/runtime-config";
 import { staticTraceCatalog } from "../lib/lab-trace-data";
+import { loadSavedRuns, removeSavedRun, saveRun, type SavedRun } from "../lib/saved-runs";
 import { deriveTraceStatusSummary } from "../lib/trace-presentation";
 import { labCards, questionCards, tracePresetOptions } from "../lib/static-data";
 import type { LabId, LabLane, LabStep, LabTraceRequest, RuntimeMode } from "../lib/types";
@@ -68,6 +69,8 @@ export function App() {
   const [executedRequest, setExecutedRequest] = useState<LabTraceRequest>(() => buildRequest(toPresetKey(firstPreset.labId, firstPreset.scenario), "static"));
   const [reloadKey, setReloadKey] = useState(0);
   const [lastRunLabel, setLastRunLabel] = useState(getUiText("ko").notRunYet);
+  const [savedRuns, setSavedRuns] = useState<SavedRun[]>(() => loadSavedRuns());
+  const [savedRunNotice, setSavedRunNotice] = useState<string | null>(null);
   const text = getUiText(locale);
 
   const localizedCards = useMemo(() => localizeLabCards(labCards, locale), [locale]);
@@ -312,6 +315,25 @@ export function App() {
     setLastRunLabel(formatRunTime(new Date(), locale));
   }
 
+  function saveCurrentRun() {
+    setSavedRuns(saveRun(executedRequest));
+    setSavedRunNotice(null);
+  }
+
+  function restoreSavedRun(run: SavedRun) {
+    const presetKey = toPresetKey(run.request.labId, run.request.scenario);
+    setSelectedLab(run.request.labId);
+    setSelectedPresetKey(presetKey);
+    setMode(run.request.mode);
+    setProduct(run.request.product ?? "lab-trace-book");
+    setQuantity(run.request.quantity ?? "2");
+    setSavedRunNotice(text.restoredRunHint);
+  }
+
+  function deleteSavedRun(id: string) {
+    setSavedRuns(removeSavedRun(id));
+  }
+
   function chooseQuestion(questionId: string) {
     const question = questionCards.find((candidate) => candidate.id === questionId);
     if (!question) {
@@ -522,7 +544,27 @@ export function App() {
               <button className="ghost-button" type="button" onClick={rerunLastTrace} disabled={loading}>
                 {consoleText.rerun}
               </button>
+              <button className="ghost-button" type="button" onClick={saveCurrentRun}>
+                {text.saveCurrentRun}
+              </button>
             </div>
+
+            {savedRuns.length > 0 ? (
+              <section className="saved-runs" aria-label={text.savedRuns}>
+                <div className="saved-runs-head"><strong>{text.savedRuns}</strong><span>{savedRuns.length}/8</span></div>
+                {savedRuns.map((run) => (
+                  <div className="saved-run" key={run.id}>
+                    <div><strong>{run.request.labId} / {run.request.scenario}</strong><span>{localizeModeLabel(run.request.mode, locale)} · {formatRunTime(new Date(run.savedAt), locale)}</span></div>
+                    <div className="run-actions">
+                      <button className="ghost-button" type="button" onClick={() => restoreSavedRun(run)}>{text.restoreRun}</button>
+                      <button className="ghost-button danger-button" type="button" onClick={() => deleteSavedRun(run.id)}>{text.removeSavedRun}</button>
+                    </div>
+                  </div>
+                ))}
+              </section>
+            ) : null}
+
+            {savedRunNotice ? <div className="info-box compact-info-box"><p>{savedRunNotice}</p></div> : null}
 
             {isDraftDirty ? (
               <div className="info-box warning-box compact-info-box">
