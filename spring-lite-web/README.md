@@ -8,6 +8,7 @@
 - `HandlerMapping`, `HandlerAdapter`, `ReturnValueHandler` 분리
 - `@RequestParam`, `@PathVariable`, `@RequestBody` 인자 바인딩
 - JSON 및 plain text 메시지 변환과 역직렬화
+- `Accept` wildcard와 quality factor를 고려한 produces 매핑 협상
 - 입력 검증과 예외 응답 변환
 - 로컬 `@ExceptionHandler`, 전역 `@ControllerAdvice` 지원
 - 예외 타입/handler method의 `@ResponseStatus` 기반 HTTP 상태 선언

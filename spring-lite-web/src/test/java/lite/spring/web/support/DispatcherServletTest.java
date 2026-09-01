@@ -305,6 +305,33 @@ class DispatcherServletTest {
     }
 
     @Test
+    void matchesProducedMediaTypeAgainstAcceptWildcardAndQualityFactor() throws Exception {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
+            DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
+            StubHttpExchange exchange = new StubHttpExchange("GET", URI.create("/greetings/metadata/negotiated"), "");
+            exchange.getRequestHeaders().set("Accept", "text/plain;q=0.1, application/*;q=0.8");
+
+            dispatcherServlet.handle(exchange);
+
+            assertThat(exchange.statusCode()).isEqualTo(200);
+            assertThat(exchange.getResponseHeaders().getFirst("Content-Type")).isEqualTo("application/json");
+        }
+    }
+
+    @Test
+    void rejectsProducedMediaTypeWhenAcceptQualityIsZero() throws Exception {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
+            DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
+            StubHttpExchange exchange = new StubHttpExchange("GET", URI.create("/greetings/metadata/negotiated"), "");
+            exchange.getRequestHeaders().set("Accept", "application/json;q=0");
+
+            dispatcherServlet.handle(exchange);
+
+            assertThat(exchange.statusCode()).isEqualTo(404);
+        }
+    }
+
+    @Test
     void returnsNotFoundWhenRequestConditionsDoNotMatch() throws Exception {
         try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
             DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
@@ -452,6 +479,11 @@ class DispatcherServletTest {
         @GetMapping(value = "/produces", produces = "application/vnd.demo+json")
         public Response conditionalByProduces() {
             return new Response("produced");
+        }
+
+        @GetMapping(value = "/metadata/negotiated", produces = "application/json")
+        public Response negotiated() {
+            return new Response("negotiated");
         }
 
         @PostMapping("/validated")

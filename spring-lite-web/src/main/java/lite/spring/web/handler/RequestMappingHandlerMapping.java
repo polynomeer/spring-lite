@@ -153,12 +153,12 @@ public class RequestMappingHandlerMapping implements HandlerMapping {
         if (accept == null || accept.equals("*/*")) {
             return true;
         }
-        List<String> acceptedTypes = Arrays.stream(accept.split(","))
-            .map(String::trim)
+        List<MediaRange> acceptedTypes = Arrays.stream(accept.split(","))
+            .map(MediaRange::parse)
+            .filter(range -> range.quality() > 0)
+            .sorted(java.util.Comparator.comparingDouble(MediaRange::quality).reversed())
             .toList();
-        return produces.stream().anyMatch(expected ->
-            acceptedTypes.stream().anyMatch(actual -> actual.equals("*/*") || actual.equalsIgnoreCase(expected))
-        );
+        return produces.stream().anyMatch(expected -> acceptedTypes.stream().anyMatch(actual -> actual.matches(expected)));
     }
 
     private boolean matchesHeaders(List<String> headers, HttpExchange exchange) {
@@ -292,6 +292,34 @@ public class RequestMappingHandlerMapping implements HandlerMapping {
             Set<String> merged = new LinkedHashSet<>(left);
             merged.addAll(right);
             return List.copyOf(merged);
+        }
+    }
+
+    private record MediaRange(String type, double quality) {
+        private static MediaRange parse(String value) {
+            String[] parts = value.split(";");
+            String type = parts[0].trim().toLowerCase();
+            double quality = 1.0;
+            for (int index = 1; index < parts.length; index++) {
+                String parameter = parts[index].trim();
+                if (parameter.startsWith("q=")) {
+                    try {
+                        quality = Double.parseDouble(parameter.substring(2));
+                    } catch (NumberFormatException ignored) {
+                        quality = 0;
+                    }
+                }
+            }
+            return new MediaRange(type, quality);
+        }
+
+        private boolean matches(String producedType) {
+            String expected = producedType.toLowerCase();
+            if (type.equals("*/*") || type.equals(expected)) {
+                return true;
+            }
+            int separator = type.indexOf('/');
+            return separator > 0 && type.endsWith("/*") && expected.startsWith(type.substring(0, separator + 1));
         }
     }
 }
