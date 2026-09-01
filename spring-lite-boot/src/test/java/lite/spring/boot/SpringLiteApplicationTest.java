@@ -25,6 +25,11 @@ import lite.spring.boot.web.WebServer;
 import lite.spring.boot.web.WebServerFactory;
 import lite.spring.tx.annotation.Transactional;
 import lite.spring.web.json.JsonMapper;
+import lite.spring.web.annotation.GetMapping;
+import lite.spring.web.annotation.PathVariable;
+import lite.spring.web.annotation.RequestBody;
+import lite.spring.web.annotation.RequestParam;
+import lite.spring.web.annotation.RestController;
 import lite.spring.web.support.DispatcherServlet;
 import org.junit.jupiter.api.Test;
 
@@ -70,13 +75,15 @@ class SpringLiteApplicationTest {
 
     @Test
     void exposesRuntimeApiDocumentationForRegisteredControllers() {
-        try (AnnotationConfigApplicationContext context = runWithRandomPort(BootTestApplication.class)) {
+        try (AnnotationConfigApplicationContext context = runWithRandomPort(ApiDocsApplication.class)) {
             ApiDocumentationController apiDocs = context.getBean(ApiDocumentationController.class);
 
             assertThat(apiDocs.apiDocs()).containsEntry("title", "Spring Lite API");
             assertThat((List<?>) apiDocs.apiDocs().get("endpoints"))
                 .anySatisfy(endpoint -> assertThat(endpoint.toString()).contains("/api-docs"))
-                .anySatisfy(endpoint -> assertThat(endpoint.toString()).contains("/actuator/health"));
+                .anySatisfy(endpoint -> assertThat(endpoint.toString()).contains("/catalog/items/{id}"))
+                .anySatisfy(endpoint -> assertThat(endpoint.toString()).contains("responseType=Item"))
+                .anySatisfy(endpoint -> assertThat(endpoint.toString()).contains("source=body"));
         }
     }
 
@@ -203,6 +210,28 @@ class SpringLiteApplicationTest {
             return "failed";
         }
     }
+
+    @SpringLiteBootApplication
+    static class ApiDocsApplication {
+        @Bean CatalogController catalogController() { return new CatalogController(); }
+        @Bean WebServerFactory webServerFactory() { return new TestWebServerFactory(); }
+    }
+
+    @RestController
+    @lite.spring.web.annotation.RequestMapping("/catalog")
+    static class CatalogController {
+        @GetMapping("/items/{id}")
+        Item find(@PathVariable("id") long id, @RequestParam("verbose") boolean verbose) {
+            return new Item(id, verbose ? "verbose" : "plain");
+        }
+
+        @lite.spring.web.annotation.PostMapping("/items")
+        Item create(@RequestBody Item item) {
+            return item;
+        }
+    }
+
+    record Item(long id, String name) { }
 
     @SpringLiteBootApplication
     static class AspectApplication {
