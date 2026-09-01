@@ -11,6 +11,7 @@ import lite.spring.context.support.AnnotationConfigApplicationContext;
 import lite.spring.context.event.ApplicationListener;
 import lite.spring.context.event.ContextClosedEvent;
 import lite.spring.context.event.ContextRefreshedEvent;
+import lite.spring.context.event.EventListener;
 import lite.spring.context.factory.BeanPostProcessor;
 import lite.spring.context.factory.FactoryBean;
 import lite.spring.core.annotation.Bean;
@@ -260,6 +261,16 @@ class AnnotationConfigApplicationContextTest {
     }
 
     @Test
+    void invokesAnnotatedEventListenerMethodsForMatchingEventTypes() {
+        AnnotatedEventCollector.events.clear();
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(AnnotatedEventConfig.class)) {
+            context.publishEvent(new SampleEvent("manual"));
+
+            assertThat(AnnotatedEventCollector.events).containsExactly("refreshed", "sample:manual");
+        }
+    }
+
+    @Test
     void appliesActiveProfileOverridesAndEnumValueConversion() {
         String previousProfiles = System.getProperty("spring.profiles.active");
         System.setProperty("spring.profiles.active", "local");
@@ -487,6 +498,14 @@ class AnnotationConfigApplicationContextTest {
         @Bean
         EventCollectorListener eventCollectorListener() {
             return new EventCollectorListener();
+        }
+    }
+
+    @Configuration
+    static class AnnotatedEventConfig {
+        @Bean
+        AnnotatedEventCollector annotatedEventCollector() {
+            return new AnnotatedEventCollector();
         }
     }
 
@@ -799,6 +818,23 @@ class AnnotationConfigApplicationContextTest {
         java.util.List<String> events() {
             return events;
         }
+    }
+
+    static class AnnotatedEventCollector {
+        private static final CopyOnWriteArrayList<String> events = new CopyOnWriteArrayList<>();
+
+        @EventListener
+        void onRefresh(ContextRefreshedEvent event) {
+            events.add("refreshed");
+        }
+
+        @EventListener
+        void onSample(SampleEvent event) {
+            events.add("sample:" + event.name());
+        }
+    }
+
+    record SampleEvent(String name) {
     }
 
     static class ProfileValueClient {

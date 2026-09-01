@@ -1,6 +1,7 @@
 package lite.spring.context.support;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.AnnotatedElement;
@@ -27,6 +28,7 @@ import lite.spring.context.bean.BeanDefinition.Kind;
 import lite.spring.context.event.ApplicationListener;
 import lite.spring.context.event.ContextClosedEvent;
 import lite.spring.context.event.ContextRefreshedEvent;
+import lite.spring.context.event.EventListener;
 import lite.spring.context.factory.BeanPostProcessor;
 import lite.spring.context.factory.ConfigurableApplicationContext;
 import lite.spring.context.factory.FactoryBean;
@@ -257,6 +259,7 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
     @Override
     public void publishEvent(Object event) {
         getBeansOfType(ApplicationListener.class).values().forEach(listener -> notifyListener(listener, event));
+        singletons.values().forEach(bean -> notifyAnnotatedListeners(bean, event));
     }
 
     private boolean isProxy(Object instance) {
@@ -661,6 +664,27 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
             }
         }
         return true;
+    }
+
+    private void notifyAnnotatedListeners(Object bean, Object event) {
+        for (Method method : bean.getClass().getDeclaredMethods()) {
+            if (!method.isAnnotationPresent(EventListener.class)) {
+                continue;
+            }
+            if (method.getParameterCount() != 1) {
+                throw new IllegalStateException("@EventListener method must declare exactly one parameter: " + method);
+            }
+            if (!method.getParameterTypes()[0].isAssignableFrom(event.getClass())) {
+                continue;
+            }
+            try {
+                method.setAccessible(true);
+                method.invoke(bean, event);
+            } catch (IllegalAccessException | InvocationTargetException exception) {
+                Throwable cause = exception instanceof InvocationTargetException invocation ? invocation.getTargetException() : exception;
+                throw new IllegalStateException("Failed to invoke @EventListener method: " + method, cause);
+            }
+        }
     }
 
     private Object convertValue(String value, Class<?> targetType) {

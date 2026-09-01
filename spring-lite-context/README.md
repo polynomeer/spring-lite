@@ -11,7 +11,7 @@
 - `BeanPostProcessor`, `@PostConstruct`, `@PreDestroy` 지원
 - `BeanNameAware`, `ApplicationContextAware` callback 지원
 - `FactoryBean` product 조회와 `&beanName` factory dereference 지원
-- `ContextRefreshedEvent`, `ContextClosedEvent` 발행
+- `ContextRefreshedEvent`, `ContextClosedEvent` 발행과 `ApplicationListener` / `@EventListener` 구독
 
 ## 핵심 패키지
 
@@ -31,6 +31,7 @@
 - `BeanNameAware`
 - `ApplicationContextAware`
 - `ApplicationListener`
+- `@EventListener`
 - `FactoryBean`
 
 가장 중요한 진입점은 `AnnotationConfigApplicationContext`다. 대부분의 컨테이너 동작은 이 클래스에서 시작해 등록, 생성, 초기화, 이벤트 발행으로 이어진다.
@@ -84,3 +85,4 @@ Spring Lite에서는 이 책임들이 더 적은 클래스에 압축되어 있�
 - `BeanFactoryPostProcessor`, `ImportSelector` 계열 미지원
 - 생성자 순환 참조는 fail-fast 처리하며 `a -> b -> a` 의존 경로를 메시지에 포함
 - 컬렉션/지연 주입 같은 고급 의존성 해석은 제한적
+- 이벤트는 동기적으로 현재 스레드에서 실행되며 async, 조건식, transaction phase는 미지원
