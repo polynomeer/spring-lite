@@ -115,6 +115,11 @@ class DefaultExceptionResolverTest {
         }
 
         @Override
+        public java.util.List<lite.spring.context.BeanRuntimeDescriptor> getBeanRuntimeDescriptors() {
+            return java.util.List.of();
+        }
+
+        @Override
         public boolean containsBeanOfType(Class<?> type) {
             return false;
         }

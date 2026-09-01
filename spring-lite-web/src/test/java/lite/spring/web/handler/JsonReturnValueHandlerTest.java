@@ -43,4 +43,15 @@ class JsonReturnValueHandlerTest {
         assertThat(exchange.statusCode()).isEqualTo(204);
         assertThat(exchange.responseBodyAsString()).isEmpty();
     }
+
+    @Test
+    void writesStringBodyAsPlainTextWhenProducesRequestsIt() throws Exception {
+        TestHttpExchange exchange = new TestHttpExchange("GET", URI.create("/"), "");
+        exchange.setAttribute("springLite.produces", "text/plain; charset=utf-8");
+
+        handler.handleReturnValue("ready", exchange, 200);
+
+        assertThat(exchange.getResponseHeaders().getFirst("Content-Type")).isEqualTo("text/plain; charset=utf-8");
+        assertThat(exchange.responseBodyAsString()).isEqualTo("ready");
+    }
 }

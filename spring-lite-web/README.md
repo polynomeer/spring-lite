@@ -7,7 +7,7 @@
 - `DispatcherServlet` 기반 Front Controller
 - `HandlerMapping`, `HandlerAdapter`, `ReturnValueHandler` 분리
 - `@RequestParam`, `@PathVariable`, `@RequestBody` 인자 바인딩
-- JSON 직렬화와 역직렬화
+- JSON 및 plain text 메시지 변환과 역직렬화
 - 입력 검증과 예외 응답 변환
 - 로컬 `@ExceptionHandler`, 전역 `@ControllerAdvice` 지원
 
@@ -36,8 +36,8 @@
   - URL, HTTP 메서드, 조건 매핑을 보고 핸들러를 선택한다.
 - `RequestMappingHandlerAdapter`
   - 인자 해석, 검증, 메서드 호출을 수행한다.
-- `JsonReturnValueHandler`
-  - 반환값을 JSON 응답으로 기록한다.
+- `JsonReturnValueHandler`, `HttpMessageConverter`
+  - negotiated `Content-Type`에 맞는 converter로 반환값을 기록한다.
 - `DefaultExceptionResolver`
   - 예외를 상태 코드와 응답 바디로 변환한다.
 
@@ -70,7 +70,6 @@
 
 ## 현재 한계
 
-- `HttpMessageConverter` 추상화 미지원
-- 콘텐츠 협상 최소 지원
+- converter 확장 지점은 JSON과 plain text만 제공
 - 뷰 렌더링, 정적 리소스 처리 미지원
 - HTTP 메서드와 미디어 타입 확장 범위 제한
