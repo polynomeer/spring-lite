@@ -12,6 +12,7 @@ import lite.spring.aop.annotation.Aspect;
 import lite.spring.aop.annotation.Before;
 import lite.spring.aop.support.AspectBeanPostProcessor;
 import lite.spring.boot.annotation.SpringLiteBootApplication;
+import lite.spring.boot.actuate.ActuatorController;
 import lite.spring.context.support.AnnotationConfigApplicationContext;
 import lite.spring.core.annotation.Bean;
 import lite.spring.core.annotation.ConditionalOnClass;
@@ -37,6 +38,17 @@ class SpringLiteApplicationTest {
             assertThat(context.containsBeanOfType(AspectBeanPostProcessor.class)).isTrue();
             assertThat(context.containsBeanOfType(WebServerFactory.class)).isTrue();
             assertThat(context.containsBeanOfType(WebServer.class)).isTrue();
+        }
+    }
+
+    @Test
+    void exposesActuatorLiteHealthAndRuntimeInfo() {
+        try (AnnotationConfigApplicationContext context = runWithRandomPort(BootTestApplication.class)) {
+            ActuatorController actuator = context.getBean(ActuatorController.class);
+
+            assertThat(actuator.health()).containsEntry("status", "UP");
+            assertThat(actuator.info()).containsEntry("application", "spring-lite");
+            assertThat((Integer) actuator.info().get("beans")).isPositive();
         }
     }
 

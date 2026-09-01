@@ -2,6 +2,7 @@ package lite.spring.boot.support;
 
 import lite.spring.context.support.AnnotationConfigApplicationContext;
 import lite.spring.boot.support.autoconfigure.AopAutoConfiguration;
+import lite.spring.boot.support.autoconfigure.ActuatorAutoConfiguration;
 import lite.spring.boot.support.autoconfigure.JdbcAutoConfiguration;
 import lite.spring.boot.support.autoconfigure.JsonAutoConfiguration;
 import lite.spring.boot.support.autoconfigure.TransactionAutoConfiguration;
@@ -14,6 +15,7 @@ public final class BootInfrastructureRegistrar {
     public static void registerDefaults(AnnotationConfigApplicationContext context) {
         context.register(
             JsonAutoConfiguration.class,
+            ActuatorAutoConfiguration.class,
             AopAutoConfiguration.class,
             TransactionAutoConfiguration.class,
             JdbcAutoConfiguration.class,

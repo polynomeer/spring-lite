@@ -8,6 +8,7 @@
 - 기본 auto-configuration 등록
 - profile-aware 프로퍼티 로딩과 런타임 오버라이드 연동
 - 내장 JDK HTTP 서버 기동
+- `/actuator/health`, `/actuator/info` actuator-lite endpoint 제공
 
 ## 핵심 패키지
 
@@ -34,6 +35,8 @@
   - 최종 프로퍼티 뷰를 애플리케이션에서 소비하기 좋은 형태로 제공한다.
 - `JdkWebServerFactory`
   - `DispatcherServlet`을 JDK `HttpServer`와 연결한다.
+- `ActuatorController`
+  - health와 실행 중인 bean/proxy 요약을 노출한다.
 
 ## 호출 흐름
 
@@ -61,5 +64,5 @@
 ## 현재 한계
 
 - auto-configuration 조건 종류가 제한적
-- starter 생태계, 관측성, 운영 지원 미지원
+- starter 생태계, metrics/management 보안 같은 고급 운영 지원 미지원
 - 서버 추상화는 JDK `HttpServer` 중심
