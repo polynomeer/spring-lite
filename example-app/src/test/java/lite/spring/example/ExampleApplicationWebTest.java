@@ -117,6 +117,23 @@ class ExampleApplicationWebTest {
     }
 
     @Test
+    void returnsLiveContainerRuntimeTrace(MockMvc mockMvc) {
+        MockHttpResponse response = mockMvc.perform(
+            MockHttpRequest.post("/lab/run/trace")
+                .contentType("application/json")
+                .body("{\"labId\":\"container\",\"scenario\":\"lifecycle-proxy\",\"mode\":\"live\"}")
+                .build()
+        );
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).contains("\"labId\":\"container\"");
+        assertThat(response.body()).contains("\"title\":\"Container Runtime Trace\"");
+        assertThat(response.body()).contains("\"Managed Beans\"");
+        assertThat(response.body()).contains("\"Container\"");
+        assertThat(response.body()).contains("\"Proxy\"");
+    }
+
+    @Test
     void rejectsUnsupportedLiveLabScenario(MockMvc mockMvc) {
         MockHttpResponse response = mockMvc.perform(
             MockHttpRequest.post("/lab/run/trace")
