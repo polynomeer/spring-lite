@@ -6,6 +6,7 @@
 
 - `JdbcTemplate` 기반 SQL 실행
 - `RowMapper` 기반 결과 매핑
+- `JdbcRepository` 기반 반복 query/delete 보조
 - 트랜잭션 활성 시 현재 커넥션 재사용
 - 간단한 `DataSource` 구현 제공
 
@@ -19,6 +20,7 @@
 - `JdbcTemplate`
 - `RowMapper`
 - `DriverManagerDataSource`
+- `JdbcRepository`
 
 ## 내부 핵심 클래스
 
@@ -28,6 +30,8 @@
   - 트랜잭션 문맥의 커넥션을 닫히지 않도록 감싼다.
 - `DriverManagerDataSource`
   - 간단한 JDBC 데이터소스 구현이다.
+- `JdbcRepository`
+  - 공통 findById/findAll/deleteById SQL을 재사용한다. insert/update 도메인 규칙은 각 repository에 남긴다.
 
 ## 호출 흐름
 
