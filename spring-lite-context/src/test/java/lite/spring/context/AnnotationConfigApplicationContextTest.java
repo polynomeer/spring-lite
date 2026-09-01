@@ -14,6 +14,7 @@ import lite.spring.context.event.ContextRefreshedEvent;
 import lite.spring.context.factory.BeanPostProcessor;
 import lite.spring.core.annotation.Bean;
 import lite.spring.core.annotation.ComponentScan;
+import lite.spring.core.annotation.Component;
 import lite.spring.core.annotation.ConditionalOnBean;
 import lite.spring.core.annotation.ConditionalOnMissingBean;
 import lite.spring.core.annotation.Configuration;
@@ -46,6 +47,23 @@ class AnnotationConfigApplicationContextTest {
             ContextAwareBean bean = context.getBean(ContextAwareBean.class);
 
             assertThat(bean.applicationContext()).isSameAs(context);
+        }
+    }
+
+    @Test
+    void invokesAwareCallbacksBeforePostConstructForComponentAndFactoryBeans() {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
+            context.register(AwareLifecycleBean.class, AwareConfig.class);
+            context.refresh();
+            AwareLifecycleBean component = (AwareLifecycleBean) context.getBean("awareLifecycleBean");
+            FactoryAwareLifecycleBean factoryBean = context.getBean(FactoryAwareLifecycleBean.class);
+
+            assertThat(component.beanName()).isEqualTo("awareLifecycleBean");
+            assertThat(component.applicationContext()).isSameAs(context);
+            assertThat(component.postConstructObservedAwareState()).isTrue();
+            assertThat(factoryBean.beanName()).isEqualTo("factoryAwareLifecycleBean");
+            assertThat(factoryBean.applicationContext()).isSameAs(context);
+            assertThat(factoryBean.postConstructObservedAwareState()).isTrue();
         }
     }
 
@@ -366,6 +384,19 @@ class AnnotationConfigApplicationContextTest {
     }
 
     @Configuration
+    static class AwareConfig {
+        @Bean
+        FactoryAwareLifecycleBean factoryAwareLifecycleBean() {
+            return new FactoryAwareLifecycleBean();
+        }
+
+        @Bean
+        AwareLifecycleBean awareLifecycleBean() {
+            return new AwareLifecycleBean();
+        }
+    }
+
+    @Configuration
     static class MissingValueConfig {
         @Bean
         MissingValueClient missingValueClient(@Value("${app.missing.value}") String value) {
@@ -585,6 +616,43 @@ class AnnotationConfigApplicationContextTest {
         boolean initialized() {
             return initialized;
         }
+    }
+
+    @Component
+    static class AwareLifecycleBean implements BeanNameAware, ApplicationContextAware {
+        private String beanName;
+        private ApplicationContext applicationContext;
+        private boolean postConstructObservedAwareState;
+
+        @Override
+        public void setBeanName(String beanName) {
+            this.beanName = beanName;
+        }
+
+        @Override
+        public void setApplicationContext(ApplicationContext applicationContext) {
+            this.applicationContext = applicationContext;
+        }
+
+        @PostConstruct
+        void initialize() {
+            postConstructObservedAwareState = beanName != null && applicationContext != null;
+        }
+
+        String beanName() {
+            return beanName;
+        }
+
+        ApplicationContext applicationContext() {
+            return applicationContext;
+        }
+
+        boolean postConstructObservedAwareState() {
+            return postConstructObservedAwareState;
+        }
+    }
+
+    static class FactoryAwareLifecycleBean extends AwareLifecycleBean {
     }
 
     static class DestroyAwareBean {

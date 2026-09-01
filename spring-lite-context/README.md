@@ -9,6 +9,7 @@
 - 생성자 주입, `@Qualifier`, `@Value` 기반 의존성 해석
 - singleton / prototype 스코프와 destroy callback 관리
 - `BeanPostProcessor`, `@PostConstruct`, `@PreDestroy` 지원
+- `BeanNameAware`, `ApplicationContextAware` callback 지원
 - `ContextRefreshedEvent`, `ContextClosedEvent` 발행
 
 ## 핵심 패키지
@@ -26,6 +27,8 @@
 - `ConfigurableApplicationContext`
 - `AnnotationConfigApplicationContext`
 - `BeanPostProcessor`
+- `BeanNameAware`
+- `ApplicationContextAware`
 - `ApplicationListener`
 
 가장 중요한 진입점은 `AnnotationConfigApplicationContext`다. 대부분의 컨테이너 동작은 이 클래스에서 시작해 등록, 생성, 초기화, 이벤트 발행으로 이어진다.
@@ -50,6 +53,8 @@
 3. `refresh()`가 후처리기와 설정 클래스를 먼저 초기화한다.
 4. `createBean(...)`이 생성자 선택, 의존성 해석, 초기화, 후처리를 수행한다.
 5. 싱글톤은 캐시에 저장되고, close 시 destroy callback이 역순 실행된다.
+
+빈 초기화 중에는 `@Value` 필드 주입 뒤에 `BeanNameAware`와 `ApplicationContextAware` callback을 호출한다. 그 다음 `BeanPostProcessor#before`, `@PostConstruct`, `BeanPostProcessor#after` 순서로 진행한다. `@PostConstruct`는 상위 클래스에 선언된 메서드도 포함해 탐색한다.
 
 ## 테스트 포인트
 

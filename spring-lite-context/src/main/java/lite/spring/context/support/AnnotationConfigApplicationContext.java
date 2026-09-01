@@ -19,6 +19,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lite.spring.context.ApplicationContext;
+import lite.spring.context.ApplicationContextAware;
+import lite.spring.context.BeanNameAware;
 import lite.spring.context.BeanRuntimeDescriptor;
 import lite.spring.context.bean.BeanDefinition;
 import lite.spring.context.bean.BeanDefinition.Kind;
@@ -508,6 +510,7 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
 
     private Object initializeBean(String beanName, Object bean) {
         injectFieldValues(bean);
+        invokeAwareCallbacks(beanName, bean);
         Object current = bean;
         for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
             current = beanPostProcessor.postProcessBeforeInitialization(beanName, current);
@@ -518,6 +521,15 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
         }
         registerDestroyCallback(beanName, bean, current);
         return current;
+    }
+
+    private void invokeAwareCallbacks(String beanName, Object bean) {
+        if (bean instanceof BeanNameAware beanNameAware) {
+            beanNameAware.setBeanName(beanName);
+        }
+        if (bean instanceof ApplicationContextAware applicationContextAware) {
+            applicationContextAware.setApplicationContext(this);
+        }
     }
 
     private void injectFieldValues(Object bean) {
@@ -535,10 +547,14 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
     }
 
     private void invokeLifecycleMethods(Object bean, Class<? extends java.lang.annotation.Annotation> annotationType) {
-        for (Method method : bean.getClass().getDeclaredMethods()) {
-            if (method.isAnnotationPresent(annotationType)) {
-                ReflectionUtils.invoke(method, bean, new Object[0]);
+        Class<?> currentType = bean.getClass();
+        while (currentType != null && !Object.class.equals(currentType)) {
+            for (Method method : currentType.getDeclaredMethods()) {
+                if (method.isAnnotationPresent(annotationType)) {
+                    ReflectionUtils.invoke(method, bean, new Object[0]);
+                }
             }
+            currentType = currentType.getSuperclass();
         }
     }
 
