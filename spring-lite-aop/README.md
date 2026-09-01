@@ -8,6 +8,7 @@
 - `MethodInvocation` 기반 인터셉터 체인 구성
 - `@Aspect`, `@Before`, `@Around`, `@AfterReturning` 해석
 - `@Order` 기반 advice 실행 순서 제어
+- `@Timed` 기반 메서드 실행 시간 기록
 
 ## 핵심 패키지
 
@@ -31,6 +32,8 @@
   - 현재 호출 대상, 메서드, 인자, `proceed()` 상태를 보관한다.
 - `AspectBeanPostProcessor`
   - aspect 빈을 읽어 인터셉터로 변환하고 프록시를 합성한다.
+- `TimedBeanPostProcessor`
+  - `@Timed` 메서드 또는 타입을 프록시로 감싸고 `MetricsRegistry`에 호출 횟수와 누적 시간을 기록한다.
 
 ## 호출 흐름
 
@@ -40,12 +43,18 @@
 4. `ProxyFactory.createProxy(...)`가 프록시를 만든다.
 5. 메서드 호출 시 `MethodInvocation.proceed()` 체인이 순차 실행된다.
 
+## 실행 시간 측정
+
+`@Timed`는 메서드나 클래스에 붙일 수 있다. 기본 metric 이름은 `<beanName>.<methodName>`이며, `@Timed("checkout.submit")`처럼 명시적으로 지정할 수도 있다. 예외가 발생한 호출도 `finally` 블록에서 기록되므로, 호출량과 실패 경로의 비용을 함께 관찰할 수 있다.
+
 ## 테스트 포인트
 
 - `AspectBeanPostProcessorTest`
   - before / around / after-returning 조합
   - 인터셉터 정렬
   - 프록시 생성 전략
+- `TimedBeanPostProcessorTest`
+  - 메서드/타입 단위 측정, 명시적 metric 이름, 예외 호출 기록
 
 ## 실제 Spring 대응
 

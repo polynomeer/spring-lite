@@ -10,6 +10,7 @@ import lite.spring.aop.annotation.AfterReturning;
 import lite.spring.aop.annotation.Around;
 import lite.spring.aop.annotation.Aspect;
 import lite.spring.aop.annotation.Before;
+import lite.spring.aop.annotation.Timed;
 import lite.spring.aop.support.AspectBeanPostProcessor;
 import lite.spring.boot.annotation.SpringLiteBootApplication;
 import lite.spring.boot.actuate.ActuatorController;
@@ -49,6 +50,20 @@ class SpringLiteApplicationTest {
             assertThat(actuator.health()).containsEntry("status", "UP");
             assertThat(actuator.info()).containsEntry("application", "spring-lite");
             assertThat((Integer) actuator.info().get("beans")).isPositive();
+        }
+    }
+
+    @Test
+    void recordsTimedServiceCallsAndExposesMetrics() {
+        try (AnnotationConfigApplicationContext context = runWithRandomPort(TimedApplication.class)) {
+            TimedService service = context.getBean(TimedService.class);
+            service.call();
+            assertThat(service.fail()).isEqualTo("failed");
+            ActuatorController actuator = context.getBean(ActuatorController.class);
+            java.util.Map<?, ?> timers = (java.util.Map<?, ?>) actuator.metrics().get("timers");
+            assertThat(timers)
+                .containsKey("timedService.call")
+                .containsKey("custom.failure");
         }
     }
 
@@ -146,6 +161,24 @@ class SpringLiteApplicationTest {
         @Transactional
         public String call(String input) {
             return input;
+        }
+    }
+
+    @SpringLiteBootApplication
+    static class TimedApplication {
+        @Bean TimedService timedService() { return new TimedService(); }
+        @Bean WebServerFactory webServerFactory() { return new TestWebServerFactory(); }
+    }
+
+    static class TimedService {
+        @Timed
+        String call() {
+            return "ok";
+        }
+
+        @Timed("custom.failure")
+        String fail() {
+            return "failed";
         }
     }
 

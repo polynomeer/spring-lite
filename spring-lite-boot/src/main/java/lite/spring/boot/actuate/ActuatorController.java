@@ -4,6 +4,7 @@ import java.util.Map;
 import lite.spring.boot.support.ApplicationProperties;
 import lite.spring.context.ApplicationContext;
 import lite.spring.context.BeanRuntimeDescriptor;
+import lite.spring.core.metrics.MetricsRegistry;
 import lite.spring.web.annotation.GetMapping;
 import lite.spring.web.annotation.RestController;
 
@@ -11,10 +12,12 @@ import lite.spring.web.annotation.RestController;
 public class ActuatorController {
     private final ApplicationContext applicationContext;
     private final ApplicationProperties properties;
+    private final MetricsRegistry metrics;
 
-    public ActuatorController(ApplicationContext applicationContext, ApplicationProperties properties) {
+    public ActuatorController(ApplicationContext applicationContext, ApplicationProperties properties, MetricsRegistry metrics) {
         this.applicationContext = applicationContext;
         this.properties = properties;
+        this.metrics = metrics;
     }
 
     @GetMapping("/actuator/health")
@@ -31,5 +34,10 @@ public class ActuatorController {
             "beans", descriptors.size(),
             "proxiedBeans", proxied
         );
+    }
+
+    @GetMapping("/actuator/metrics")
+    public Map<String, Object> metrics() {
+        return Map.of("counters", metrics.counters(), "timers", metrics.timers());
     }
 }

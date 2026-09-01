@@ -17,6 +17,7 @@
 - `lite.spring.core.convert`
 - `lite.spring.core.exception`
 - `lite.spring.core.reflect`
+- `lite.spring.core.metrics`
 - `lite.spring.core.util`
 - `lite.spring.core.validation`
 
@@ -41,6 +42,8 @@
   - 메서드 호출과 접근 제어 우회를 단순화한다.
 - `OrderUtils`
   - `@Order`와 `Ordered` 기준의 정렬 규칙을 제공한다.
+- `MetricsRegistry`
+  - counter와 timer의 스레드 안전한 in-memory 스냅샷을 제공한다.
 
 ## 호출 흐름에서의 위치
 

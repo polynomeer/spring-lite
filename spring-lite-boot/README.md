@@ -8,7 +8,7 @@
 - 기본 auto-configuration 등록
 - profile-aware 프로퍼티 로딩과 런타임 오버라이드 연동
 - 내장 JDK HTTP 서버 기동
-- `/actuator/health`, `/actuator/info` actuator-lite endpoint 제공
+- `/actuator/health`, `/actuator/info`, `/actuator/metrics` actuator-lite endpoint 제공
 
 ## 핵심 패키지
 
@@ -36,7 +36,11 @@
 - `JdkWebServerFactory`
   - `DispatcherServlet`을 JDK `HttpServer`와 연결한다.
 - `ActuatorController`
-  - health와 실행 중인 bean/proxy 요약을 노출한다.
+  - health, 실행 중인 bean/proxy 요약, in-memory counter/timer 스냅샷을 노출한다.
+
+## Metrics endpoint
+
+`@Timed`가 붙은 빈의 호출은 `MetricsRegistry`에 기록된다. `GET /actuator/metrics`는 `counters`와 `timers`를 반환하며, timer 값은 호출 횟수(`count`)와 누적 나노초(`totalNanos`)를 포함한다. 이 endpoint는 교육용 in-memory 관측성 계약이며 영속 저장소나 관리 endpoint 보안은 제공하지 않는다.
 
 ## 호출 흐름
 
