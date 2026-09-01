@@ -77,6 +77,22 @@ class JdbcIntegrationTest {
         assertThat(dataSource.username()).isEqualTo("sa");
     }
 
+    @Test
+    void executesBatchUpdatesAndReturnsOneCountPerArgumentSet() {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(JdbcIntegrationConfig.class)) {
+            JdbcTemplate jdbcTemplate = context.getBean(JdbcTemplate.class);
+
+            int[] updates = jdbcTemplate.batchUpdate(
+                "insert into accounts(name) values (?)",
+                List.of(new Object[]{"alice"}, new Object[]{"bob"}, new Object[]{"carol"})
+            );
+
+            assertThat(updates).containsExactly(1, 1, 1);
+            assertThat(jdbcTemplate.query("select name from accounts order by name", rs -> rs.getString(1)))
+                .containsExactly("alice", "bob", "carol");
+        }
+    }
+
     @Configuration
     static class JdbcIntegrationConfig {
         @Bean

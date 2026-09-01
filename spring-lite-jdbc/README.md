@@ -26,7 +26,7 @@
 ## 내부 핵심 클래스
 
 - `JdbcTemplate`
-  - update/query/queryForObject를 제공한다.
+  - update/batchUpdate/query/queryForObject를 제공한다.
 - `SingleConnectionProxy`
   - 트랜잭션 문맥의 커넥션을 닫히지 않도록 감싼다.
 - `DriverManagerDataSource`
@@ -57,6 +57,6 @@
 
 ## 현재 한계
 
-- named parameter, batch update 미지원
+- named parameter 미지원
 - 예외 계층 단순화
 - 고급 리소스/메타데이터 추상화 미지원

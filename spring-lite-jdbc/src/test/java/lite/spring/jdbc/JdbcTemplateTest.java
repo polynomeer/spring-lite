@@ -62,6 +62,16 @@ class JdbcTemplateTest {
         assertThat(none).isNull();
     }
 
+    @Test
+    void returnsNoUpdateCountsWithoutOpeningAConnectionForAnEmptyBatch() {
+        RecordingJdbc recordingJdbc = new RecordingJdbc(List.of());
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(recordingJdbc.dataSource(), new TransactionManager(null));
+
+        assertThat(jdbcTemplate.batchUpdate("update orders set status = ?", List.of())).isEmpty();
+        assertThat(recordingJdbc.preparedSql).isEmpty();
+        assertThat(recordingJdbc.connectionCloseCount).isZero();
+    }
+
     private static final class TestTransactionManager extends TransactionManager {
         private final Connection connection;
 

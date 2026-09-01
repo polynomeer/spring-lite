@@ -34,6 +34,25 @@ public class JdbcTemplate {
         }
     }
 
+    /** Executes one prepared statement for each argument set and returns JDBC update counts. */
+    public int[] batchUpdate(String sql, List<Object[]> batchArguments) {
+        if (batchArguments.isEmpty()) {
+            return new int[0];
+        }
+        try (
+            Connection connection = obtainConnectionIfNeeded();
+            PreparedStatement statement = connection.prepareStatement(sql)
+        ) {
+            for (Object[] arguments : batchArguments) {
+                bind(statement, arguments);
+                statement.addBatch();
+            }
+            return statement.executeBatch();
+        } catch (SQLException exception) {
+            throw new IllegalStateException("Failed to execute batch update: " + sql, exception);
+        }
+    }
+
     public <T> List<T> query(String sql, RowMapper<T> rowMapper, Object... args) {
         try (
             Connection connection = obtainConnectionIfNeeded();
@@ -71,4 +90,3 @@ public class JdbcTemplate {
         }
     }
 }
-
