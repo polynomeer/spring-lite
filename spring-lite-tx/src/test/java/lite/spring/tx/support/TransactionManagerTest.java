@@ -6,6 +6,8 @@ import java.io.PrintWriter;
 import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.Test;
 
@@ -44,10 +46,23 @@ class TransactionManagerTest {
         assertThat(recordingConnection.closeCalls).isEqualTo(1);
     }
 
+    @Test
+    void appliesReadOnlyHintAndRestoresConnectionState() {
+        RecordingConnection recordingConnection = new RecordingConnection();
+        TransactionManager transactionManager = new TransactionManager(recordingConnection.dataSource());
+
+        transactionManager.begin(true);
+        transactionManager.commit();
+
+        assertThat(recordingConnection.readOnlySettings).containsExactly(true, false);
+        assertThat(recordingConnection.commitCalls).isEqualTo(1);
+    }
+
     private static final class RecordingConnection {
         private int commitCalls;
         private int rollbackCalls;
         private int closeCalls;
+        private final List<Boolean> readOnlySettings = new ArrayList<>();
 
         private DataSource dataSource() {
             return new DataSource() {
@@ -101,7 +116,12 @@ class TransactionManagerTest {
                 getClass().getClassLoader(),
                 new Class<?>[]{Connection.class},
                 (proxy, method, args) -> switch (method.getName()) {
-                    case "setAutoCommit", "setReadOnly" -> null;
+                    case "setAutoCommit" -> null;
+                    case "setReadOnly" -> {
+                        readOnlySettings.add((Boolean) args[0]);
+                        yield null;
+                    }
+                    case "isReadOnly" -> false;
                     case "getAutoCommit" -> false;
                     case "commit" -> {
                         commitCalls++;
