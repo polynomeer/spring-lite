@@ -2,11 +2,14 @@ package lite.spring.tx.support;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import javax.sql.DataSource;
+import lite.spring.tx.annotation.Propagation;
 
 public class TransactionManager {
     private final DataSource dataSource;
-    private final ThreadLocal<TransactionContext> transactionContext = new ThreadLocal<>();
+    private final ThreadLocal<Deque<TransactionContext>> transactionContexts = ThreadLocal.withInitial(ArrayDeque::new);
 
     public TransactionManager(DataSource dataSource) {
         this.dataSource = dataSource;
@@ -17,13 +20,18 @@ public class TransactionManager {
     }
 
     public void begin(boolean readOnly) {
-        TransactionContext context = transactionContext.get();
-        if (context != null) {
+        begin(Propagation.REQUIRED, readOnly);
+    }
+
+    public void begin(Propagation propagation, boolean readOnly) {
+        Deque<TransactionContext> contexts = transactionContexts.get();
+        TransactionContext context = contexts.peek();
+        if (propagation == Propagation.REQUIRED && context != null) {
             context.incrementDepth();
             return;
         }
         if (dataSource == null) {
-            transactionContext.set(new TransactionContext(null, readOnly, false));
+            contexts.push(new TransactionContext(null, readOnly, false));
             return;
         }
         try {
@@ -31,14 +39,15 @@ public class TransactionManager {
             boolean originalReadOnly = connection.isReadOnly();
             connection.setReadOnly(readOnly);
             connection.setAutoCommit(false);
-            transactionContext.set(new TransactionContext(connection, readOnly, originalReadOnly));
+            contexts.push(new TransactionContext(connection, readOnly, originalReadOnly));
         } catch (SQLException exception) {
             throw new IllegalStateException("Failed to begin transaction", exception);
         }
     }
 
     public void commit() {
-        TransactionContext context = transactionContext.get();
+        Deque<TransactionContext> contexts = transactionContexts.get();
+        TransactionContext context = contexts.peek();
         if (context == null) {
             return;
         }
@@ -46,7 +55,7 @@ public class TransactionManager {
             return;
         }
         if (context.connection() == null) {
-            transactionContext.remove();
+            completeContext(contexts);
             return;
         }
         if (context.rollbackOnly()) {
@@ -63,7 +72,8 @@ public class TransactionManager {
     }
 
     public void rollback() {
-        TransactionContext context = transactionContext.get();
+        Deque<TransactionContext> contexts = transactionContexts.get();
+        TransactionContext context = contexts.peek();
         if (context == null) {
             return;
         }
@@ -72,18 +82,18 @@ public class TransactionManager {
             return;
         }
         if (context.connection() == null) {
-            transactionContext.remove();
+            completeContext(contexts);
             return;
         }
         rollbackConnection(context);
     }
 
     public boolean isTransactionActive() {
-        return transactionContext.get() != null;
+        return transactionContexts.get().peek() != null;
     }
 
     public Connection currentConnection() {
-        TransactionContext context = transactionContext.get();
+        TransactionContext context = transactionContexts.get().peek();
         return context == null ? null : context.connection();
     }
 
@@ -106,7 +116,14 @@ public class TransactionManager {
         } catch (SQLException exception) {
             throw new IllegalStateException("Failed to close transaction connection", exception);
         } finally {
-            transactionContext.remove();
+            completeContext(transactionContexts.get());
+        }
+    }
+
+    private void completeContext(Deque<TransactionContext> contexts) {
+        contexts.pop();
+        if (contexts.isEmpty()) {
+            transactionContexts.remove();
         }
     }
 

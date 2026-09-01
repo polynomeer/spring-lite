@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.sql.DataSource;
+import lite.spring.tx.annotation.Propagation;
 import org.junit.jupiter.api.Test;
 
 class TransactionManagerTest {
@@ -56,6 +57,24 @@ class TransactionManagerTest {
 
         assertThat(recordingConnection.readOnlySettings).containsExactly(true, false);
         assertThat(recordingConnection.commitCalls).isEqualTo(1);
+    }
+
+    @Test
+    void resumesTheSuspendedTransactionAfterRequiresNewCompletes() {
+        RecordingConnection recordingConnection = new RecordingConnection();
+        TransactionManager transactionManager = new TransactionManager(recordingConnection.dataSource());
+
+        transactionManager.begin();
+        transactionManager.begin(Propagation.REQUIRES_NEW, false);
+        transactionManager.commit();
+
+        assertThat(transactionManager.isTransactionActive()).isTrue();
+        assertThat(recordingConnection.commitCalls).isEqualTo(1);
+
+        transactionManager.commit();
+
+        assertThat(recordingConnection.commitCalls).isEqualTo(2);
+        assertThat(recordingConnection.closeCalls).isEqualTo(2);
     }
 
     private static final class RecordingConnection {

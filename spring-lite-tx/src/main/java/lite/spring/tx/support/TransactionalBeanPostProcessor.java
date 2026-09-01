@@ -28,9 +28,25 @@ public class TransactionalBeanPostProcessor implements BeanPostProcessor {
         if (targetClass.isAnnotationPresent(Transactional.class)) {
             return true;
         }
-        for (Method method : targetClass.getMethods()) {
-            if (method.isAnnotationPresent(Transactional.class)) {
+        for (Class<?> current = targetClass; current != null; current = current.getSuperclass()) {
+            for (Method method : current.getDeclaredMethods()) {
+                if (method.isAnnotationPresent(Transactional.class)) {
+                    return true;
+                }
+            }
+            if (hasTransactionalInterfaceMethod(current)) {
                 return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean hasTransactionalInterfaceMethod(Class<?> targetClass) {
+        for (Class<?> implementedInterface : targetClass.getInterfaces()) {
+            for (Method method : implementedInterface.getMethods()) {
+                if (method.isAnnotationPresent(Transactional.class)) {
+                    return true;
+                }
             }
         }
         return false;
@@ -40,9 +56,13 @@ public class TransactionalBeanPostProcessor implements BeanPostProcessor {
         return new TransactionInterceptor(ProxyFactory.getTargetClass(bean));
     }
 
-    private Transactional resolveTransactionalMetadata(Class<?> beanType, Method targetMethod) {
+    private Transactional resolveTransactionalMetadata(Class<?> beanType, Method targetMethod, Method invokedMethod) {
         Transactional methodAnnotation = targetMethod.getAnnotation(Transactional.class);
-        return methodAnnotation != null ? methodAnnotation : beanType.getAnnotation(Transactional.class);
+        if (methodAnnotation != null) {
+            return methodAnnotation;
+        }
+        Transactional interfaceAnnotation = invokedMethod.getAnnotation(Transactional.class);
+        return interfaceAnnotation != null ? interfaceAnnotation : beanType.getAnnotation(Transactional.class);
     }
 
     private boolean shouldRollback(Throwable throwable, Transactional transactional) {
@@ -73,16 +93,12 @@ public class TransactionalBeanPostProcessor implements BeanPostProcessor {
 
         @Override
         public Object invoke(lite.spring.aop.MethodInvocation invocation) throws Throwable {
-            Method targetMethod = targetClass.getMethod(invocation.getMethod().getName(), invocation.getMethod().getParameterTypes());
-            Transactional transactional = resolveTransactionalMetadata(targetClass, targetMethod);
+            Method targetMethod = findTargetMethod(invocation.getMethod());
+            Transactional transactional = resolveTransactionalMetadata(targetClass, targetMethod, invocation.getMethod());
             if (transactional == null) {
                 return invocation.proceed();
             }
-            if (transactional.readOnly()) {
-                transactionManager.begin(true);
-            } else {
-                transactionManager.begin();
-            }
+            transactionManager.begin(transactional.propagation(), transactional.readOnly());
             try {
                 Object result = invocation.proceed();
                 transactionManager.commit();
@@ -95,6 +111,19 @@ public class TransactionalBeanPostProcessor implements BeanPostProcessor {
                 }
                 throw throwable;
             }
+        }
+
+        private Method findTargetMethod(Method invokedMethod) {
+            for (Class<?> current = targetClass; current != null; current = current.getSuperclass()) {
+                try {
+                    Method method = current.getDeclaredMethod(invokedMethod.getName(), invokedMethod.getParameterTypes());
+                    method.setAccessible(true);
+                    return method;
+                } catch (NoSuchMethodException ignored) {
+                    // Continue to a superclass before using the proxy's interface method.
+                }
+            }
+            return invokedMethod;
         }
     }
 }

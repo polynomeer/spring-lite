@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import lite.spring.tx.annotation.Transactional;
+import lite.spring.tx.annotation.Propagation;
 import org.junit.jupiter.api.Test;
 
 class TransactionalBeanPostProcessorTest {
@@ -96,6 +97,33 @@ class TransactionalBeanPostProcessorTest {
         assertThat(transactionManager.rollbackCalls).isEqualTo(1);
     }
 
+    @Test
+    void passesRequiresNewPolicyToTransactionManager() {
+        RecordingTransactionManager transactionManager = new RecordingTransactionManager();
+        TransactionalBeanPostProcessor processor = new TransactionalBeanPostProcessor(transactionManager);
+        NewTransactionService proxied = (NewTransactionService) processor.postProcessAfterInitialization(
+            "newTransactionService", new NewTransactionService()
+        );
+
+        assertThat(proxied.call()).isEqualTo("new");
+
+        assertThat(transactionManager.propagations).containsExactly(Propagation.REQUIRES_NEW);
+        assertThat(transactionManager.commitCalls).isEqualTo(1);
+    }
+
+    @Test
+    void resolvesTransactionalMetadataDeclaredOnAnInterfaceMethod() {
+        RecordingTransactionManager transactionManager = new RecordingTransactionManager();
+        TransactionalBeanPostProcessor processor = new TransactionalBeanPostProcessor(transactionManager);
+        InterfaceAnnotatedService proxied = (InterfaceAnnotatedService) processor.postProcessAfterInitialization(
+            "interfaceAnnotatedService", new InterfaceAnnotatedServiceImpl()
+        );
+
+        assertThat(proxied.call()).isEqualTo("interface");
+
+        assertThat(transactionManager.propagations).containsExactly(Propagation.REQUIRED);
+    }
+
     interface SampleService {
         String succeed(String input);
 
@@ -104,6 +132,18 @@ class TransactionalBeanPostProcessorTest {
         String failWithoutRollback();
 
         String failChecked() throws CheckedFailureException;
+    }
+
+    interface InterfaceAnnotatedService {
+        @Transactional
+        String call();
+    }
+
+    static class InterfaceAnnotatedServiceImpl implements InterfaceAnnotatedService {
+        @Override
+        public String call() {
+            return "interface";
+        }
     }
 
     static class SampleServiceImpl implements SampleService {
@@ -145,6 +185,13 @@ class TransactionalBeanPostProcessorTest {
         }
     }
 
+    public static class NewTransactionService {
+        @Transactional(propagation = Propagation.REQUIRES_NEW)
+        public String call() {
+            return "new";
+        }
+    }
+
     static class CheckedFailureException extends Exception {
         CheckedFailureException(String message) {
             super(message);
@@ -155,6 +202,7 @@ class TransactionalBeanPostProcessorTest {
         private int beginCalls;
         private int commitCalls;
         private int rollbackCalls;
+        private final java.util.List<Propagation> propagations = new java.util.ArrayList<>();
 
         RecordingTransactionManager() {
             super(null);
@@ -163,6 +211,12 @@ class TransactionalBeanPostProcessorTest {
         @Override
         public void begin() {
             beginCalls++;
+        }
+
+        @Override
+        public void begin(Propagation propagation, boolean readOnly) {
+            beginCalls++;
+            propagations.add(propagation);
         }
 
         @Override

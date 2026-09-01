@@ -14,6 +14,7 @@ import lite.spring.core.annotation.Bean;
 import lite.spring.core.annotation.Configuration;
 import lite.spring.core.annotation.Order;
 import lite.spring.tx.annotation.Transactional;
+import lite.spring.tx.annotation.Propagation;
 import org.junit.jupiter.api.Test;
 
 class TransactionalAspectChainTest {
@@ -106,6 +107,11 @@ class TransactionalAspectChainTest {
 
         @Override
         public void begin() {
+            events.add("tx-begin");
+        }
+
+        @Override
+        public void begin(Propagation propagation, boolean readOnly) {
             events.add("tx-begin");
         }
 

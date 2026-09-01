@@ -6,8 +6,8 @@
 
 - `@Transactional` 메타데이터 해석
 - 트랜잭션 begin / commit / rollback 경계 제어
-- `REQUIRED`, `readOnly`, `rollbackFor`, `noRollbackFor` 지원
-- 현재 스레드의 커넥션과 중첩 depth 관리
+- `REQUIRED`, `REQUIRES_NEW`, `readOnly`, `rollbackFor`, `noRollbackFor` 지원
+- 현재 스레드의 커넥션과 중첩 depth 및 suspend/resume stack 관리
 
 ## 핵심 패키지
 
@@ -23,7 +23,7 @@
 ## 내부 핵심 클래스
 
 - `TransactionManager`
-  - 현재 스레드의 트랜잭션 상태를 보관한다.
+  - 현재 스레드의 트랜잭션 상태를 보관하며 `REQUIRES_NEW` 호출에서는 외부 경계를 잠시 중단한다.
 - `TransactionalBeanPostProcessor`
   - 대상 빈을 트랜잭션 프록시로 감싼다.
 - `ConnectionHolder`
@@ -54,6 +54,6 @@
 
 ## 현재 한계
 
-- propagation은 `REQUIRED` 중심
+- `REQUIRED`, `REQUIRES_NEW` 외 propagation 미지원
 - isolation, timeout 미지원
 - 다중 데이터소스/동기화 콜백 미지원
