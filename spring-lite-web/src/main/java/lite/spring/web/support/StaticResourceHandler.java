@@ -4,6 +4,7 @@ import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLConnection;
+import java.util.Arrays;
 import java.util.Map;
 
 /** Serves immutable classpath files after no controller mapping matched a request. */
@@ -44,6 +45,12 @@ public final class StaticResourceHandler {
             byte[] body = input.readAllBytes();
             exchange.getResponseHeaders().set("Content-Type", contentType(resourcePath));
             exchange.getResponseHeaders().set("Cache-Control", "public, max-age=3600");
+            String entityTag = entityTag(body);
+            exchange.getResponseHeaders().set("ETag", entityTag);
+            if (entityTag.equals(exchange.getRequestHeaders().getFirst("If-None-Match"))) {
+                exchange.sendResponseHeaders(304, -1);
+                return true;
+            }
             if ("HEAD".equalsIgnoreCase(exchange.getRequestMethod())) {
                 exchange.sendResponseHeaders(200, -1);
                 return true;
@@ -67,6 +74,10 @@ public final class StaticResourceHandler {
         String extension = extensionStart == 0 ? "" : resourcePath.substring(extensionStart).toLowerCase();
         String guessed = URLConnection.guessContentTypeFromName(resourcePath);
         return CONTENT_TYPES.getOrDefault(extension, guessed == null ? "application/octet-stream" : guessed);
+    }
+
+    private String entityTag(byte[] body) {
+        return '"' + Integer.toUnsignedString(Arrays.hashCode(body), 16) + '-' + body.length + '"';
     }
 
     private String trimSlashes(String value) {

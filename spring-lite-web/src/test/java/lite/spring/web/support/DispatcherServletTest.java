@@ -106,6 +106,37 @@ class DispatcherServletTest {
     }
 
     @Test
+    void returnsNotModifiedWhenStaticResourceEtagMatches() throws Exception {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
+            DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
+            StubHttpExchange initial = new StubHttpExchange("GET", URI.create("/hello.txt"), "");
+            dispatcherServlet.handle(initial);
+            StubHttpExchange conditional = new StubHttpExchange("GET", URI.create("/hello.txt"), "");
+            conditional.getRequestHeaders().set("If-None-Match", initial.getResponseHeaders().getFirst("ETag"));
+
+            dispatcherServlet.handle(conditional);
+
+            assertThat(conditional.statusCode()).isEqualTo(304);
+            assertThat(conditional.responseBodyAsString()).isEmpty();
+            assertThat(conditional.getResponseHeaders().getFirst("ETag")).isEqualTo(initial.getResponseHeaders().getFirst("ETag"));
+        }
+    }
+
+    @Test
+    void servesStaticResourceHeadersWithoutABodyForHeadRequests() throws Exception {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
+            DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
+            StubHttpExchange exchange = new StubHttpExchange("HEAD", URI.create("/hello.txt"), "");
+
+            dispatcherServlet.handle(exchange);
+
+            assertThat(exchange.statusCode()).isEqualTo(200);
+            assertThat(exchange.responseBodyAsString()).isEmpty();
+            assertThat(exchange.getResponseHeaders().getFirst("ETag")).isNotBlank();
+        }
+    }
+
+    @Test
     void rejectsTraversalAttemptsBeforeLoadingStaticResources() throws Exception {
         try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
             DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
