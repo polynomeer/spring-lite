@@ -107,7 +107,7 @@ export const questionCards = [
     labId: "comparison",
     scenario: "tx",
     difficulty: "advanced",
-    supportsLive: false,
+    supportsLive: true,
     questionEn: "What matches real Spring and what is intentionally simplified?",
     questionKo: "실제 Spring과 무엇이 같고 무엇이 의도적으로 단순화되었는가",
     goalEn: "Map the same concept across Spring Lite and Spring with one comparison scenario.",

@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
 import { TracePreview } from "../components/trace/TracePreview";
 import { TraceNarrativePanel } from "../components/trace/TraceNarrativePanel";
+import { DualRuntimePanel } from "../components/trace/DualRuntimePanel";
 import { adaptTrace } from "../features/trace-adapters";
 import { useLabTrace } from "../hooks/useLabTrace";
+import { useDualRuntimeTrace } from "../hooks/useDualRuntimeTrace";
 import {
   formatRunTime,
   getUiText,
@@ -121,6 +123,7 @@ export function App() {
   const activeQuestion = isDraftDirty ? selectedQuestion : executedQuestion;
 
   const { trace, error: traceError, loading, requestedMode, resolvedSource } = useLabTrace(executedRequest, reloadKey);
+  const dualRuntime = useDualRuntimeTrace(executedRequest.labId === "comparison" && executedRequest.scenario === "di" && executedRequest.mode === "live", reloadKey);
   const localizedTrace = useMemo(() => (trace ? localizeTrace(trace, locale) : null), [locale, trace]);
   const localizedStaticBaseline = useMemo(() => {
     if (executedRequest.labId !== "example-flow" || executedRequest.mode !== "live") {
@@ -631,6 +634,10 @@ export function App() {
                 nextStepDetail={narrativeNextDetail}
                 tone={narrativeTone}
               />
+
+              {executedRequest.labId === "comparison" && executedRequest.scenario === "di" && executedRequest.mode === "live" ? (
+                <DualRuntimePanel state={dualRuntime} />
+              ) : null}
 
               <label className="field">
                 <span>{text.requestPayload}</span>

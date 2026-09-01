@@ -1271,6 +1271,13 @@ code {
   overflow: hidden;
 }
 
+.dual-runtime-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.dual-runtime-card { display: grid; gap: 9px; padding: 12px; border: 1px solid var(--line); background: var(--surface-2); }
+.dual-runtime-card.live { border-top: 2px solid var(--accent); }
+.dual-runtime-card.static { border-top: 2px solid #8ab298; }
+.dual-runtime-metric { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 12px; }
+.dual-runtime-metric strong { color: var(--text); text-align: right; }
+
 .trace-panel::before {
   content: "";
   position: absolute;
