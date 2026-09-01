@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { TracePreview } from "../components/trace/TracePreview";
 import { TraceNarrativePanel } from "../components/trace/TraceNarrativePanel";
 import { DualRuntimePanel } from "../components/trace/DualRuntimePanel";
+import { RunProgressStrip } from "../components/trace/RunProgressStrip";
 import { adaptTrace } from "../features/trace-adapters";
 import { useLabTrace } from "../hooks/useLabTrace";
 import { useDualRuntimeTrace } from "../hooks/useDualRuntimeTrace";
@@ -641,6 +642,14 @@ export function App() {
                   <p>{executedRequest.mode === "live" ? endpointLabel : text.localStaticProvider}</p>
                 </div>
               </div>
+
+              <RunProgressStrip
+                locale={locale}
+                loading={loading}
+                source={resolvedSource}
+                isComparison={isLiveComparison}
+                comparison={dualRuntime}
+              />
 
               {traceStatus ? (
                 <div className={`run-focus-card tone-${traceStatus.tone}`}>

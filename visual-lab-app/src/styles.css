@@ -120,6 +120,7 @@ code {
 .chip-row,
 .lane-events,
 .runtime-strip,
+.run-progress-strip,
 .trace-status-row,
 .trace-tab-row,
 .query-mode-row {
@@ -128,6 +129,19 @@ code {
   flex-wrap: wrap;
   gap: 10px;
 }
+
+.run-progress-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 10px 0; }
+.run-progress-phase { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--line); color: var(--muted); background: rgba(7, 15, 10, 0.58); }
+.run-progress-phase > span { color: var(--muted); font-size: 11px; }
+.run-progress-phase > div { display: grid; gap: 2px; }
+.run-progress-phase strong { color: var(--text); font-size: 12px; }
+.run-progress-phase small { font-size: 11px; }
+.run-progress-phase.done { border-color: rgba(49, 255, 132, 0.38); }
+.run-progress-phase.done > span { color: var(--accent); }
+.run-progress-phase.active { border-color: rgba(200, 255, 121, 0.45); }
+.run-progress-phase.active > span { color: var(--warning); animation: run-progress-pulse 1s steps(2, end) infinite; }
+
+@keyframes run-progress-pulse { 50% { opacity: 0.35; } }
 
 .brand-mark {
   gap: 12px;
