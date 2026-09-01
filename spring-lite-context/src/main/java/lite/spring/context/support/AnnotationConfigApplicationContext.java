@@ -29,6 +29,7 @@ import lite.spring.context.event.ContextClosedEvent;
 import lite.spring.context.event.ContextRefreshedEvent;
 import lite.spring.context.factory.BeanPostProcessor;
 import lite.spring.context.factory.ConfigurableApplicationContext;
+import lite.spring.context.factory.FactoryBean;
 import lite.spring.context.scan.ClassPathScanner;
 import lite.spring.core.annotation.Autowired;
 import lite.spring.core.annotation.Bean;
@@ -56,6 +57,7 @@ import lite.spring.core.util.PropertyResolver;
 public class AnnotationConfigApplicationContext implements ConfigurableApplicationContext {
     private final Map<String, BeanDefinition> beanDefinitions = new LinkedHashMap<>();
     private final Map<String, Object> singletons = new LinkedHashMap<>();
+    private final Map<String, Object> factoryBeanObjects = new LinkedHashMap<>();
     private final Map<String, Runnable> destroyCallbacks = new LinkedHashMap<>();
     private final Map<String, ConditionMetadata> conditionMetadata = new LinkedHashMap<>();
     private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
@@ -156,14 +158,26 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
 
     @Override
     public Object getBean(String name) {
-        if (singletons.containsKey(name)) {
-            return singletons.get(name);
+        boolean factoryDereference = name.startsWith("&");
+        String beanName = factoryDereference ? name.substring(1) : name;
+        if (beanName.isBlank()) {
+            throw new NoSuchBeanException("Bean name must not be blank");
         }
-        BeanDefinition beanDefinition = beanDefinitions.get(name);
-        if (beanDefinition == null || !isBeanEligible(name)) {
-            throw new NoSuchBeanException("No bean named " + name);
+        Object bean = singletons.get(beanName);
+        if (bean == null) {
+            BeanDefinition beanDefinition = beanDefinitions.get(beanName);
+            if (beanDefinition == null || !isBeanEligible(beanName)) {
+                throw new NoSuchBeanException("No bean named " + beanName);
+            }
+            bean = createBean(beanName, beanDefinition);
         }
-        return createBean(name, beanDefinition);
+        if (factoryDereference) {
+            if (!(bean instanceof FactoryBean<?>)) {
+                throw new NoSuchBeanException("Bean named " + beanName + " is not a FactoryBean");
+            }
+            return bean;
+        }
+        return getObjectForBeanInstance(beanName, bean);
     }
 
     @Override
@@ -171,8 +185,19 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
         Map<String, T> result = new LinkedHashMap<>();
         for (String beanName : beanDefinitions.keySet()) {
             BeanDefinition beanDefinition = beanDefinitions.get(beanName);
-            if (isBeanEligible(beanName) && type.isAssignableFrom(beanDefinition.beanType())) {
-                result.put(beanName, type.cast(getBean(beanName)));
+            if (!isBeanEligible(beanName)) {
+                continue;
+            }
+            if (type.isAssignableFrom(beanDefinition.beanType())) {
+                Object bean = FactoryBean.class.isAssignableFrom(beanDefinition.beanType())
+                    ? getBean("&" + beanName)
+                    : getBean(beanName);
+                result.put(beanName, type.cast(bean));
+            } else if (FactoryBean.class.isAssignableFrom(beanDefinition.beanType())) {
+                Object product = getBean(beanName);
+                if (type.isInstance(product)) {
+                    result.put(beanName, type.cast(product));
+                }
             }
         }
         for (Map.Entry<String, Object> entry : singletons.entrySet()) {
@@ -181,6 +206,16 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
             }
         }
         return result;
+    }
+
+    private Object getObjectForBeanInstance(String beanName, Object bean) {
+        if (!(bean instanceof FactoryBean<?> factoryBean)) {
+            return bean;
+        }
+        if (!factoryBean.isSingleton()) {
+            return factoryBean.getObject();
+        }
+        return factoryBeanObjects.computeIfAbsent(beanName, ignored -> factoryBean.getObject());
     }
 
     @Override

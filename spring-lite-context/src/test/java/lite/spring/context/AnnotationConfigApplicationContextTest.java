@@ -12,6 +12,7 @@ import lite.spring.context.event.ApplicationListener;
 import lite.spring.context.event.ContextClosedEvent;
 import lite.spring.context.event.ContextRefreshedEvent;
 import lite.spring.context.factory.BeanPostProcessor;
+import lite.spring.context.factory.FactoryBean;
 import lite.spring.core.annotation.Bean;
 import lite.spring.core.annotation.ComponentScan;
 import lite.spring.core.annotation.Component;
@@ -64,6 +65,24 @@ class AnnotationConfigApplicationContextTest {
             assertThat(factoryBean.beanName()).isEqualTo("factoryAwareLifecycleBean");
             assertThat(factoryBean.applicationContext()).isSameAs(context);
             assertThat(factoryBean.postConstructObservedAwareState()).isTrue();
+        }
+    }
+
+    @Test
+    void exposesFactoryProductsAndAllowsFactoryDereference() {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(FactoryBeanConfig.class)) {
+            Formatter first = (Formatter) context.getBean("singletonFormatterFactory");
+            Formatter second = (Formatter) context.getBean("singletonFormatterFactory");
+            FactoryBean<?> factory = (FactoryBean<?>) context.getBean("&singletonFormatterFactory");
+            Formatter prototypeFirst = (Formatter) context.getBean("prototypeFormatterFactory");
+            Formatter prototypeSecond = (Formatter) context.getBean("prototypeFormatterFactory");
+
+            assertThat(first).isSameAs(second);
+            assertThat(first.value()).isEqualTo("factory-singleton");
+            assertThat(context.getBeansOfType(Formatter.class)).containsKeys("singletonFormatterFactory", "prototypeFormatterFactory");
+            assertThat(factory).isInstanceOf(SingletonFormatterFactory.class);
+            assertThat(prototypeFirst).isNotSameAs(prototypeSecond);
+            assertThat(prototypeFirst.value()).isEqualTo("factory-prototype");
         }
     }
 
@@ -397,6 +416,19 @@ class AnnotationConfigApplicationContextTest {
     }
 
     @Configuration
+    static class FactoryBeanConfig {
+        @Bean
+        SingletonFormatterFactory singletonFormatterFactory() {
+            return new SingletonFormatterFactory();
+        }
+
+        @Bean
+        PrototypeFormatterFactory prototypeFormatterFactory() {
+            return new PrototypeFormatterFactory();
+        }
+    }
+
+    @Configuration
     static class MissingValueConfig {
         @Bean
         MissingValueClient missingValueClient(@Value("${app.missing.value}") String value) {
@@ -653,6 +685,17 @@ class AnnotationConfigApplicationContextTest {
     }
 
     static class FactoryAwareLifecycleBean extends AwareLifecycleBean {
+    }
+
+    static class SingletonFormatterFactory implements FactoryBean<Formatter> {
+        @Override public Formatter getObject() { return () -> "factory-singleton"; }
+        @Override public Class<?> getObjectType() { return Formatter.class; }
+    }
+
+    static class PrototypeFormatterFactory implements FactoryBean<Formatter> {
+        @Override public Formatter getObject() { return new Formatter() { @Override public String value() { return "factory-prototype"; } }; }
+        @Override public Class<?> getObjectType() { return Formatter.class; }
+        @Override public boolean isSingleton() { return false; }
     }
 
     static class DestroyAwareBean {
