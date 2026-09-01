@@ -6,7 +6,7 @@
 
 - `@Transactional` 메타데이터 해석
 - 트랜잭션 begin / commit / rollback 경계 제어
-- `REQUIRED`, `rollbackFor`, `noRollbackFor` 지원
+- `REQUIRED`, `readOnly`, `rollbackFor`, `noRollbackFor` 지원
 - 현재 스레드의 커넥션과 중첩 depth 관리
 
 ## 핵심 패키지
@@ -55,5 +55,5 @@
 ## 현재 한계
 
 - propagation은 `REQUIRED` 중심
-- isolation, timeout, read-only 미지원
+- isolation, timeout 미지원
 - 다중 데이터소스/동기화 콜백 미지원

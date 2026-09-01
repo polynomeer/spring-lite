@@ -10,6 +10,8 @@ import java.lang.annotation.Target;
 public @interface Transactional {
     Propagation propagation() default Propagation.REQUIRED;
 
+    boolean readOnly() default false;
+
     Class<? extends Throwable>[] rollbackFor() default {};
 
     Class<? extends Throwable>[] noRollbackFor() default {};

@@ -13,19 +13,25 @@ public class TransactionManager {
     }
 
     public void begin() {
+        begin(false);
+    }
+
+    public void begin(boolean readOnly) {
         TransactionContext context = transactionContext.get();
         if (context != null) {
             context.incrementDepth();
             return;
         }
         if (dataSource == null) {
-            transactionContext.set(new TransactionContext(null));
+            transactionContext.set(new TransactionContext(null, readOnly, false));
             return;
         }
         try {
             Connection connection = dataSource.getConnection();
+            boolean originalReadOnly = connection.isReadOnly();
+            connection.setReadOnly(readOnly);
             connection.setAutoCommit(false);
-            transactionContext.set(new TransactionContext(connection));
+            transactionContext.set(new TransactionContext(connection, readOnly, originalReadOnly));
         } catch (SQLException exception) {
             throw new IllegalStateException("Failed to begin transaction", exception);
         }
@@ -44,7 +50,7 @@ public class TransactionManager {
             return;
         }
         if (context.rollbackOnly()) {
-            rollbackConnection(context.connection());
+            rollbackConnection(context);
             return;
         }
         try {
@@ -52,7 +58,7 @@ public class TransactionManager {
         } catch (SQLException exception) {
             throw new IllegalStateException("Failed to commit transaction", exception);
         } finally {
-            cleanup(context.connection());
+            cleanup(context);
         }
     }
 
@@ -69,7 +75,7 @@ public class TransactionManager {
             transactionContext.remove();
             return;
         }
-        rollbackConnection(context.connection());
+        rollbackConnection(context);
     }
 
     public boolean isTransactionActive() {
@@ -81,19 +87,21 @@ public class TransactionManager {
         return context == null ? null : context.connection();
     }
 
-    private void rollbackConnection(Connection connection) {
+    private void rollbackConnection(TransactionContext context) {
         try {
-            connection.rollback();
+            context.connection().rollback();
         } catch (SQLException exception) {
             throw new IllegalStateException("Failed to rollback transaction", exception);
         } finally {
-            cleanup(connection);
+            cleanup(context);
         }
     }
 
-    private void cleanup(Connection connection) {
+    private void cleanup(TransactionContext context) {
         try {
+            Connection connection = context.connection();
             connection.setAutoCommit(true);
+            connection.setReadOnly(context.originalReadOnly());
             connection.close();
         } catch (SQLException exception) {
             throw new IllegalStateException("Failed to close transaction connection", exception);
@@ -104,16 +112,22 @@ public class TransactionManager {
 
     private static final class TransactionContext {
         private final Connection connection;
+        private final boolean readOnly;
+        private final boolean originalReadOnly;
         private int depth = 1;
         private boolean rollbackOnly;
 
-        private TransactionContext(Connection connection) {
+        private TransactionContext(Connection connection, boolean readOnly, boolean originalReadOnly) {
             this.connection = connection;
+            this.readOnly = readOnly;
+            this.originalReadOnly = originalReadOnly;
         }
 
         private Connection connection() {
             return connection;
         }
+
+        private boolean originalReadOnly() { return originalReadOnly; }
 
         private void incrementDepth() {
             depth++;

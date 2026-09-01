@@ -78,7 +78,11 @@ public class TransactionalBeanPostProcessor implements BeanPostProcessor {
             if (transactional == null) {
                 return invocation.proceed();
             }
-            transactionManager.begin();
+            if (transactional.readOnly()) {
+                transactionManager.begin(true);
+            } else {
+                transactionManager.begin();
+            }
             try {
                 Object result = invocation.proceed();
                 transactionManager.commit();
