@@ -2,11 +2,10 @@
 
 ## Next Up
 
-- JAR 클래스패스 스캔 지원
-- `@Qualifier`, `@Value` 지원
-- 인터페이스 없는 클래스에 대한 프록시 전략 보강
-- 예외 처리기와 HTTP 상태 코드 매핑 고도화
-- JDBC 통합 테스트용 실제 임베디드 DB 시나리오 추가
+- DataSource 확장 지점과 연결 상태 진단
+- 컨테이너 빈/조건부 자동 설정 상태를 출력하는 CLI
+- `/api-docs`의 요청·응답 타입 요약
+- web request metrics와 trace export contract
 
 ## Open Decisions
 
@@ -17,12 +16,10 @@
 
 ## Deferred
 
-- `@Qualifier`
-- `@Value`
 - `@Aspect` 포인트컷 표현식 확장
-- 예외 처리 어드바이스
-- 테스트 슬라이스
-- 자동 설정 조건부 등록
+- isolation, timeout, 다중 DataSource 트랜잭션 정책
+- 정적 리소스 압축, range request, conditional GET
+- OpenAPI 호환 문서 생성
 
 ## Definition Of Done
 

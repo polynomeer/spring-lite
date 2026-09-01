@@ -24,7 +24,11 @@
 - 순환 의존성 경로 진단
 - `@Transactional(readOnly = true)` connection hint
 - `HttpMessageConverter` 기반 JSON / plain text 응답 변환
-- actuator-lite `/actuator/health`, `/actuator/info`
+- actuator-lite `/actuator/health`, `/actuator/info`, `/actuator/metrics`
+- `@Timed` 기반 메서드 timer와 in-memory metrics registry
+- `classpath:/static` fallback, cache header, 경로 탐색 차단
+- `/api-docs` runtime API catalogue
+- `REQUIRES_NEW` 전파와 외부 트랜잭션 suspend/resume
 
 이미 완료된 확장 항목도 있다.
 
@@ -49,14 +53,14 @@
 - `ResponseEntity`와 상태/헤더/빈 본문 처리
 - `@Order` 기반 AOP/트랜잭션 interceptor chain
 - `FactoryBean`, Aware callback, 의존 경로가 포함된 순환 참조 fail-fast
-- read-only transaction hint, 메시지 converter 최소 협상, actuator-lite
+- read-only / `REQUIRES_NEW` transaction hint, 메시지 converter 최소 협상, actuator-lite
 
 ## 현재 추천 순서
 
-1. 간단한 repository abstraction과 row-mapping helper
-2. 요청/메서드 실행 시간 측정 및 metrics registry
-3. 정적 리소스 서빙과 cache header
-4. OpenAPI-lite 및 CLI 진단 도구
+1. DataSource 확장 지점과 연결 진단
+2. CLI 기반 컨테이너/자동 설정 진단
+3. API catalogue의 요청·응답 타입 요약 확장
+4. metrics의 웹 요청 계측과 export contract
 
 ## Priority 1. JDBC / Transaction 고도화
 
@@ -95,7 +99,7 @@
 
 ## Priority 9. Web MVC 고도화
 
-### 21. 정적 리소스 서빙
+### 21. 정적 리소스 서빙 (완료)
 
 내장 서버와 MVC가 있는 만큼 정적 파일 제공도 좋은 학습 포인트다.
 
@@ -127,7 +131,7 @@ JDBC 위에 한 단계 더 올려 학습용 data abstraction을 만들 수 있�
 
 ## Priority 12. Observability And Operations
 
-### 28. 요청 로깅 / 실행 시간 측정
+### 28. 요청 로깅 / 실행 시간 측정 (부분 완료)
 
 프레임워크를 학습할 때 observability는 좋은 공통 관심사 예제다.
 
@@ -143,7 +147,7 @@ JDBC 위에 한 단계 더 올려 학습용 data abstraction을 만들 수 있�
 
 ## Priority 13. Developer Experience
 
-### 30. 코드 생성 없는 API 문서화
+### 30. 코드 생성 없는 API 문서화 (부분 완료)
 
 웹 애노테이션 메타데이터를 읽어서 문서를 뽑아내면 학습 프로젝트로서 만족도가 높다.
 
