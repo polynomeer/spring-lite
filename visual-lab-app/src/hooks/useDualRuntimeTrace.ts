@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchDualRuntimeDiTraces } from "../lib/live-api";
+import { fetchDualRuntimeComparisonTraces } from "../lib/live-api";
 import type { LabTrace } from "../lib/types";
 
 export interface DualRuntimeTraceState {
@@ -18,7 +18,7 @@ const initialState: DualRuntimeTraceState = {
   loading: false
 };
 
-export function useDualRuntimeTrace(enabled: boolean, runSequence: number): DualRuntimeTraceState {
+export function useDualRuntimeTrace(enabled: boolean, scenario: string, runSequence: number): DualRuntimeTraceState {
   const [state, setState] = useState<DualRuntimeTraceState>(initialState);
 
   useEffect(() => {
@@ -28,7 +28,7 @@ export function useDualRuntimeTrace(enabled: boolean, runSequence: number): Dual
     }
     let cancelled = false;
     setState({ ...initialState, loading: true });
-    fetchDualRuntimeDiTraces().then(([lite, boot]) => {
+    fetchDualRuntimeComparisonTraces(scenario).then(([lite, boot]) => {
       if (cancelled) return;
       setState({
         springLite: lite.status === "fulfilled" ? lite.value : null,
@@ -39,7 +39,7 @@ export function useDualRuntimeTrace(enabled: boolean, runSequence: number): Dual
       });
     });
     return () => { cancelled = true; };
-  }, [enabled, runSequence]);
+  }, [enabled, runSequence, scenario]);
 
   return state;
 }

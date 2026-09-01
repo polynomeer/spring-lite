@@ -42,4 +42,22 @@ class ComparisonSpringLiteWebTest {
         assertThat(response.body()).contains("\"value\":\"spring-lite\"");
         assertThat(response.body()).contains("[spring-lite] Hello, Visual Lab");
     }
+
+    @Test
+    void exposesNormalizedLiveMvcTrace(MockMvc mockMvc) {
+        MockHttpResponse response = mockMvc.get("/lab/compare/mvc");
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).contains("\"scenario\":\"mvc\"");
+        assertThat(response.body()).contains("[spring-lite] Hello, Dr visual-lab");
+    }
+
+    @Test
+    void exposesNormalizedRollbackTrace(MockMvc mockMvc) {
+        MockHttpResponse response = mockMvc.get("/lab/compare/tx");
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).contains("\"scenario\":\"tx\"");
+        assertThat(response.body()).contains("\"value\":\"verified\"");
+    }
 }

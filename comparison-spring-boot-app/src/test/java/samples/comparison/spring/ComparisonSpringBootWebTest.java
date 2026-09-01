@@ -50,4 +50,20 @@ class ComparisonSpringBootWebTest {
             .andExpect(content().string(org.hamcrest.Matchers.containsString("\"value\":\"spring\"")))
             .andExpect(content().string(org.hamcrest.Matchers.containsString("[spring] Hello, Visual Lab")));
     }
+
+    @Test
+    void exposesNormalizedLiveMvcTrace() throws Exception {
+        mockMvc().perform(get("/lab/compare/mvc"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("\"scenario\":\"mvc\"")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("[spring] Hello, Dr visual-lab")));
+    }
+
+    @Test
+    void exposesNormalizedRollbackTrace() throws Exception {
+        mockMvc().perform(get("/lab/compare/tx"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("\"scenario\":\"tx\"")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("\"value\":\"verified\"")));
+    }
 }

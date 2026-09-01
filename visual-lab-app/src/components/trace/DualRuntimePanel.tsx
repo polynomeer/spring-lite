@@ -1,6 +1,6 @@
 import type { DualRuntimeTraceState } from "../../hooks/useDualRuntimeTrace";
 
-export function DualRuntimePanel({ state }: { state: DualRuntimeTraceState }) {
+export function DualRuntimePanel({ scenario, state }: { scenario: string; state: DualRuntimeTraceState }) {
   const runtimes = [
     { label: "Spring Lite", trace: state.springLite, error: state.springLiteError, tone: "live" },
     { label: "Spring Boot", trace: state.springBoot, error: state.springBootError, tone: "static" }
@@ -8,7 +8,7 @@ export function DualRuntimePanel({ state }: { state: DualRuntimeTraceState }) {
 
   return (
     <article className="trace-panel dual-runtime-panel">
-      <div className="trace-head"><div><p className="eyebrow">dual runtime</p><h3>Live DI comparison</h3></div></div>
+      <div className="trace-head"><div><p className="eyebrow">dual runtime</p><h3>Live {scenario.toUpperCase()} comparison</h3></div></div>
       <p role="status" aria-atomic="true" className="mode-note">
         {state.loading ? "Running both runtime endpoints..." : "Each column is an independently observed server response."}
       </p>

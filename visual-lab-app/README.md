@@ -84,7 +84,7 @@ npm run dev
 - `playground / mvc-validation`
 - `container / bootstrap-full`
 - `container / lifecycle-proxy`
-- `comparison / di` (Spring Lite와 Spring Boot 서버를 동시에 조회)
+- `comparison / di`, `comparison / mvc`, `comparison / tx` (Spring Lite와 Spring Boot 서버를 동시에 조회)
 
 이 시나리오들은 모두 같은 `LabTrace` 스키마로 내려오며, 일부는 실제 서비스/트랜잭션/JDBC 경로를 실행하고 일부는 컨트롤러 선행 검증 분기를 정규화해서 보여준다.
 
@@ -108,10 +108,8 @@ static mode에서 현재 포함된 랩 범위는 다음과 같다.
   - `mvc`
   - `tx`
 
-`comparison / mvc`, `comparison / tx`는 현재 static trace로 제공된다. 각 runtime의 동등한 live endpoint가 준비되면 dual-runtime panel에 같은 방식으로 연결한다.
-
 ## 다음 구현 순서
 
-1. `comparison / mvc`, `comparison / tx`의 live trace contract를 추가한다.
-2. 두 runtime 결과의 step, metric, outcome 차이를 강조하는 diff를 제공한다.
-3. request form 편집, replay, 저장 세션 같은 상호작용을 확장한다.
+1. 두 runtime 결과의 step, metric, outcome 차이를 강조하는 diff를 제공한다.
+2. request form 편집, replay, 저장 세션 같은 상호작용을 확장한다.
+3. comparison trace의 요청 파라미터를 편집하고 결과를 재현할 수 있게 한다.

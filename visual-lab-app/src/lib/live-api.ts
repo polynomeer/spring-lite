@@ -29,9 +29,9 @@ async function fetchComparisonTrace(endpoint: string, runtime: string): Promise<
   return (await response.json()) as LabTrace;
 }
 
-export function fetchDualRuntimeDiTraces() {
+export function fetchDualRuntimeComparisonTraces(scenario: string) {
   return Promise.allSettled([
-    fetchComparisonTrace(springLiteCompareEndpoint, "Spring Lite"),
-    fetchComparisonTrace(springBootCompareEndpoint, "Spring Boot")
+    fetchComparisonTrace(springLiteCompareEndpoint(scenario), "Spring Lite"),
+    fetchComparisonTrace(springBootCompareEndpoint(scenario), "Spring Boot")
   ]);
 }

@@ -4,23 +4,58 @@ import java.util.List;
 import java.util.Map;
 import lite.spring.web.annotation.GetMapping;
 import lite.spring.web.annotation.RestController;
+import samples.comparison.lite.greeting.GreetingController;
 import samples.comparison.lite.greeting.GreetingService;
+import samples.comparison.lite.order.OrderRepository;
+import samples.comparison.lite.order.OrderService;
 
 @RestController
 public class ComparisonLabTraceController {
     private final GreetingService greetingService;
+    private final GreetingController greetingController;
+    private final OrderService orderService;
+    private final OrderRepository orderRepository;
 
-    public ComparisonLabTraceController(GreetingService greetingService) {
+    public ComparisonLabTraceController(
+        GreetingService greetingService,
+        GreetingController greetingController,
+        OrderService orderService,
+        OrderRepository orderRepository
+    ) {
         this.greetingService = greetingService;
+        this.greetingController = greetingController;
+        this.orderService = orderService;
+        this.orderRepository = orderRepository;
     }
 
     @GetMapping("/lab/compare/di")
     public Map<String, Object> dependencyInjectionTrace() {
         String greeting = greetingService.greet("Visual Lab");
-        return trace("spring-lite", greeting, "Explicit annotation scanning and compact constructor resolution.");
+        return dependencyInjectionTrace("spring-lite", greeting, "Explicit annotation scanning and compact constructor resolution.");
     }
 
-    private Map<String, Object> trace(String runtime, String greeting, String detail) {
+    @GetMapping("/lab/compare/mvc")
+    public Map<String, Object> mvcTrace() {
+        Map<String, Object> response = greetingController.greet("visual-lab", "Dr");
+        String greeting = (String) response.get("message");
+        return mvcTrace("spring-lite", greeting, "Compact dispatcher, argument resolver, and JSON response path.");
+    }
+
+    @GetMapping("/lab/compare/tx")
+    public Map<String, Object> transactionTrace() {
+        long before = orderRepository.count();
+        String outcome;
+        try {
+            orderService.createOrder("visual-lab-rollback", 1, true);
+            outcome = "unexpected commit";
+        } catch (IllegalStateException exception) {
+            outcome = exception.getMessage();
+        }
+        long after = orderRepository.count();
+        return transactionTrace("spring-lite", before, after, outcome, "Explicit REQUIRED transaction manager and rollback rules.");
+    }
+
+    private Map<String, Object> dependencyInjectionTrace(String runtime, String greeting, String detail) {
         return Map.ofEntries(
             Map.entry("id", "live-comparison-di-" + runtime),
             Map.entry("labId", "comparison"),
@@ -49,6 +84,74 @@ public class ComparisonLabTraceController {
             )),
             Map.entry("snapshot", Map.of("watch", "Both applications execute a real injected service, not an example-only trace.", "why", detail, "next", "Run the paired endpoint and compare the normalized traces.")),
             Map.entry("references", List.of("comparison-spring-lite-app/src/main/java/samples/comparison/lite/greeting/GreetingService.java"))
+        );
+    }
+
+    private Map<String, Object> mvcTrace(String runtime, String greeting, String detail) {
+        return Map.ofEntries(
+            Map.entry("id", "live-comparison-mvc-" + runtime),
+            Map.entry("labId", "comparison"),
+            Map.entry("title", "Live MVC Comparison Trace"),
+            Map.entry("mode", "live"),
+            Map.entry("scenario", "mvc"),
+            Map.entry("summary", "Live MVC trace generated after invoking a real controller method in the " + runtime + " comparison application."),
+            Map.entry("metrics", List.of(
+                Map.of("label", "Runtime", "value", runtime, "detail", "The server that produced this trace."),
+                Map.of("label", "HTTP Outcome", "value", "200 JSON", "detail", "The controller returned a response body."),
+                Map.of("label", "Greeting Result", "value", greeting, "detail", "Actual controller-to-service invocation result.")
+            )),
+            Map.entry("steps", List.of(
+                Map.of("id", "dispatch", "title", "Request mapped", "detail", "The front controller resolves the greeting handler.", "marker", "dispatch", "kind", "success"),
+                Map.of("id", "bind", "title", "Arguments bound", "detail", "Path and request parameters reach the controller method.", "marker", "bind", "kind", "success"),
+                Map.of("id", "render", "title", "JSON response rendered", "detail", greeting, "marker", "render", "kind", "success")
+            )),
+            Map.entry("lanes", List.of(
+                Map.of("id", "web", "label", "Web", "detail", detail, "kind", "web", "events", List.of(
+                    Map.of("id", "web-1", "text", "GET /greetings/visual-lab?title=Dr", "kind", "success"),
+                    Map.of("id", "web-2", "text", "resolve GreetingController", "kind", "success")
+                )),
+                Map.of("id", "application", "label", "Application", "detail", "The real controller delegates to its injected service.", "kind", "service", "events", List.of(
+                    Map.of("id", "application-1", "text", greeting, "kind", "success")
+                ))
+            )),
+            Map.entry("snapshot", Map.of("watch", "Both runtimes pass through a real controller and service boundary.", "why", detail, "next", "Compare the same transaction rollback in both runtimes.")),
+            Map.entry("references", List.of("comparison-spring-lite-app/src/main/java/samples/comparison/lite/greeting/GreetingController.java"))
+        );
+    }
+
+    private Map<String, Object> transactionTrace(String runtime, long before, long after, String outcome, String detail) {
+        return Map.ofEntries(
+            Map.entry("id", "live-comparison-tx-" + runtime),
+            Map.entry("labId", "comparison"),
+            Map.entry("title", "Live Transaction Comparison Trace"),
+            Map.entry("mode", "live"),
+            Map.entry("scenario", "tx"),
+            Map.entry("summary", "Live rollback trace generated by a failing transactional order operation in the " + runtime + " comparison application."),
+            Map.entry("metrics", List.of(
+                Map.of("label", "Runtime", "value", runtime, "detail", "The server that produced this trace."),
+                Map.of("label", "Orders Before", "value", String.valueOf(before), "detail", "Repository count before the failing call."),
+                Map.of("label", "Orders After", "value", String.valueOf(after), "detail", "The count remains unchanged after rollback."),
+                Map.of("label", "Rollback", "value", before == after ? "verified" : "failed", "detail", outcome)
+            )),
+            Map.entry("steps", List.of(
+                Map.of("id", "proxy", "title", "Transactional call intercepted", "detail", "The @Transactional service method begins a transaction.", "marker", "proxy", "kind", "success"),
+                Map.of("id", "save", "title", "Order insert attempted", "detail", "The service saves an order before requesting failure.", "marker", "jdbc", "kind", "warning"),
+                Map.of("id", "rollback", "title", "Rollback verified", "detail", outcome + "; repository count " + before + " -> " + after + ".", "marker", "rollback", "kind", before == after ? "success" : "error")
+            )),
+            Map.entry("lanes", List.of(
+                Map.of("id", "service", "label", "Service", "detail", "A real proxied service method throws after saving.", "kind", "service", "events", List.of(
+                    Map.of("id", "service-1", "text", "createOrder(..., failAfterSave=true)", "kind", "warning")
+                )),
+                Map.of("id", "transaction", "label", "Transaction", "detail", detail, "kind", "tx", "events", List.of(
+                    Map.of("id", "tx-1", "text", "begin transaction", "kind", "success"),
+                    Map.of("id", "tx-2", "text", "rollback on IllegalStateException", "kind", before == after ? "success" : "error")
+                )),
+                Map.of("id", "jdbc", "label", "JDBC", "detail", "Repository count confirms the database outcome.", "kind", "jdbc", "events", List.of(
+                    Map.of("id", "jdbc-1", "text", "orders: " + before + " -> " + after, "kind", before == after ? "success" : "error")
+                ))
+            )),
+            Map.entry("snapshot", Map.of("watch", "The endpoint measures the persisted outcome, not only the exception.", "why", detail, "next", "Contrast the shared rollback result with each runtime's transaction infrastructure.")),
+            Map.entry("references", List.of("comparison-spring-lite-app/src/main/java/samples/comparison/lite/order/OrderService.java"))
         );
     }
 }
