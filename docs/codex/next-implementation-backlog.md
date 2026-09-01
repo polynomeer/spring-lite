@@ -19,6 +19,12 @@
 - profile-aware property loading과 공통 conversion service
 - `@Order` 기반 interceptor chain 정렬과 프록시 합성
 - `@Transactional` 테스트 롤백 지원
+- `FactoryBean` product / factory dereference 모델
+- `BeanNameAware`, `ApplicationContextAware` lifecycle callback
+- 순환 의존성 경로 진단
+- `@Transactional(readOnly = true)` connection hint
+- `HttpMessageConverter` 기반 JSON / plain text 응답 변환
+- actuator-lite `/actuator/health`, `/actuator/info`
 
 이미 완료된 확장 항목도 있다.
 
@@ -34,102 +40,25 @@
 - `@SpringLiteTest`와 mock web 테스트 지원
 - JDBC/H2 기반 예제 앱과 설정 주입 예시
 
-## Priority 1. Boot 완성도
+## 완료된 초기 확장
 
-### 1. 조건부 자동 설정
+아래 항목은 이미 구현되었으며, 이후 기능은 이 구조를 전제로 확장한다.
 
-현재 자동 설정은 코드 기반 기본 등록 수준이다. 다음 단계는 Spring Boot 스타일의 조건부 등록 모델을 추가하는 것이다.
+- 조건부 자동 설정: `@ConditionalOnMissingBean`, `@ConditionalOnClass`, `@ConditionalOnProperty`
+- 기능별 auto-configuration과 `WebServer` / `WebServerFactory` 분리
+- `ResponseEntity`와 상태/헤더/빈 본문 처리
+- `@Order` 기반 AOP/트랜잭션 interceptor chain
+- `FactoryBean`, Aware callback, 의존 경로가 포함된 순환 참조 fail-fast
+- read-only transaction hint, 메시지 converter 최소 협상, actuator-lite
 
-구현 후보:
+## 현재 추천 순서
 
-- `@ConditionalOnMissingBean`
-- `@ConditionalOnClass`
-- `@ConditionalOnProperty`
+1. 간단한 repository abstraction과 row-mapping helper
+2. 요청/메서드 실행 시간 측정 및 metrics registry
+3. 정적 리소스 서빙과 cache header
+4. OpenAPI-lite 및 CLI 진단 도구
 
-완료 기준:
-
-- 기본 인프라 Bean이 "필요할 때만" 등록된다.
-- 사용자 정의 Bean이 있으면 자동 설정이 자연스럽게 비활성화된다.
-
-### 2. 자동 설정 모듈화
-
-현재 부트스트랩 인프라는 하나의 registrar에 모여 있다. 이를 기능별 자동 설정 클래스로 분리하면 구조가 더 명확해진다.
-
-구현 후보:
-
-- `WebAutoConfiguration`
-- `JdbcAutoConfiguration`
-- `TransactionAutoConfiguration`
-- `JsonAutoConfiguration`
-
-완료 기준:
-
-- 자동 설정 단위별 책임이 분리된다.
-- 예제 앱이 필요한 자동 설정만 로드하는 흐름이 드러난다.
-
-### 3. 서버 추상화
-
-현재는 JDK `HttpServer`에 고정되어 있다. Boot 계층과 서버 구현을 분리하면 향후 확장이 쉬워진다.
-
-구현 후보:
-
-- `WebServer`
-- `WebServerFactory`
-- `JdkWebServer`
-
-완료 기준:
-
-- 애플리케이션 실행 계층이 구체 서버 구현에 직접 의존하지 않는다.
-
-## Priority 2. AOP 재현도
-
-### 4. Advisor 정렬과 체인 고도화
-
-트랜잭션, 로깅, 측정이 함께 적용될 때 실행 순서가 명확해야 한다.
-
-구현 후보:
-
-- `Ordered` 또는 `@Order`
-- interceptor chain 정렬 규칙
-- 중첩 advisor 적용 테스트
-
-완료 기준:
-
-- 동일 Bean에 여러 advisor가 적용될 때 순서가 예측 가능하다.
-
-## Priority 3. Web MVC 확장
-
-### 6. 응답 모델 확장
-
-현재는 JSON 본문 중심이다. 상태 코드와 헤더를 표현하는 응답 모델이 필요하다.
-
-구현 후보:
-
-- `ResponseEntity`
-- 응답 헤더 설정 API
-- 빈 본문 응답 처리
-
-완료 기준:
-
-- 컨트롤러가 상태 코드, 헤더, 바디를 명시적으로 제어할 수 있다.
-
-## Priority 4. Container 심화
-
-### 10. 순환 의존성 정책 명시
-
-현재 구조에서 순환 참조는 실패하거나 우연히 통과할 수 있다. 정책을 명확히 해야 한다.
-
-구현 후보:
-
-- 생성자 순환 의존 탐지
-- 의존성 경로 포함 예외 메시지
-- 필드/세터 주입을 도입하지 않는다면 명시적 비지원 정책 문서화
-
-완료 기준:
-
-- 순환 의존 시 실패 이유와 경로를 한 번에 확인할 수 있다.
-
-## Priority 5. JDBC / Transaction 고도화
+## Priority 1. JDBC / Transaction 고도화
 
 ### 14. DataSource 추상화 확장
 
@@ -143,17 +72,6 @@
 완료 기준:
 
 - `DriverManagerDataSource` 외의 확장 지점이 제공된다.
-
-## Priority 6. Test Support
-
-## Priority 7. Example App 강화
-
-## 현재 이후 추천 구현 순서
-
-현 시점에서 가장 효율적인 순서는 아래다.
-
-1. 콘텐츠 협상과 메시지 변환기 추상화
-2. 더 풍부한 auto-configuration 조건과 조립 전략
 
 ## 추가 확장 후보
 
@@ -177,20 +95,6 @@
 
 ## Priority 9. Web MVC 고도화
 
-### 20. 콘텐츠 협상과 메시지 변환기 추상화
-
-현재는 JSON 고정이다. 메시지 변환기 추상화를 도입하면 MVC 구조가 더 Spring답게 변한다.
-
-구현 후보:
-
-- `HttpMessageConverter`
-- JSON converter 분리
-- `text/plain` 또는 `application/json` 최소 협상
-
-완료 기준:
-
-- 반환 타입과 `Content-Type` 처리 계층이 분리된다.
-
 ### 21. 정적 리소스 서빙
 
 내장 서버와 MVC가 있는 만큼 정적 파일 제공도 좋은 학습 포인트다.
@@ -206,46 +110,7 @@
 
 ## Priority 10. Container And Extension Model
 
-### 24. `FactoryBean` 유사 모델
-
-Spring에서 "Bean 자체"와 "Bean을 만들어내는 팩토리"를 구분하는 개념은 중요하다.
-
-구현 후보:
-
-- 팩토리 객체 계약
-- 팩토리 결과물과 팩토리 자신 조회 구분
-
-완료 기준:
-
-- 인프라성 Bean 생성 패턴을 일반화할 수 있다.
-
-### 25. Aware 인터페이스 최소 지원
-
-컨테이너 확장 학습을 위해 `ApplicationContextAware` 같은 콜백 모델은 의미가 있다.
-
-구현 후보:
-
-- `ApplicationContextAware`
-- `BeanNameAware`
-
-완료 기준:
-
-- 특정 Bean이 컨테이너 메타정보를 안전하게 받을 수 있다.
-
 ## Priority 11. Transactions And Data
-
-### 26. 선언적 읽기 전용 트랜잭션
-
-트랜잭션 속성 모델의 첫 확장으로 `readOnly`는 비교적 단순하고 설명 가치가 높다.
-
-구현 후보:
-
-- `@Transactional(readOnly = true)`
-- JDBC connection 힌트 반영 여부 검토
-
-완료 기준:
-
-- 읽기 전용 서비스 메서드의 정책이 애노테이션에 드러난다.
 
 ### 27. 간단한 repository 추상화
 
@@ -275,20 +140,6 @@ JDBC 위에 한 단계 더 올려 학습용 data abstraction을 만들 수 있�
 완료 기준:
 
 - 웹 요청과 서비스 호출의 실행 흐름을 눈으로 확인할 수 있다.
-
-### 29. 헬스체크와 정보 엔드포인트
-
-Boot 계층 설명용으로 actuator-lite 성격의 기능을 넣을 수 있다.
-
-구현 후보:
-
-- `/actuator/health`
-- `/actuator/info`
-- 등록된 Bean 수나 서버 포트 노출
-
-완료 기준:
-
-- 러닝 애플리케이션의 상태를 최소 수준으로 확인할 수 있다.
 
 ## Priority 13. Developer Experience
 
