@@ -31,4 +31,15 @@ class ComparisonSpringLiteWebTest {
         assertThat(response.statusCode()).isEqualTo(200);
         assertThat(response.body()).contains("\"product\":\"book\"");
     }
+
+    @Test
+    void exposesNormalizedLiveDependencyInjectionTrace(MockMvc mockMvc) {
+        MockHttpResponse response = mockMvc.get("/lab/compare/di");
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).contains("\"labId\":\"comparison\"");
+        assertThat(response.body()).contains("\"scenario\":\"di\"");
+        assertThat(response.body()).contains("\"value\":\"spring-lite\"");
+        assertThat(response.body()).contains("[spring-lite] Hello, Visual Lab");
+    }
 }

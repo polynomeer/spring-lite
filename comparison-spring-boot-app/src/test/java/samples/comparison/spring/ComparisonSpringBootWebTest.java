@@ -40,4 +40,14 @@ class ComparisonSpringBootWebTest {
             .andExpect(status().isOk())
             .andExpect(content().string(org.hamcrest.Matchers.containsString("\"product\":\"book\"")));
     }
+
+    @Test
+    void exposesNormalizedLiveDependencyInjectionTrace() throws Exception {
+        mockMvc().perform(get("/lab/compare/di"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("\"labId\":\"comparison\"")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("\"scenario\":\"di\"")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("\"value\":\"spring\"")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("[spring] Hello, Visual Lab")));
+    }
 }
