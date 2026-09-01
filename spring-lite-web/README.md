@@ -27,7 +27,7 @@
 
 - `DispatcherServlet`
 - `ResponseEntity`
-- `@RestController`, `@RequestMapping`, `@GetMapping`, `@PostMapping`
+- `@RestController`, `@RequestMapping`, `@GetMapping`, `@PostMapping`, `@PutMapping`, `@DeleteMapping`
 - `@RequestBody`, `@RequestParam`, `@PathVariable`
 
 ## 내부 핵심 클래스

@@ -10,6 +10,8 @@ import java.util.Map;
 import lite.spring.aop.support.ProxyFactory;
 import lite.spring.context.ApplicationContext;
 import lite.spring.web.annotation.GetMapping;
+import lite.spring.web.annotation.PutMapping;
+import lite.spring.web.annotation.DeleteMapping;
 import lite.spring.web.annotation.PathVariable;
 import lite.spring.web.annotation.PostMapping;
 import lite.spring.web.annotation.RequestBody;
@@ -43,6 +45,12 @@ public class ApiDocumentationController {
                 } else if (method.isAnnotationPresent(PostMapping.class)) {
                     httpMethod = "POST";
                     methodPath = method.getAnnotation(PostMapping.class).value();
+                } else if (method.isAnnotationPresent(PutMapping.class)) {
+                    httpMethod = "PUT";
+                    methodPath = method.getAnnotation(PutMapping.class).value();
+                } else if (method.isAnnotationPresent(DeleteMapping.class)) {
+                    httpMethod = "DELETE";
+                    methodPath = method.getAnnotation(DeleteMapping.class).value();
                 }
                 if (httpMethod != null) {
                     endpoints.add(describeEndpoint(targetClass, method, httpMethod, normalizePath(basePath, methodPath)));
@@ -64,17 +72,46 @@ public class ApiDocumentationController {
         endpoint.put("handler", targetClass.getSimpleName() + "#" + method.getName());
         endpoint.put("responseType", typeName(method.getReturnType()));
         endpoint.put("parameters", describeParameters(method));
-        if (method.isAnnotationPresent(GetMapping.class)) {
-            GetMapping mapping = method.getAnnotation(GetMapping.class);
-            endpoint.put("produces", List.of(mapping.produces()));
-            endpoint.put("headers", List.of(mapping.headers()));
-            endpoint.put("params", List.of(mapping.params()));
+        if (method.isAnnotationPresent(GetMapping.class) || method.isAnnotationPresent(DeleteMapping.class)) {
+            String[] produces;
+            String[] headers;
+            String[] params;
+            if (method.isAnnotationPresent(GetMapping.class)) {
+                GetMapping mapping = method.getAnnotation(GetMapping.class);
+                produces = mapping.produces();
+                headers = mapping.headers();
+                params = mapping.params();
+            } else {
+                DeleteMapping mapping = method.getAnnotation(DeleteMapping.class);
+                produces = mapping.produces();
+                headers = mapping.headers();
+                params = mapping.params();
+            }
+            endpoint.put("produces", List.of(produces));
+            endpoint.put("headers", List.of(headers));
+            endpoint.put("params", List.of(params));
         } else {
-            PostMapping mapping = method.getAnnotation(PostMapping.class);
-            endpoint.put("consumes", List.of(mapping.consumes()));
-            endpoint.put("produces", List.of(mapping.produces()));
-            endpoint.put("headers", List.of(mapping.headers()));
-            endpoint.put("params", List.of(mapping.params()));
+            String[] consumes;
+            String[] produces;
+            String[] headers;
+            String[] params;
+            if (method.isAnnotationPresent(PostMapping.class)) {
+                PostMapping mapping = method.getAnnotation(PostMapping.class);
+                consumes = mapping.consumes();
+                produces = mapping.produces();
+                headers = mapping.headers();
+                params = mapping.params();
+            } else {
+                PutMapping mapping = method.getAnnotation(PutMapping.class);
+                consumes = mapping.consumes();
+                produces = mapping.produces();
+                headers = mapping.headers();
+                params = mapping.params();
+            }
+            endpoint.put("consumes", List.of(consumes));
+            endpoint.put("produces", List.of(produces));
+            endpoint.put("headers", List.of(headers));
+            endpoint.put("params", List.of(params));
         }
         return endpoint;
     }

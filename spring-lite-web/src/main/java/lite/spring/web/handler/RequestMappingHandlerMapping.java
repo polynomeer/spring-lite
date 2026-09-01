@@ -15,6 +15,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lite.spring.context.ApplicationContext;
 import lite.spring.web.annotation.GetMapping;
+import lite.spring.web.annotation.PutMapping;
+import lite.spring.web.annotation.DeleteMapping;
 import lite.spring.web.annotation.PostMapping;
 import lite.spring.web.annotation.RequestMapping;
 import lite.spring.web.annotation.RestController;
@@ -86,6 +88,18 @@ public class RequestMappingHandlerMapping implements HandlerMapping {
                         classPath,
                         mapping.value(),
                         classConditions.merge(RequestConditions.fromPostMapping(mapping))
+                    ));
+                } else if (method.isAnnotationPresent(PutMapping.class)) {
+                    PutMapping mapping = method.getAnnotation(PutMapping.class);
+                    discovered.add(newHandler(
+                        bean, method, HttpMethod.PUT, classPath, mapping.value(),
+                        classConditions.merge(RequestConditions.fromPutMapping(mapping))
+                    ));
+                } else if (method.isAnnotationPresent(DeleteMapping.class)) {
+                    DeleteMapping mapping = method.getAnnotation(DeleteMapping.class);
+                    discovered.add(newHandler(
+                        bean, method, HttpMethod.DELETE, classPath, mapping.value(),
+                        classConditions.merge(RequestConditions.fromDeleteMapping(mapping))
                     ));
                 }
             }
@@ -255,6 +269,14 @@ public class RequestMappingHandlerMapping implements HandlerMapping {
                 List.of(postMapping.headers()),
                 List.of(postMapping.params())
             );
+        }
+
+        private static RequestConditions fromPutMapping(PutMapping putMapping) {
+            return new RequestConditions(List.of(putMapping.consumes()), List.of(putMapping.produces()), List.of(putMapping.headers()), List.of(putMapping.params()));
+        }
+
+        private static RequestConditions fromDeleteMapping(DeleteMapping deleteMapping) {
+            return new RequestConditions(List.of(), List.of(deleteMapping.produces()), List.of(deleteMapping.headers()), List.of(deleteMapping.params()));
         }
 
         private RequestConditions merge(RequestConditions other) {

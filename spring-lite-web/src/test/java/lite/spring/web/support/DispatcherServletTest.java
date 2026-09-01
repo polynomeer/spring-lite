@@ -25,6 +25,8 @@ import lite.spring.core.validation.Valid;
 import lite.spring.core.metrics.MetricsRegistry;
 import lite.spring.web.annotation.ControllerAdvice;
 import lite.spring.web.annotation.GetMapping;
+import lite.spring.web.annotation.PutMapping;
+import lite.spring.web.annotation.DeleteMapping;
 import lite.spring.web.annotation.ExceptionHandler;
 import lite.spring.web.annotation.PathVariable;
 import lite.spring.web.annotation.PostMapping;
@@ -60,6 +62,24 @@ class DispatcherServletTest {
 
             assertThat(exchange.statusCode()).withFailMessage(exchange.responseBodyAsString()).isEqualTo(200);
             assertThat(exchange.responseBodyAsString()).isEqualTo("{\"message\":\"created spring-lite x2\"}");
+        }
+    }
+
+    @Test
+    void dispatchesPutAndDeleteRequests() throws Exception {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class)) {
+            DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
+            StubHttpExchange put = new StubHttpExchange("PUT", URI.create("/greetings/7"), "{\"name\":\"updated\",\"quantity\":1}");
+            put.getRequestHeaders().set("Content-Type", "application/json");
+            StubHttpExchange delete = new StubHttpExchange("DELETE", URI.create("/greetings/7"), "");
+
+            dispatcherServlet.handle(put);
+            dispatcherServlet.handle(delete);
+
+            assertThat(put.statusCode()).isEqualTo(200);
+            assertThat(put.responseBodyAsString()).isEqualTo("{\"message\":\"updated 7 to updated\"}");
+            assertThat(delete.statusCode()).isEqualTo(200);
+            assertThat(delete.responseBodyAsString()).isEqualTo("{\"message\":\"deleted 7\"}");
         }
     }
 
@@ -351,6 +371,16 @@ class DispatcherServletTest {
         @PostMapping
         public Response create(@RequestBody Request request) {
             return new Response("created " + request.name() + " x" + request.quantity());
+        }
+
+        @PutMapping(value = "/{id}", consumes = "application/json")
+        public Response update(@PathVariable("id") Long id, @RequestBody Request request) {
+            return new Response("updated " + id + " to " + request.name());
+        }
+
+        @DeleteMapping("/{id}")
+        public Response delete(@PathVariable("id") Long id) {
+            return new Response("deleted " + id);
         }
 
         @GetMapping("/error")

@@ -27,6 +27,8 @@ import lite.spring.boot.web.WebServerFactory;
 import lite.spring.tx.annotation.Transactional;
 import lite.spring.web.json.JsonMapper;
 import lite.spring.web.annotation.GetMapping;
+import lite.spring.web.annotation.PutMapping;
+import lite.spring.web.annotation.DeleteMapping;
 import lite.spring.web.annotation.PathVariable;
 import lite.spring.web.annotation.RequestBody;
 import lite.spring.web.annotation.RequestParam;
@@ -83,6 +85,8 @@ class SpringLiteApplicationTest {
             assertThat((List<?>) apiDocs.apiDocs().get("endpoints"))
                 .anySatisfy(endpoint -> assertThat(endpoint.toString()).contains("/api-docs"))
                 .anySatisfy(endpoint -> assertThat(endpoint.toString()).contains("/catalog/items/{id}"))
+                .anySatisfy(endpoint -> assertThat(endpoint.toString()).contains("method=PUT"))
+                .anySatisfy(endpoint -> assertThat(endpoint.toString()).contains("method=DELETE"))
                 .anySatisfy(endpoint -> assertThat(endpoint.toString()).contains("responseType=Item"))
                 .anySatisfy(endpoint -> assertThat(endpoint.toString()).contains("source=body"));
         }
@@ -232,6 +236,15 @@ class SpringLiteApplicationTest {
         @lite.spring.web.annotation.PostMapping("/items")
         Item create(@RequestBody Item item) {
             return item;
+        }
+
+        @PutMapping(value = "/items/{id}", consumes = "application/json")
+        Item update(@PathVariable("id") long id, @RequestBody Item item) {
+            return new Item(id, item.name());
+        }
+
+        @DeleteMapping("/items/{id}")
+        void delete(@PathVariable("id") long id) {
         }
     }
 
