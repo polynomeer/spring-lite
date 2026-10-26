@@ -23,6 +23,8 @@ import lite.spring.core.validation.NotNull;
 import lite.spring.core.validation.Size;
 import lite.spring.core.validation.Valid;
 import lite.spring.core.metrics.MetricsRegistry;
+import lite.spring.core.trace.TraceEvent;
+import lite.spring.core.trace.TraceRecorder;
 import lite.spring.web.annotation.ControllerAdvice;
 import lite.spring.web.annotation.GetMapping;
 import lite.spring.web.annotation.PutMapping;
@@ -108,6 +110,23 @@ class DispatcherServletTest {
             assertThat(metrics.counters()).containsEntry("http.server.requests.GET.200", 1L);
             assertThat(metrics.counters()).containsEntry("http.server.requests.GET.404", 1L);
             assertThat(metrics.timers()).containsKeys("http.server.duration.GET.200", "http.server.duration.GET.404");
+        }
+    }
+
+    @Test
+    void tracesRequestHandlerAndResponseWhenSessionIsOpen() throws Exception {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(WebTestConfig.class);
+             TraceRecorder.Session session = TraceRecorder.start()) {
+            DispatcherServlet dispatcherServlet = new DispatcherServlet(context, new JsonMapper());
+            dispatcherServlet.handle(new StubHttpExchange("GET", URI.create("/greetings/7?name=codex"), ""));
+
+            assertThat(session.events())
+                .extracting(TraceEvent::kind)
+                .containsExactly("request", "handler", "response");
+            assertThat(session.events().get(0).attributes()).containsEntry("path", "/greetings/7");
+            assertThat(session.events().get(1).stack()).hasSize(2).first().isEqualTo("DispatcherServlet.handle");
+            assertThat(session.events().get(2).attributes()).containsEntry("status", "200");
+            assertThat(session.events().get(2).stack()).containsExactly("DispatcherServlet.handle");
         }
     }
 

@@ -9,6 +9,8 @@ import lite.spring.context.ApplicationContext;
 import lite.spring.core.validation.SimpleValidator;
 import lite.spring.core.validation.Validator;
 import lite.spring.core.metrics.MetricsRegistry;
+import lite.spring.core.trace.TraceLayer;
+import lite.spring.core.trace.TraceRecorder;
 import lite.spring.web.bind.HandlerMethodArgumentResolver;
 import lite.spring.web.bind.HttpExchangeArgumentResolver;
 import lite.spring.web.bind.PathVariableArgumentResolver;
@@ -67,8 +69,22 @@ public class DispatcherServlet implements HttpHandler {
     public void handle(HttpExchange exchange) throws IOException {
         HandlerMethodMatch handlerMethodMatch = null;
         long started = System.nanoTime();
+        String method = exchange.getRequestMethod();
+        String path = exchange.getRequestURI().getPath();
+        TraceRecorder.pushFrame("DispatcherServlet.handle");
+        TraceRecorder.record(TraceLayer.WEB, "request", method + " " + path, "Request entered DispatcherServlet.",
+            TraceRecorder.attributes("method", method, "path", path));
+        boolean handlerFramePushed = false;
         try {
             handlerMethodMatch = handlerMapping.getHandler(exchange);
+            if (handlerMethodMatch != null) {
+                String handler = handlerMethodMatch.handlerMethod().method().getDeclaringClass().getSimpleName()
+                    + "." + handlerMethodMatch.handlerMethod().method().getName();
+                TraceRecorder.pushFrame(handler);
+                handlerFramePushed = true;
+                TraceRecorder.record(TraceLayer.WEB, "handler", "route", "Mapped to " + handler + ".",
+                    TraceRecorder.attributes("handler", handler, "pattern", handlerMethodMatch.handlerMethod().pathPattern()));
+            }
             if (handlerMethodMatch == null) {
                 if (staticResourceHandler.handle(exchange)) {
                     return;
@@ -80,9 +96,18 @@ public class DispatcherServlet implements HttpHandler {
             returnValueHandler.handleReturnValue(result, exchange, 200);
         } catch (Exception exception) {
             ExceptionHandlingResult resolved = exceptionResolver.resolve(exception, handlerMethodMatch);
+            TraceRecorder.record(TraceLayer.WEB, "exception", String.valueOf(resolved.statusCode()),
+                "Exception resolver mapped " + exception.getClass().getSimpleName() + " to " + resolved.statusCode() + ".",
+                TraceRecorder.attributes("exception", exception.getClass().getName(), "status", resolved.statusCode()));
             returnValueHandler.handleReturnValue(resolved.body(), exchange, resolved.statusCode());
         } finally {
             int status = exchange.getResponseCode();
+            if (handlerFramePushed) {
+                TraceRecorder.popFrame();
+            }
+            TraceRecorder.record(TraceLayer.WEB, "response", String.valueOf(status), "Response written with status " + status + ".",
+                TraceRecorder.attributes("status", status));
+            TraceRecorder.popFrame();
             metrics.increment("http.server.requests." + exchange.getRequestMethod() + "." + status);
             metrics.recordNanos("http.server.duration." + exchange.getRequestMethod() + "." + status, System.nanoTime() - started);
             exchange.close();

@@ -14,6 +14,7 @@
 - 예외 타입/handler method의 `@ResponseStatus` 기반 HTTP 상태 선언
 - controller 매핑 이후 `classpath:/static` 정적 리소스 fallback, ETag 조건부 요청
 - 요청 method/status별 counter와 누적 duration metrics 기록
+- 요청 진입, handler 매핑, 예외 변환, 응답 상태를 실행 이벤트와 호출 프레임으로 기록(`TraceRecorder`)
 
 ## 핵심 패키지
 
