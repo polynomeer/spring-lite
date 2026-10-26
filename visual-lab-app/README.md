@@ -17,6 +17,7 @@
 - metrics, steps, lanes, snapshot, references를 공통 스키마로 렌더링하는 trace UI
 - `example-flow`, `container`, `playground` live runtime 연동
 - Spring Lite와 Spring Boot DI 결과를 나란히 조회하는 dual-runtime comparison
+- 라이트(기본)·다크(Trace Ink) 테마 토큰(`src/theme/theme.css`, `--lab-*`)과 상단 바 테마 전환, 선택은 브라우저에 저장
 
 ## 실행 예정 방법
 

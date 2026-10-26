@@ -1,0 +1,183 @@
+/*
+ * Lab design tokens. Light ("Lab Notebook") is the default; dark ("Trace Ink") follows the
+ * original Visual Lab palette. Names are prefixed with --lab- so they never collide with the
+ * legacy console variables in styles.css.
+ */
+:root {
+  --lab-bg: #f4f6f8;
+  --lab-surface: #ffffff;
+  --lab-line-soft: #eef1f4;
+  --lab-line: #dde2e7;
+  --lab-line-strong: #aeb7c0;
+  --lab-ink: #101418;
+  --lab-text-2: #3a434d;
+  --lab-muted: #5a6470;
+  --lab-brand: #18794e;
+  --lab-brand-text: #0f5a38;
+  --lab-brand-soft: #e8f3ec;
+  --lab-tx: #b45309;
+  --lab-tx-text: #8a4b08;
+  --lab-tx-ink: #5c3305;
+  --lab-tx-soft: #fdf3e4;
+  --lab-web: #1d5fd6;
+  --lab-web-text: #123f91;
+  --lab-web-soft: #e6eefc;
+  --lab-jdbc: #6d3fd1;
+  --lab-jdbc-text: #4b2596;
+  --lab-jdbc-soft: #f1ecfc;
+  --lab-aop: #8a4b08;
+  --lab-err: #c42b1c;
+  --lab-err-text: #a3241a;
+  --lab-err-soft: #fbeae7;
+  --lab-code-bg: #f7f8fa;
+  --lab-code-text: #24292f;
+  --lab-sans: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --lab-mono: "JetBrains Mono", "IBM Plex Mono", "SFMono-Regular", "Consolas", monospace;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --lab-bg: #0e1311;
+  --lab-surface: #151b18;
+  --lab-line-soft: #1f2824;
+  --lab-line: #2a3530;
+  --lab-line-strong: #4a5a51;
+  --lab-ink: #e7eeea;
+  --lab-text-2: #c9d4ce;
+  --lab-muted: #95a59c;
+  --lab-brand: #4fd98a;
+  --lab-brand-text: #7be7a8;
+  --lab-brand-soft: #15241b;
+  --lab-tx: #f0b44c;
+  --lab-tx-text: #f7c96e;
+  --lab-tx-ink: #f7d9a0;
+  --lab-tx-soft: #262013;
+  --lab-web: #7ab2ff;
+  --lab-web-text: #a9ccff;
+  --lab-web-soft: #1e2a3a;
+  --lab-jdbc: #b79cff;
+  --lab-jdbc-text: #ded2ff;
+  --lab-jdbc-soft: #241e36;
+  --lab-aop: #f7c96e;
+  --lab-err: #ff8a7a;
+  --lab-err-text: #ffb3a8;
+  --lab-err-soft: #2a1a18;
+  --lab-code-bg: #0a0e0c;
+  --lab-code-text: #d6dee6;
+  color-scheme: dark;
+}
+
+.lab-shell {
+  min-height: 100vh;
+  background: var(--lab-bg);
+  color: var(--lab-ink);
+  font-family: var(--lab-sans);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.lab-shell a {
+  color: var(--lab-web);
+}
+
+.lab-shell :focus-visible {
+  outline: 2px solid var(--lab-web);
+  outline-offset: 2px;
+}
+
+.lab-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 28px;
+  padding: 12px 32px;
+  background: var(--lab-surface);
+  border-bottom: 1px solid var(--lab-line);
+}
+
+.lab-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 17px;
+}
+
+.lab-brand small {
+  font-size: inherit;
+  font-weight: 500;
+  color: var(--lab-muted);
+}
+
+.lab-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--lab-brand);
+}
+
+.lab-brand-mark path {
+  stroke: var(--lab-surface);
+}
+
+.lab-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  flex: 1 1 auto;
+}
+
+.lab-nav a {
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: var(--lab-text-2);
+  text-decoration: none;
+}
+
+.lab-nav a[aria-current="page"] {
+  background: var(--lab-brand-soft);
+  color: var(--lab-brand-text);
+  font-weight: 600;
+}
+
+.lab-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--lab-line);
+  border-radius: 10px;
+  background: var(--lab-surface);
+  color: var(--lab-ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.lab-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.lab-button.primary {
+  border-color: transparent;
+  background: var(--lab-brand);
+  color: var(--lab-surface);
+  font-weight: 600;
+}
+
+.lab-button.icon {
+  width: 44px;
+  padding: 0;
+}
+
+.lab-shell.is-console {
+  background: transparent;
+}
+
+.lab-legacy-frame {
+  padding-top: 8px;
+}
