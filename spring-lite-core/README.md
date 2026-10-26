@@ -10,6 +10,7 @@
 - 프로퍼티 해석과 placeholder 처리
 - 문자열 기반 타입 변환
 - 입력 검증 규칙과 위반 모델 제공
+- 학습용 실행 이벤트 수집(`TraceRecorder`, 스레드별 세션)
 
 ## 핵심 패키지
 
@@ -17,6 +18,7 @@
 - `lite.spring.core.convert`
 - `lite.spring.core.exception`
 - `lite.spring.core.reflect`
+- `lite.spring.core.trace`
 - `lite.spring.core.metrics`
 - `lite.spring.core.util`
 - `lite.spring.core.validation`
@@ -29,6 +31,7 @@
 - `ConversionService`, `DefaultConversionService`
 - `PropertyResolver`
 - `Validator`, `SimpleValidator`
+- `TraceRecorder`, `TraceEvent`, `TraceLayer`
 
 ## 내부 핵심 클래스
 
