@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { App } from "./App";
+import { ReplayView } from "../features/replay/ReplayView";
 import { useLabTheme } from "../theme/theme";
 
-type View = "console";
+type View = "replay" | "console";
 
 const views: { id: View; label: string }[] = [
+  { id: "replay", label: "리플레이" },
   { id: "console", label: "기존 랩 콘솔" }
 ];
 
@@ -64,6 +66,7 @@ export function Shell() {
           )}
         </button>
       </header>
+      {view === "replay" && <ReplayView />}
       {view === "console" && (
         <div className="lab-legacy-frame">
           <App />

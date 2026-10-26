@@ -1,5 +1,5 @@
-import { liveTraceEndpoint, springBootCompareEndpoint, springLiteCompareEndpoint } from "./runtime-config";
-import type { LabTrace, LabTraceRequest } from "./types";
+import { liveEventsEndpoint, liveTraceEndpoint, springBootCompareEndpoint, springLiteCompareEndpoint } from "./runtime-config";
+import type { LabEventTrace, LabTrace, LabTraceRequest } from "./types";
 
 export async function fetchLiveLabTrace(request: LabTraceRequest): Promise<LabTrace> {
   if (!liveTraceEndpoint) {
@@ -19,6 +19,22 @@ export async function fetchLiveLabTrace(request: LabTraceRequest): Promise<LabTr
   }
 
   return (await response.json()) as LabTrace;
+}
+
+export async function fetchLabEventTrace(request: LabTraceRequest): Promise<LabEventTrace> {
+  const response = await fetch(liveEventsEndpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(request)
+  });
+
+  if (!response.ok) {
+    throw new Error(`Live event trace request failed: ${response.status} ${response.statusText}`);
+  }
+
+  return (await response.json()) as LabEventTrace;
 }
 
 async function fetchComparisonTrace(endpoint: string, runtime: string): Promise<LabTrace> {

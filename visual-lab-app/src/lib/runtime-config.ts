@@ -8,6 +8,12 @@ export const liveTraceEndpoint = liveApiBaseUrl
     ? `${liveApiBaseUrl}${liveTraceEndpointPath}`
     : liveTraceEndpointPath;
 
+export const liveEventsEndpointPath = "/lab/run/events";
+
+export const liveEventsEndpoint = liveApiBaseUrl
+    ? `${liveApiBaseUrl}${liveEventsEndpointPath}`
+    : liveEventsEndpointPath;
+
 function configuredUrl(value: string | undefined) {
   const trimmed = value?.trim() ?? "";
   return trimmed.length > 0 ? trimmed.replace(/\/+$/, "") : "";

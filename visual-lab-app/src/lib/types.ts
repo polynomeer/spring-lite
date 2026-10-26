@@ -66,3 +66,21 @@ export interface LabTraceProvider {
   readonly kind: RuntimeMode;
   getTrace(request: LabTraceRequest): Promise<LabTrace>;
 }
+
+export type TraceEventLayer = "web" | "service" | "tx" | "jdbc" | "container" | "aop";
+
+/** One runtime event recorded by spring-lite's TraceRecorder, as returned by POST /lab/run/events. */
+export interface TraceEventView {
+  seq: number;
+  layer: TraceEventLayer;
+  kind: string;
+  marker: string;
+  detail: string;
+  stack: string[];
+  attributes: Record<string, string>;
+}
+
+export interface LabEventTrace {
+  trace: LabTrace;
+  events: TraceEventView[];
+}
