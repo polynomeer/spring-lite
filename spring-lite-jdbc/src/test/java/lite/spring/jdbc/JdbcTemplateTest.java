@@ -10,6 +10,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.sql.DataSource;
+import lite.spring.core.trace.TraceEvent;
+import lite.spring.core.trace.TraceRecorder;
 import lite.spring.tx.support.TransactionManager;
 import org.junit.jupiter.api.Test;
 
@@ -25,6 +27,24 @@ class JdbcTemplateTest {
         assertThat(recordingJdbc.preparedSql).containsExactly("update orders set status = ? where id = ?");
         assertThat(recordingJdbc.boundParameters).containsExactly(List.of("PAID", 1L));
         assertThat(recordingJdbc.connectionCloseCount).isEqualTo(1);
+    }
+
+    @Test
+    void tracesSqlVerbRowsAndConnectionOwner() {
+        RecordingJdbc recordingJdbc = new RecordingJdbc(List.of());
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(recordingJdbc.dataSource(), new TransactionManager(null));
+
+        try (TraceRecorder.Session session = TraceRecorder.start()) {
+            jdbcTemplate.update("insert into orders(product) values (?)", "book");
+
+            TraceEvent event = session.events().getFirst();
+            assertThat(event.kind()).isEqualTo("update");
+            assertThat(event.marker()).isEqualTo("insert");
+            assertThat(event.attributes())
+                .containsEntry("rows", "1")
+                .containsEntry("sql", "insert into orders(product) values (?)")
+                .doesNotContainKey("tx");
+        }
     }
 
     @Test

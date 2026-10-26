@@ -8,6 +8,7 @@
 - `RowMapper` 기반 결과 매핑
 - `JdbcRepository` 기반 반복 query/delete 보조
 - 트랜잭션 활성 시 현재 커넥션 재사용
+- SQL 동사, 영향 행 수, 실행한 트랜잭션 이름을 실행 이벤트로 기록(`TraceRecorder`)
 - 간단한 `DataSource` 구현 제공
 
 ## 핵심 패키지

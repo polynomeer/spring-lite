@@ -6,7 +6,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import javax.sql.DataSource;
+import lite.spring.core.trace.TraceLayer;
+import lite.spring.core.trace.TraceRecorder;
 import lite.spring.tx.support.TransactionManager;
 
 public class JdbcTemplate {
@@ -25,6 +28,7 @@ public class JdbcTemplate {
         ) {
             bind(statement, args);
             int updated = statement.executeUpdate();
+            trace("update", sql, updated);
             if (transactionManager.currentConnection() != null) {
                 statement.close();
             }
@@ -47,7 +51,9 @@ public class JdbcTemplate {
                 bind(statement, arguments);
                 statement.addBatch();
             }
-            return statement.executeBatch();
+            int[] counts = statement.executeBatch();
+            trace("batch", sql, counts.length);
+            return counts;
         } catch (SQLException exception) {
             throw new IllegalStateException("Failed to execute batch update: " + sql, exception);
         }
@@ -64,6 +70,7 @@ public class JdbcTemplate {
                 while (resultSet.next()) {
                     results.add(rowMapper.mapRow(resultSet));
                 }
+                trace("query", sql, results.size());
                 return results;
             }
         } catch (SQLException exception) {
@@ -82,6 +89,22 @@ public class JdbcTemplate {
             return new SingleConnectionProxy(current);
         }
         return dataSource.getConnection();
+    }
+
+    private void trace(String kind, String sql, int rows) {
+        if (!TraceRecorder.isActive()) {
+            return;
+        }
+        String transaction = transactionManager.currentTransactionName();
+        TraceRecorder.record(TraceLayer.JDBC, kind, sqlVerb(sql),
+            (transaction == null ? "Ran on its own connection: " : "Ran inside " + transaction + ": ") + sql,
+            TraceRecorder.attributes("sql", sql, "rows", rows, "tx", transaction));
+    }
+
+    private String sqlVerb(String sql) {
+        String trimmed = sql.strip();
+        int space = trimmed.indexOf(' ');
+        return (space < 0 ? trimmed : trimmed.substring(0, space)).toLowerCase(Locale.ROOT);
     }
 
     private void bind(PreparedStatement statement, Object[] args) throws SQLException {
