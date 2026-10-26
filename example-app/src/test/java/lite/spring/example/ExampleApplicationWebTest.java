@@ -132,6 +132,27 @@ class ExampleApplicationWebTest {
     }
 
     @Test
+    void returnsRecordedFrameworkEventsForRollbackScenario(MockMvc mockMvc) {
+        MockHttpResponse response = mockMvc.perform(
+            MockHttpRequest.post("/lab/run/events")
+                .contentType("application/json")
+                .body("{\"labId\":\"example-flow\",\"scenario\":\"rollback\",\"mode\":\"live\"}")
+                .build()
+        );
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).contains("\"scenario\":\"rollback\"");
+        String body = response.body().substring(response.body().indexOf("\"events\":"));
+        int begin = body.indexOf("\"kind\":\"begin\"");
+        int insert = body.indexOf("\"marker\":\"insert\"");
+        int rollback = body.indexOf("\"kind\":\"rollback\"");
+        assertThat(begin).isPositive();
+        assertThat(insert).isGreaterThan(begin);
+        assertThat(rollback).isGreaterThan(insert);
+        assertThat(body).contains("\"layer\":\"tx\"", "\"layer\":\"jdbc\"", "\"tx\":\"tx#");
+    }
+
+    @Test
     void returnsLiveContainerRuntimeTrace(MockMvc mockMvc) {
         MockHttpResponse response = mockMvc.perform(
             MockHttpRequest.post("/lab/run/trace")

@@ -5,6 +5,7 @@ import java.util.List;
 import lite.spring.context.ApplicationContext;
 import lite.spring.context.BeanRuntimeDescriptor;
 import lite.spring.core.annotation.Service;
+import lite.spring.core.trace.TraceRecorder;
 import lite.spring.example.order.Order;
 import lite.spring.example.order.OrderService;
 
@@ -32,6 +33,17 @@ public class VisualLabTraceService {
             case "playground" -> runPlaygroundScenario(request.scenario());
             default -> throw new IllegalArgumentException("Unsupported lab id: " + request.labId());
         };
+    }
+
+    /** Runs a scenario inside a trace session so the response carries the real framework events. */
+    public LabEventTraceResponse runWithEvents(LabTraceRequest request) {
+        try (TraceRecorder.Session session = TraceRecorder.start()) {
+            LabTraceResponse trace = run(request);
+            return new LabEventTraceResponse(
+                trace,
+                session.events().stream().map(LabTraceEventView::from).toList()
+            );
+        }
     }
 
     private LabTraceResponse runPlaygroundScenario(String scenario) {

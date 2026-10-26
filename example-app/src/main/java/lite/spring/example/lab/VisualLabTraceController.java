@@ -18,4 +18,9 @@ public class VisualLabTraceController {
     public LabTraceResponse trace(@RequestBody LabTraceRequest request) {
         return visualLabTraceService.run(request);
     }
+
+    @PostMapping("/events")
+    public LabEventTraceResponse events(@RequestBody LabTraceRequest request) {
+        return visualLabTraceService.runWithEvents(request);
+    }
 }
