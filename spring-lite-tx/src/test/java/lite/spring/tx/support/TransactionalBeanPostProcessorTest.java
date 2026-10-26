@@ -3,6 +3,8 @@ package lite.spring.tx.support;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import lite.spring.core.trace.TraceEvent;
+import lite.spring.core.trace.TraceRecorder;
 import lite.spring.tx.annotation.Transactional;
 import lite.spring.tx.annotation.Propagation;
 import org.junit.jupiter.api.Test;
@@ -37,6 +39,22 @@ class TransactionalBeanPostProcessorTest {
         assertThat(transactionManager.beginCalls).isEqualTo(1);
         assertThat(transactionManager.commitCalls).isZero();
         assertThat(transactionManager.rollbackCalls).isEqualTo(1);
+    }
+
+    @Test
+    void tracesProxyFrameAroundTransactionEvents() {
+        TransactionalBeanPostProcessor processor = new TransactionalBeanPostProcessor(new TransactionManager(null));
+        SampleService proxied = (SampleService) processor.postProcessAfterInitialization("sampleService", new SampleServiceImpl());
+
+        try (TraceRecorder.Session session = TraceRecorder.start()) {
+            assertThatThrownBy(proxied::fail).isInstanceOf(IllegalStateException.class);
+
+            assertThat(session.events())
+                .extracting(TraceEvent::kind)
+                .containsExactly("proxy-enter", "begin", "throw", "rollback");
+            assertThat(session.events().get(1).stack()).containsExactly("SampleServiceImpl.fail");
+            assertThat(session.events().get(2).attributes()).containsEntry("rollback", "true");
+        }
     }
 
     @Test

@@ -9,6 +9,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.sql.DataSource;
+import lite.spring.core.trace.TraceEvent;
+import lite.spring.core.trace.TraceRecorder;
 import lite.spring.tx.annotation.Propagation;
 import org.junit.jupiter.api.Test;
 
@@ -75,6 +77,43 @@ class TransactionManagerTest {
 
         assertThat(recordingConnection.commitCalls).isEqualTo(2);
         assertThat(recordingConnection.closeCalls).isEqualTo(2);
+    }
+
+    @Test
+    void tracesSuspendAndResumeAroundRequiresNew() {
+        TransactionManager transactionManager = new TransactionManager(new RecordingConnection().dataSource());
+
+        try (TraceRecorder.Session session = TraceRecorder.start()) {
+            transactionManager.begin();
+            transactionManager.begin(Propagation.REQUIRES_NEW, false);
+            assertThat(transactionManager.currentTransactionName()).isEqualTo("tx#2");
+            transactionManager.commit();
+            transactionManager.commit();
+
+            assertThat(session.events())
+                .extracting(TraceEvent::kind)
+                .containsExactly("begin", "suspend", "begin", "commit", "resume", "commit");
+            assertThat(session.events())
+                .extracting(event -> event.attributes().get("tx"))
+                .containsExactly("tx#1", "tx#1", "tx#2", "tx#2", "tx#1", "tx#1");
+        }
+    }
+
+    @Test
+    void tracesParticipantRollbackAsRollbackOnlyMark() {
+        TransactionManager transactionManager = new TransactionManager(new RecordingConnection().dataSource());
+
+        try (TraceRecorder.Session session = TraceRecorder.start()) {
+            transactionManager.begin();
+            transactionManager.begin();
+            transactionManager.rollback();
+            transactionManager.commit();
+
+            assertThat(session.events())
+                .extracting(TraceEvent::kind)
+                .containsExactly("begin", "join", "mark-rollback-only", "rollback");
+            assertThat(session.events().getLast().attributes()).containsEntry("rollbackOnly", "true");
+        }
     }
 
     private static final class RecordingConnection {

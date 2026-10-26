@@ -4,12 +4,16 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.sql.DataSource;
+import lite.spring.core.trace.TraceLayer;
+import lite.spring.core.trace.TraceRecorder;
 import lite.spring.tx.annotation.Propagation;
 
 public class TransactionManager {
     private final DataSource dataSource;
     private final ThreadLocal<Deque<TransactionContext>> transactionContexts = ThreadLocal.withInitial(ArrayDeque::new);
+    private final AtomicInteger transactionSequence = new AtomicInteger();
 
     public TransactionManager(DataSource dataSource) {
         this.dataSource = dataSource;
@@ -28,10 +32,17 @@ public class TransactionManager {
         TransactionContext context = contexts.peek();
         if (propagation == Propagation.REQUIRED && context != null) {
             context.incrementDepth();
+            trace("join", "join", "Joined the active transaction " + context.name() + ".", context);
             return;
         }
+        if (context != null) {
+            trace("suspend", "suspend", "Suspended " + context.name() + " to start an independent transaction.", context);
+        }
+        String name = "tx#" + transactionSequence.incrementAndGet();
         if (dataSource == null) {
-            contexts.push(new TransactionContext(null, readOnly, false));
+            TransactionContext created = new TransactionContext(name, null, readOnly, false);
+            contexts.push(created);
+            trace("begin", "begin()", "Started " + name + " without a data source.", created);
             return;
         }
         try {
@@ -39,7 +50,9 @@ public class TransactionManager {
             boolean originalReadOnly = connection.isReadOnly();
             connection.setReadOnly(readOnly);
             connection.setAutoCommit(false);
-            contexts.push(new TransactionContext(connection, readOnly, originalReadOnly));
+            TransactionContext created = new TransactionContext(name, connection, readOnly, originalReadOnly);
+            contexts.push(created);
+            trace("begin", "begin()", "Started " + name + " on a new connection with auto-commit disabled.", created);
         } catch (SQLException exception) {
             throw new IllegalStateException("Failed to begin transaction", exception);
         }
@@ -52,7 +65,13 @@ public class TransactionManager {
             return;
         }
         if (!context.decrementAndIsComplete()) {
+            trace("leave", "leave", "Left " + context.name() + " without committing; the outer boundary decides.", context);
             return;
+        }
+        if (context.rollbackOnly()) {
+            trace("rollback", "rollback()", "Rolled back " + context.name() + " because a participant marked it rollback-only.", context);
+        } else {
+            trace("commit", "commit()", "Committed " + context.name() + ".", context);
         }
         if (context.connection() == null) {
             completeContext(contexts);
@@ -79,8 +98,10 @@ public class TransactionManager {
         }
         context.markRollbackOnly();
         if (!context.decrementAndIsComplete()) {
+            trace("mark-rollback-only", "rollbackOnly", "Marked " + context.name() + " rollback-only; the outer boundary will roll back.", context);
             return;
         }
+        trace("rollback", "rollback()", "Rolled back " + context.name() + ".", context);
         if (context.connection() == null) {
             completeContext(contexts);
             return;
@@ -90,6 +111,12 @@ public class TransactionManager {
 
     public boolean isTransactionActive() {
         return transactionContexts.get().peek() != null;
+    }
+
+    /** Returns the name of the innermost active transaction such as {@code tx#1}, or {@code null}. */
+    public String currentTransactionName() {
+        TransactionContext context = transactionContexts.get().peek();
+        return context == null ? null : context.name();
     }
 
     public Connection currentConnection() {
@@ -124,24 +151,51 @@ public class TransactionManager {
         contexts.pop();
         if (contexts.isEmpty()) {
             transactionContexts.remove();
+            return;
         }
+        TransactionContext resumed = contexts.peek();
+        trace("resume", "resume", "Resumed the suspended transaction " + resumed.name() + ".", resumed);
+    }
+
+    private void trace(String kind, String marker, String detail, TransactionContext context) {
+        TraceRecorder.record(TraceLayer.TX, kind, marker, detail, TraceRecorder.attributes(
+            "tx", context.name(),
+            "depth", context.depth(),
+            "active", transactionContexts.get().size(),
+            "readOnly", context.readOnly(),
+            "rollbackOnly", context.rollbackOnly()
+        ));
     }
 
     private static final class TransactionContext {
+        private final String name;
         private final Connection connection;
         private final boolean readOnly;
         private final boolean originalReadOnly;
         private int depth = 1;
         private boolean rollbackOnly;
 
-        private TransactionContext(Connection connection, boolean readOnly, boolean originalReadOnly) {
+        private TransactionContext(String name, Connection connection, boolean readOnly, boolean originalReadOnly) {
+            this.name = name;
             this.connection = connection;
             this.readOnly = readOnly;
             this.originalReadOnly = originalReadOnly;
         }
 
+        private String name() {
+            return name;
+        }
+
         private Connection connection() {
             return connection;
+        }
+
+        private boolean readOnly() {
+            return readOnly;
+        }
+
+        private int depth() {
+            return depth;
         }
 
         private boolean originalReadOnly() { return originalReadOnly; }

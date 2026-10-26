@@ -8,6 +8,7 @@
 - 트랜잭션 begin / commit / rollback 경계 제어
 - `REQUIRED`, `REQUIRES_NEW`, `readOnly`, `rollbackFor`, `noRollbackFor` 지원
 - 현재 스레드의 커넥션과 중첩 depth 및 suspend/resume stack 관리
+- 트랜잭션 이름(`tx#N`) 부여와 begin/join/suspend/resume/commit/rollback 실행 이벤트 기록(`TraceRecorder`)
 
 ## 핵심 패키지
 

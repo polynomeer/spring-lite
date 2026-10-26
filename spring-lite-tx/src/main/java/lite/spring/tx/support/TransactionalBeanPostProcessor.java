@@ -6,6 +6,8 @@ import lite.spring.aop.MethodInterceptor;
 import lite.spring.aop.support.ProxyFactory;
 import lite.spring.context.factory.BeanPostProcessor;
 import lite.spring.core.Ordered;
+import lite.spring.core.trace.TraceLayer;
+import lite.spring.core.trace.TraceRecorder;
 import lite.spring.tx.annotation.Transactional;
 
 public class TransactionalBeanPostProcessor implements BeanPostProcessor {
@@ -98,18 +100,30 @@ public class TransactionalBeanPostProcessor implements BeanPostProcessor {
             if (transactional == null) {
                 return invocation.proceed();
             }
-            transactionManager.begin(transactional.propagation(), transactional.readOnly());
+            String frame = targetClass.getSimpleName() + "." + targetMethod.getName();
+            TraceRecorder.pushFrame(frame);
+            TraceRecorder.record(TraceLayer.AOP, "proxy-enter", "proxy", "Transactional proxy intercepted " + frame + ".",
+                TraceRecorder.attributes("propagation", transactional.propagation(), "readOnly", transactional.readOnly()));
             try {
-                Object result = invocation.proceed();
-                transactionManager.commit();
-                return result;
-            } catch (Throwable throwable) {
-                if (shouldRollback(throwable, transactional)) {
-                    transactionManager.rollback();
-                } else {
+                transactionManager.begin(transactional.propagation(), transactional.readOnly());
+                try {
+                    Object result = invocation.proceed();
+                    TraceRecorder.record(TraceLayer.SERVICE, "return", "return", frame + " returned normally.");
                     transactionManager.commit();
+                    return result;
+                } catch (Throwable throwable) {
+                    boolean rollback = shouldRollback(throwable, transactional);
+                    TraceRecorder.record(TraceLayer.SERVICE, "throw", "throw", frame + " threw " + throwable.getClass().getSimpleName() + ".",
+                        TraceRecorder.attributes("exception", throwable.getClass().getName(), "rollback", rollback));
+                    if (rollback) {
+                        transactionManager.rollback();
+                    } else {
+                        transactionManager.commit();
+                    }
+                    throw throwable;
                 }
-                throw throwable;
+            } finally {
+                TraceRecorder.popFrame();
             }
         }
 
