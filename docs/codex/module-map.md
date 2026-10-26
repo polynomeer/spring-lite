@@ -25,6 +25,7 @@ spring-lite-boot
 - 리플렉션 유틸리티
 - 예외 타입
 - 이름 생성 전략
+- 실행 이벤트 수집(`TraceRecorder`): web·tx·jdbc·aop가 같은 스레드 세션에 이벤트를 남기는 학습용 관측 지점
 
 ### `spring-lite-context`
 
