@@ -13,10 +13,16 @@ import lite.spring.example.order.OrderService;
 public class VisualLabTraceService {
     private final OrderService orderService;
     private final ApplicationContext applicationContext;
+    private final LabDbSnapshotProvider snapshotProvider;
 
-    public VisualLabTraceService(OrderService orderService, ApplicationContext applicationContext) {
+    public VisualLabTraceService(
+        OrderService orderService,
+        ApplicationContext applicationContext,
+        LabDbSnapshotProvider snapshotProvider
+    ) {
         this.orderService = orderService;
         this.applicationContext = applicationContext;
+        this.snapshotProvider = snapshotProvider;
     }
 
     public LabTraceResponse run(LabTraceRequest request) {
@@ -37,7 +43,7 @@ public class VisualLabTraceService {
 
     /** Runs a scenario inside a trace session so the response carries the real framework events. */
     public LabEventTraceResponse runWithEvents(LabTraceRequest request) {
-        try (TraceRecorder.Session session = TraceRecorder.start()) {
+        try (TraceRecorder.Session session = TraceRecorder.start().snapshotWith(snapshotProvider::snapshot)) {
             LabTraceResponse trace = run(request);
             return new LabEventTraceResponse(
                 trace,

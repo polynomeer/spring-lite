@@ -8,7 +8,7 @@
 - `@Transactional` 서비스 계층 검증
 - JDBC/H2 기반 저장소 검증
 - 프로퍼티 기반 기본 주문 상태와 데이터소스 설정 검증
-- Visual Lab trace API: `POST /lab/run/trace`(정규화된 시나리오 trace), `POST /lab/run/events`(trace와 실제 프레임워크 실행 이벤트)
+- Visual Lab trace API: `POST /lab/run/trace`(정규화된 시나리오 trace), `POST /lab/run/events`(trace와 실제 프레임워크 실행 이벤트, 쓰기·트랜잭션 완료 직후 커넥션별 주문 행 수 스냅샷)
 
 ## 핵심 패키지
 

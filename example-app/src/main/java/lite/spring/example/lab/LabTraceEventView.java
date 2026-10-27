@@ -12,7 +12,8 @@ public record LabTraceEventView(
     String marker,
     String detail,
     List<String> stack,
-    Map<String, String> attributes
+    Map<String, String> attributes,
+    Map<String, String> snapshot
 ) {
     static LabTraceEventView from(TraceEvent event) {
         return new LabTraceEventView(
@@ -22,7 +23,8 @@ public record LabTraceEventView(
             event.marker(),
             event.detail(),
             event.stack(),
-            event.attributes()
+            event.attributes(),
+            event.snapshot()
         );
     }
 }
