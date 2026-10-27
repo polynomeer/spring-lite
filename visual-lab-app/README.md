@@ -17,6 +17,7 @@
 - metrics, steps, lanes, snapshot, references를 공통 스키마로 렌더링하는 trace UI
 - `example-flow`, `container`, `playground` live runtime 연동
 - Spring Lite와 Spring Boot DI 결과를 나란히 조회하는 dual-runtime comparison
+- 학습 지도(`#/`, `#/map`, 홈): 트랙 8개(core~test)×단계 4개(개념·구현·실험·비교) 메타데이터(`src/lib/learning-tracks.json`), 트랙별 진행 막대, 이어서 하기. 실험 단계는 리플레이·샌드박스·빈 그래프·함정 실험실이 남기는 활동 신호로 자동 완료되고, 읽기·구현 단계는 직접 완료 표시. 진행도는 브라우저 `localStorage`(`spring-lite-lab-progress`)
 - 라이트(기본)·다크(Trace Ink) 테마 토큰(`src/theme/theme.css`, `--lab-*`)과 상단 바 테마 전환, 선택은 브라우저에 저장
 - 요청 리플레이(`#/replay`): `POST /lab/run/events`의 실제 프레임워크 이벤트를 스크러버(←/→/스페이스), 콜스택, 이벤트 상세, 트랜잭션 상태 인스펙터, 이벤트 로그로 재생. 서버 없이 쓰는 정적 샘플(`replay-samples.ts`) 포함
 - 리플레이 DB 스냅샷(쓰기·트랜잭션 완료 직후 트랜잭션 커넥션과 다른 커넥션의 행 수)과 예측 루프(트랜잭션 결말·메서드 반환/예외를 먼저 고르고 확인, 기록은 브라우저 `localStorage`)

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { containerSample } from "../../lib/container-sample";
 import { fetchContainerGraph } from "../../lib/live-api";
+import { recordActivity } from "../../lib/progress-store";
 import type { ContainerGraph, RuntimeMode } from "../../lib/types";
 import {
   NODE_HEIGHT,
@@ -69,6 +70,7 @@ export function BeanGraphView() {
         const next = value === null ? 0 : value + 1;
         if (next >= order.length - 1) {
           setPlaying(false);
+          recordActivity("beans:playback");
           return order.length - 1;
         }
         return next;

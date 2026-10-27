@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { fetchLabEventTrace } from "../../lib/live-api";
 import { loadPredictions, savePrediction, type PredictionRecord } from "../../lib/prediction-store";
+import { recordActivity } from "../../lib/progress-store";
 import { replaySamples } from "../../lib/replay-samples";
 import type { LabEventTrace, RuntimeMode } from "../../lib/types";
 import {
@@ -57,6 +58,12 @@ export function ReplayView() {
   }, [mode, scenario, liveData]);
 
   useEffect(() => {
+    if (events.length > 1 && position === lastIndex) {
+      recordActivity("replay", `replay:${scenario}`, ...(mode === "live" ? ["replay-live"] : []));
+    }
+  }, [events.length, position, lastIndex, scenario, mode]);
+
+  useEffect(() => {
     if (playing && pendingCheckpoint) {
       setPlaying(false);
     }
@@ -79,6 +86,7 @@ export function ReplayView() {
       correct,
       at: new Date().toISOString()
     }));
+    recordActivity("predict");
     setIndex(position + 1);
   };
 

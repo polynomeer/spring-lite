@@ -154,6 +154,8 @@
   background: var(--lab-surface);
   color: var(--lab-ink);
   font: inherit;
+  text-decoration: none;
+  box-sizing: border-box;
   cursor: pointer;
 }
 

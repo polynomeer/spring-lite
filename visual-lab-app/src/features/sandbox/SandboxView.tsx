@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { runSandbox } from "../../lib/live-api";
 import { savePrediction } from "../../lib/prediction-store";
+import { recordActivity } from "../../lib/progress-store";
 import type { SandboxNode, SandboxRunResult, SandboxTable } from "../../lib/types";
 import { layerLabels } from "../replay/replay-state";
 import { NodeEditor } from "./NodeEditor";
@@ -50,6 +51,7 @@ export function SandboxView() {
         correct,
         at: new Date().toISOString()
       });
+      recordActivity("sandbox:run");
       setResult({ run, prediction });
     } catch (cause) {
       setResult(null);

@@ -1,0 +1,98 @@
+{
+  "stages": [
+    { "id": "concept", "label": "개념", "summary": "왜 필요한가. 짧은 글과 핵심 질문 하나로 시작한다." },
+    { "id": "build", "label": "구현", "summary": "실패하는 테스트를 통과시키며 직접 만든다." },
+    { "id": "experiment", "label": "실험", "summary": "결과를 먼저 예측하고 실행한 뒤, 틀리면 리플레이로 원인을 찾는다." },
+    { "id": "compare", "label": "비교", "summary": "같은 시나리오를 실제 Spring Boot와 나란히 놓고 차이를 짚는다." }
+  ],
+  "tracks": [
+    {
+      "id": "core",
+      "title": "core",
+      "subtitle": "애노테이션·리플렉션·실행 기록",
+      "steps": [
+        { "stage": "concept", "title": "메타 애노테이션과 리플렉션", "reading": "docs/architecture/spring-core-principles-and-code-guide.md" },
+        { "stage": "build", "title": "ReflectionUtils와 TraceRecorder 만들기", "reading": "docs/book/build-along-implementation-guide.md" },
+        { "stage": "experiment", "title": "실행 기록으로 예측해 보기", "href": "#/replay", "action": "리플레이에서 예측하기", "signals": ["predict"] },
+        { "stage": "compare", "title": "Spring의 AnnotationUtils와 비교", "reading": "docs/architecture/spring-lite-to-real-spring-code-map.md" }
+      ]
+    },
+    {
+      "id": "context",
+      "title": "context",
+      "subtitle": "빈 정의·생성자 주입·생명주기",
+      "steps": [
+        { "stage": "concept", "title": "IoC 컨테이너가 하는 일", "reading": "docs/architecture/spring-core-principles-and-code-guide.md" },
+        { "stage": "build", "title": "스캔과 생성자 주입 구현", "reading": "docs/book/build-along-implementation-guide.md" },
+        { "stage": "experiment", "title": "빈 생성 순서와 함정", "href": "#/beans", "action": "생성 순서 재생하기", "signals": ["beans:playback", "pitfall:prototype-injection", "pitfall:circular-dependency"] },
+        { "stage": "compare", "title": "Spring 컨테이너와 비교", "href": "#/console", "action": "비교 대시보드 열기" }
+      ]
+    },
+    {
+      "id": "aop",
+      "title": "aop",
+      "subtitle": "프록시·어드바이스 체인",
+      "steps": [
+        { "stage": "concept", "title": "프록시가 호출을 가로채는 방법", "reading": "docs/architecture/runtime-sequence-diagrams.md" },
+        { "stage": "build", "title": "JDK·ByteBuddy 프록시 구현", "reading": "docs/book/build-along-implementation-guide.md" },
+        { "stage": "experiment", "title": "프록시를 우회하는 호출", "href": "#/pitfalls", "action": "self-invocation 재현하기", "signals": ["pitfall:self-invocation", "pitfall:final-method"] },
+        { "stage": "compare", "title": "CGLIB 프록시와 비교", "href": "#/console", "action": "비교 대시보드 열기" }
+      ]
+    },
+    {
+      "id": "tx",
+      "title": "tx",
+      "subtitle": "@Transactional·전파·롤백",
+      "steps": [
+        { "stage": "concept", "title": "트랜잭션 경계와 전파", "reading": "docs/architecture/example-app-request-flow.md" },
+        { "stage": "build", "title": "TransactionManager 구현", "reading": "docs/book/build-along-implementation-guide.md" },
+        { "stage": "experiment", "title": "전파 속성 조립해 보기", "href": "#/sandbox", "action": "샌드박스에서 예측하기", "signals": ["sandbox:run", "pitfall:rollback-only", "pitfall:new-thread", "pitfall:checked-exception"] },
+        { "stage": "compare", "title": "rollback 규칙 차이", "reading": "docs/architecture/intentional-simplifications-and-limitations.md" }
+      ]
+    },
+    {
+      "id": "jdbc",
+      "title": "jdbc",
+      "subtitle": "JdbcTemplate·커넥션 공유",
+      "steps": [
+        { "stage": "concept", "title": "템플릿 콜백 패턴", "reading": "docs/architecture/spring-lite-module-code-guide.md" },
+        { "stage": "build", "title": "JdbcTemplate과 RowMapper 구현", "reading": "docs/book/build-along-implementation-guide.md" },
+        { "stage": "experiment", "title": "커넥션별로 보이는 행", "href": "#/replay", "action": "리플레이 끝까지 보기", "signals": ["replay"] },
+        { "stage": "compare", "title": "Spring JDBC와 비교", "reading": "docs/architecture/code-level-comparison-with-spring.md" }
+      ]
+    },
+    {
+      "id": "web",
+      "title": "web",
+      "subtitle": "Dispatcher·인자 해석·예외 처리",
+      "steps": [
+        { "stage": "concept", "title": "요청 하나가 지나는 길", "reading": "docs/architecture/example-app-request-flow.md" },
+        { "stage": "build", "title": "DispatcherServlet 구현", "reading": "docs/book/build-along-implementation-guide.md" },
+        { "stage": "experiment", "title": "검증이 일어나는 조건", "href": "#/pitfalls", "action": "@Valid 누락 재현하기", "signals": ["pitfall:missing-valid", "replay:validation"] },
+        { "stage": "compare", "title": "Spring MVC와 비교", "href": "#/console", "action": "비교 대시보드 열기" }
+      ]
+    },
+    {
+      "id": "boot",
+      "title": "boot",
+      "subtitle": "자동 설정·내장 서버",
+      "steps": [
+        { "stage": "concept", "title": "자동 설정과 조건부 빈", "reading": "docs/architecture/overview.md" },
+        { "stage": "build", "title": "내장 HttpServer 띄우기", "reading": "docs/book/build-along-implementation-guide.md" },
+        { "stage": "experiment", "title": "실행 중인 앱에서 기록 받기", "href": "#/replay", "action": "live 리플레이 실행하기", "signals": ["replay-live"] },
+        { "stage": "compare", "title": "Spring Boot 자동 설정과 비교", "href": "#/console", "action": "비교 대시보드 열기" }
+      ]
+    },
+    {
+      "id": "test",
+      "title": "test",
+      "subtitle": "@SpringLiteTest·MockMvc·롤백",
+      "steps": [
+        { "stage": "concept", "title": "테스트 컨텍스트와 롤백", "reading": "docs/testing/detailed-test-guide.md" },
+        { "stage": "build", "title": "JUnit 확장 구현", "reading": "docs/book/build-along-implementation-guide.md" },
+        { "stage": "experiment", "title": "테스트 트랜잭션 롤백 확인", "reading": "spring-lite-test/README.md" },
+        { "stage": "compare", "title": "@SpringBootTest와 비교", "reading": "docs/architecture/code-level-comparison-with-spring.md" }
+      ]
+    }
+  ]
+}

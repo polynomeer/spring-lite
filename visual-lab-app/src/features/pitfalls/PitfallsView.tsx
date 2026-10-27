@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { runMissingValid, runPitfall } from "../../lib/live-api";
+import { recordActivity } from "../../lib/progress-store";
 import type { PitfallRunResult } from "../../lib/types";
 import { layerLabels } from "../replay/replay-state";
 import { pitfallLayerLabels, pitfalls, type Pitfall, type PitfallLayer } from "./pitfall-catalog";
@@ -18,6 +19,14 @@ export function PitfallsView() {
   const visible = pitfalls.filter((pitfall) => layer === "all" || pitfall.layers.includes(layer));
   const selected = pitfalls.find((pitfall) => pitfall.id === selectedId) ?? pitfalls[0];
   const selectedResults = results[selected.id] ?? {};
+
+  useEffect(() => {
+    for (const [id, variants] of Object.entries(results)) {
+      if (variants.broken && variants.fixed) {
+        recordActivity(`pitfall:${id}`);
+      }
+    }
+  }, [results]);
 
   const run = async (pitfall: Pitfall, variant: Variant) => {
     setRunning(variant);
