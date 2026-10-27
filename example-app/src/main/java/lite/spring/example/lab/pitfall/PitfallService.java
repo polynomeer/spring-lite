@@ -110,7 +110,7 @@ public class PitfallService {
         }
         String outcome = transactions == 0
             ? "트랜잭션이 열리지 않았다. 각 SQL은 자동 커밋으로 바로 저장된다."
-            : "트랜잭션 " + transactions + "개가 열렸고 마지막 결말은 " + ending + "다.";
+            : "트랜잭션 " + transactions + "개가 열렸고 마지막 결말은 " + (ending.equals("commit") ? "커밋" : "롤백") + "이다.";
         return new PitfallRunResponse(id, variant, outcome, facts, views(events));
     }
 
