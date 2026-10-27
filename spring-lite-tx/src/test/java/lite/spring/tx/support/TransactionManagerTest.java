@@ -8,6 +8,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import javax.sql.DataSource;
 import lite.spring.core.trace.TraceEvent;
 import lite.spring.core.trace.TraceRecorder;
@@ -114,6 +115,27 @@ class TransactionManagerTest {
                 .containsExactly("begin", "join", "mark-rollback-only", "rollback");
             assertThat(session.events().getLast().attributes()).containsEntry("rollbackOnly", "true");
         }
+    }
+
+    @Test
+    void recordsCompletionEventsAfterThePhysicalCommitOrRollback() {
+        RecordingConnection recordingConnection = new RecordingConnection();
+        TransactionManager transactionManager = new TransactionManager(recordingConnection.dataSource());
+        List<String> observed = new ArrayList<>();
+
+        try (TraceRecorder.Session session = TraceRecorder.start()) {
+            session.snapshotWith(event -> {
+                observed.add(event.kind() + ":" + recordingConnection.commitCalls + "/" + recordingConnection.rollbackCalls
+                    + ":" + (transactionManager.currentConnection() != null));
+                return Map.of();
+            });
+            transactionManager.begin();
+            transactionManager.commit();
+            transactionManager.begin();
+            transactionManager.rollback();
+        }
+
+        assertThat(observed).containsExactly("begin:0/0:true", "commit:1/0:true", "begin:1/0:true", "rollback:1/1:true");
     }
 
     private static final class RecordingConnection {

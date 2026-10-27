@@ -68,21 +68,23 @@ public class TransactionManager {
             trace("leave", "leave", "Left " + context.name() + " without committing; the outer boundary decides.", context);
             return;
         }
-        if (context.rollbackOnly()) {
-            trace("rollback", "rollback()", "Rolled back " + context.name() + " because a participant marked it rollback-only.", context);
-        } else {
-            trace("commit", "commit()", "Committed " + context.name() + ".", context);
-        }
+        String rollbackOnlyDetail = "Rolled back " + context.name() + " because a participant marked it rollback-only.";
         if (context.connection() == null) {
+            if (context.rollbackOnly()) {
+                trace("rollback", "rollback()", rollbackOnlyDetail, context);
+            } else {
+                trace("commit", "commit()", "Committed " + context.name() + ".", context);
+            }
             completeContext(contexts);
             return;
         }
         if (context.rollbackOnly()) {
-            rollbackConnection(context);
+            rollbackConnection(context, rollbackOnlyDetail);
             return;
         }
         try {
             context.connection().commit();
+            trace("commit", "commit()", "Committed " + context.name() + ".", context);
         } catch (SQLException exception) {
             throw new IllegalStateException("Failed to commit transaction", exception);
         } finally {
@@ -101,12 +103,13 @@ public class TransactionManager {
             trace("mark-rollback-only", "rollbackOnly", "Marked " + context.name() + " rollback-only; the outer boundary will roll back.", context);
             return;
         }
-        trace("rollback", "rollback()", "Rolled back " + context.name() + ".", context);
+        String detail = "Rolled back " + context.name() + ".";
         if (context.connection() == null) {
+            trace("rollback", "rollback()", detail, context);
             completeContext(contexts);
             return;
         }
-        rollbackConnection(context);
+        rollbackConnection(context, detail);
     }
 
     public boolean isTransactionActive() {
@@ -124,9 +127,11 @@ public class TransactionManager {
         return context == null ? null : context.connection();
     }
 
-    private void rollbackConnection(TransactionContext context) {
+    /** Rolls back, then records the event while the connection is still bound so observers see the outcome. */
+    private void rollbackConnection(TransactionContext context, String detail) {
         try {
             context.connection().rollback();
+            trace("rollback", "rollback()", detail, context);
         } catch (SQLException exception) {
             throw new IllegalStateException("Failed to rollback transaction", exception);
         } finally {
