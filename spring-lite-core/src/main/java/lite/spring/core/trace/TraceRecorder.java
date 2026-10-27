@@ -7,6 +7,7 @@ import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * Thread-bound collector for instructional runtime traces.
@@ -73,6 +74,8 @@ public final class TraceRecorder {
         private final Session enclosing;
         private final List<TraceEvent> events = new ArrayList<>();
         private final Deque<String> frames = new ArrayDeque<>();
+        private Function<TraceEvent, Map<String, String>> snapshotProvider;
+        private boolean capturing;
         private boolean closed;
 
         private Session(Session enclosing) {
@@ -83,10 +86,22 @@ public final class TraceRecorder {
             return List.copyOf(events);
         }
 
+        /**
+         * Asks {@code provider} for extra state right after each event is recorded. Events emitted while
+         * the provider runs (for example by its own queries) are ignored so a snapshot never traces itself.
+         */
+        public Session snapshotWith(Function<TraceEvent, Map<String, String>> provider) {
+            this.snapshotProvider = provider;
+            return this;
+        }
+
         private void add(TraceLayer layer, String kind, String marker, String detail, Map<String, String> attributes) {
+            if (capturing) {
+                return;
+            }
             List<String> stack = new ArrayList<>(frames);
             Collections.reverse(stack);
-            events.add(new TraceEvent(
+            TraceEvent event = new TraceEvent(
                 events.size() + 1,
                 layer,
                 kind,
@@ -94,8 +109,23 @@ public final class TraceRecorder {
                 detail,
                 Thread.currentThread().getName(),
                 stack,
-                attributes
-            ));
+                attributes,
+                Map.of()
+            );
+            events.add(snapshot(event));
+        }
+
+        private TraceEvent snapshot(TraceEvent event) {
+            if (snapshotProvider == null) {
+                return event;
+            }
+            capturing = true;
+            try {
+                Map<String, String> captured = snapshotProvider.apply(event);
+                return captured == null || captured.isEmpty() ? event : event.withSnapshot(captured);
+            } finally {
+                capturing = false;
+            }
         }
 
         @Override

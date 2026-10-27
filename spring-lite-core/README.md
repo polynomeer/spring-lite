@@ -10,7 +10,7 @@
 - 프로퍼티 해석과 placeholder 처리
 - 문자열 기반 타입 변환
 - 입력 검증 규칙과 위반 모델 제공
-- 학습용 실행 이벤트 수집(`TraceRecorder`, 스레드별 세션)
+- 학습용 실행 이벤트 수집(`TraceRecorder`, 스레드별 세션)과 이벤트 직후 상태 스냅샷 훅(`Session.snapshotWith`)
 
 ## 핵심 패키지
 

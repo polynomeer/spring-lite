@@ -16,6 +16,8 @@ import java.util.Map;
  * @param thread name of the emitting thread
  * @param stack call frames active when the event was recorded, outermost first
  * @param attributes extra state such as transaction name or SQL text
+ * @param snapshot state captured right after the event, such as row counts seen by different
+ *     connections; empty unless the session has a snapshot provider
  */
 public record TraceEvent(
     int seq,
@@ -25,10 +27,16 @@ public record TraceEvent(
     String detail,
     String thread,
     List<String> stack,
-    Map<String, String> attributes
+    Map<String, String> attributes,
+    Map<String, String> snapshot
 ) {
     public TraceEvent {
         stack = List.copyOf(stack);
         attributes = Collections.unmodifiableMap(new LinkedHashMap<>(attributes));
+        snapshot = Collections.unmodifiableMap(new LinkedHashMap<>(snapshot));
+    }
+
+    TraceEvent withSnapshot(Map<String, String> captured) {
+        return new TraceEvent(seq, layer, kind, marker, detail, thread, stack, attributes, captured);
     }
 }

@@ -59,6 +59,25 @@ class TraceRecorderTest {
     }
 
     @Test
+    void attachesSnapshotWithoutTracingTheProvidersOwnWork() {
+        try (TraceRecorder.Session session = TraceRecorder.start()) {
+            session.snapshotWith(event -> {
+                TraceRecorder.record(TraceLayer.JDBC, "query", "select", "snapshot query");
+                return "insert".equals(event.marker()) ? Map.of("orders.current", "2", "orders.other", "1") : Map.of();
+            });
+
+            TraceRecorder.record(TraceLayer.TX, "begin", "begin()", "transaction opened");
+            TraceRecorder.record(TraceLayer.JDBC, "update", "insert", "row inserted");
+
+            assertThat(session.events()).extracting(TraceEvent::kind).containsExactly("begin", "update");
+            assertThat(session.events().get(0).snapshot()).isEmpty();
+            assertThat(session.events().get(1).snapshot())
+                .containsEntry("orders.current", "2")
+                .containsEntry("orders.other", "1");
+        }
+    }
+
+    @Test
     void buildsAttributeMapSkippingNullValues() {
         assertThat(TraceRecorder.attributes("tx", "tx#1", "rows", 1, "sql", null))
             .containsExactly(Map.entry("tx", "tx#1"), Map.entry("rows", "1"));
