@@ -6,6 +6,8 @@
 - 컨테이너 빈/조건부 자동 설정 상태를 출력하는 CLI
 - `/api-docs`의 요청·응답 타입 요약
 - web request metrics와 trace export contract
+- 웹 계층 실행 경로 비교: 요청 단위 trace를 Boot `HandlerInterceptor`와 맞춰 비교 화면에 추가
+- 메모 달린 리플레이 공유(Lab 기획안 화면 11)
 
 ## Open Decisions
 
@@ -13,6 +15,7 @@
 - AOP 표현식을 어느 수준까지 확장할지 여부
 - 내장 서버를 JDK HTTP 서버에서 Jetty/Tomcat으로 교체할지 여부
 - JSON 매퍼를 자체 구현 유지할지 외부 라이브러리로 교체할지 여부
+- Lab 진행도·예측 기록을 브라우저 밖(계정, 저장소 파일)에 둘지 여부
 
 ## Deferred
 

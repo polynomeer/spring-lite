@@ -54,6 +54,7 @@
 - `@Order` 기반 AOP/트랜잭션 interceptor chain
 - `FactoryBean`, Aware callback, 의존 경로가 포함된 순환 참조 fail-fast
 - read-only / `REQUIRES_NEW` transaction hint, 메시지 converter 최소 협상, actuator-lite
+- 학습용 관측과 실험 장치: `TraceRecorder`(core) 실행 이벤트, What-if 플래그(`WhatIf`: rollback-only 무시, 인터셉터 순서 뒤집기, 클래스 프록시 강제, 순환 감지 끄기, 기본값은 모두 꺼짐)
 
 ## 현재 추천 순서
 

@@ -26,6 +26,7 @@ spring-lite-boot
 - 예외 타입
 - 이름 생성 전략
 - 실행 이벤트 수집(`TraceRecorder`): web·tx·jdbc·aop가 같은 스레드 세션에 이벤트를 남기는 학습용 관측 지점
+- What-if 플래그(`lite.spring.core.whatif.WhatIf`): tx(rollback-only 무시), aop(인터셉터 순서 뒤집기, 클래스 프록시 강제), context(순환 감지 끄기)의 학습용 실험 스위치. 기본은 모두 꺼짐
 
 ### `spring-lite-context`
 
