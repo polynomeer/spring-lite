@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { App } from "./App";
 import { ReplayView } from "../features/replay/ReplayView";
+import { SandboxView } from "../features/sandbox/SandboxView";
 import { useLabTheme } from "../theme/theme";
 
-type View = "replay" | "console";
+type View = "replay" | "sandbox" | "console";
 
 const views: { id: View; label: string }[] = [
   { id: "replay", label: "리플레이" },
+  { id: "sandbox", label: "트랜잭션 샌드박스" },
   { id: "console", label: "기존 랩 콘솔" }
 ];
 
@@ -67,6 +69,7 @@ export function Shell() {
         </button>
       </header>
       {view === "replay" && <ReplayView />}
+      {view === "sandbox" && <SandboxView />}
       {view === "console" && (
         <div className="lab-legacy-frame">
           <App />

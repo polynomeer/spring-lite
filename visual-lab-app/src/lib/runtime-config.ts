@@ -14,6 +14,12 @@ export const liveEventsEndpoint = liveApiBaseUrl
     ? `${liveApiBaseUrl}${liveEventsEndpointPath}`
     : liveEventsEndpointPath;
 
+export const sandboxEndpointPath = "/lab/sandbox/run";
+
+export const sandboxEndpoint = liveApiBaseUrl
+    ? `${liveApiBaseUrl}${sandboxEndpointPath}`
+    : sandboxEndpointPath;
+
 function configuredUrl(value: string | undefined) {
   const trimmed = value?.trim() ?? "";
   return trimmed.length > 0 ? trimmed.replace(/\/+$/, "") : "";

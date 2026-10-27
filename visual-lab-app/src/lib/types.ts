@@ -86,3 +86,26 @@ export interface LabEventTrace {
   trace: LabTrace;
   events: TraceEventView[];
 }
+
+export type SandboxPropagation = "REQUIRED" | "REQUIRES_NEW" | "NONE";
+
+export type SandboxTable = "orders" | "audit_log";
+
+export type SandboxStep =
+  | { type: "insert"; target: SandboxTable }
+  | { type: "throw" }
+  | { type: "call"; catch: boolean; call: SandboxNode };
+
+export interface SandboxNode {
+  name: string;
+  propagation: SandboxPropagation;
+  steps: SandboxStep[];
+}
+
+export interface SandboxRunResult {
+  runId: string;
+  outcome: "completed" | "exception";
+  exceptionMessage: string | null;
+  events: TraceEventView[];
+  rows: Record<string, number>;
+}

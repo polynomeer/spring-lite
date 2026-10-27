@@ -1,5 +1,5 @@
-import { liveEventsEndpoint, liveTraceEndpoint, springBootCompareEndpoint, springLiteCompareEndpoint } from "./runtime-config";
-import type { LabEventTrace, LabTrace, LabTraceRequest } from "./types";
+import { liveEventsEndpoint, liveTraceEndpoint, sandboxEndpoint, springBootCompareEndpoint, springLiteCompareEndpoint } from "./runtime-config";
+import type { LabEventTrace, LabTrace, LabTraceRequest, SandboxNode, SandboxRunResult } from "./types";
 
 export async function fetchLiveLabTrace(request: LabTraceRequest): Promise<LabTrace> {
   if (!liveTraceEndpoint) {
@@ -35,6 +35,23 @@ export async function fetchLabEventTrace(request: LabTraceRequest): Promise<LabE
   }
 
   return (await response.json()) as LabEventTrace;
+}
+
+export async function runSandbox(root: SandboxNode): Promise<SandboxRunResult> {
+  const response = await fetch(sandboxEndpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ root })
+  });
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`Sandbox run failed: ${response.status} ${detail || response.statusText}`);
+  }
+
+  return (await response.json()) as SandboxRunResult;
 }
 
 async function fetchComparisonTrace(endpoint: string, runtime: string): Promise<LabTrace> {
