@@ -8,10 +8,12 @@ import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -55,6 +57,9 @@ import lite.spring.core.exception.BeansException;
 import lite.spring.core.exception.NoSuchBeanException;
 import lite.spring.core.exception.NoUniqueBeanException;
 import lite.spring.core.reflect.ReflectionUtils;
+import lite.spring.core.trace.TraceEvent;
+import lite.spring.core.trace.TraceLayer;
+import lite.spring.core.trace.TraceRecorder;
 import lite.spring.core.util.OrderUtils;
 import lite.spring.core.util.PropertyResolver;
 
@@ -67,6 +72,9 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
     private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
     private final Set<String> beansInCreation = new LinkedHashSet<>();
     private final List<String> beanCreationPath = new ArrayList<>();
+    private final Map<String, List<String>> beanDependencies = new LinkedHashMap<>();
+    private final Deque<List<String>> resolvingDependencies = new ArrayDeque<>();
+    private List<TraceEvent> refreshTrace = List.of();
     private final ClassPathScanner classPathScanner = new ClassPathScanner();
     private final PropertyResolver propertyResolver = PropertyResolver.loadApplicationProperties();
     private final ConversionService conversionService = new DefaultConversionService();
@@ -142,11 +150,23 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
             return;
         }
         refreshed = true;
-        instantiateBeanPostProcessors();
-        instantiateConfigurationBeans();
-        instantiateBeanPostProcessors();
-        instantiateRemainingSingletons();
+        try (TraceRecorder.Session session = TraceRecorder.start()) {
+            try {
+                instantiateBeanPostProcessors();
+                instantiateConfigurationBeans();
+                instantiateBeanPostProcessors();
+                instantiateRemainingSingletons();
+            } finally {
+                refreshTrace = session.events();
+            }
+        }
         publishEvent(new ContextRefreshedEvent(this));
+    }
+
+    /** Container events recorded while {@link #refresh()} created the singletons, in creation order. */
+    @Override
+    public List<TraceEvent> getRefreshTrace() {
+        return refreshTrace;
     }
 
     @Override
@@ -252,7 +272,8 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
                     definition.kind().name(),
                     definition.singleton(),
                     instance != null,
-                    instance != null && isProxy(instance)
+                    instance != null && isProxy(instance),
+                    beanDependencies.getOrDefault(definition.name(), List.of())
                 );
             })
             .toList();
@@ -354,14 +375,37 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
             return singletons.get(beanName);
         }
         if (!beansInCreation.add(beanName)) {
-            throw new BeansException("Circular dependency detected: " + describeCircularDependency(beanName));
+            String cycle = describeCircularDependency(beanName);
+            TraceRecorder.record(TraceLayer.CONTAINER, "cycle", "cycle", "Circular dependency detected: " + cycle,
+                TraceRecorder.attributes("bean", beanName, "path", cycle));
+            throw new BeansException("Circular dependency detected: " + cycle);
         }
         beanCreationPath.add(beanName);
+        TraceRecorder.pushFrame(beanName);
         try {
-            Object instance = switch (beanDefinition.kind()) {
-                case COMPONENT, CONFIGURATION, INFRASTRUCTURE -> instantiateClass(beanDefinition.beanType());
-                case FACTORY_METHOD -> invokeFactoryMethod(beanDefinition);
-            };
+            TraceRecorder.record(TraceLayer.CONTAINER, "create", "create", "Started creating " + beanName + ".",
+                TraceRecorder.attributes(
+                    "bean", beanName,
+                    "type", beanDefinition.beanType().getName(),
+                    "definitionKind", beanDefinition.kind().name(),
+                    "scope", beanDefinition.singleton() ? "singleton" : "prototype"
+                ));
+            resolvingDependencies.push(new ArrayList<>());
+            Object instance;
+            List<String> dependencies;
+            try {
+                instance = switch (beanDefinition.kind()) {
+                    case COMPONENT, CONFIGURATION, INFRASTRUCTURE -> instantiateClass(beanDefinition.beanType());
+                    case FACTORY_METHOD -> invokeFactoryMethod(beanDefinition);
+                };
+            } finally {
+                dependencies = List.copyOf(resolvingDependencies.pop());
+            }
+            beanDependencies.put(beanName, dependencies);
+            TraceRecorder.record(TraceLayer.CONTAINER, "instantiate", "new",
+                (beanDefinition.kind() == Kind.FACTORY_METHOD ? "Called the @Bean method for " : "Called the constructor of ") + beanName
+                    + (dependencies.isEmpty() ? "." : " with " + String.join(", ", dependencies) + "."),
+                TraceRecorder.attributes("bean", beanName, "dependencies", String.join(",", dependencies)));
 
             Object initialized = initializeBean(beanName, instance);
             if (beanDefinition.singleton()) {
@@ -373,6 +417,7 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
             }
             return initialized;
         } finally {
+            TraceRecorder.popFrame();
             beansInCreation.remove(beanName);
             beanCreationPath.remove(beanName);
         }
@@ -440,12 +485,25 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
         }
         Qualifier qualifier = parameter.getAnnotation(Qualifier.class);
         if (qualifier != null) {
-            return resolveQualifiedDependency(dependencyType, qualifier.value(), candidates);
+            return noteDependency(candidates, resolveQualifiedDependency(dependencyType, qualifier.value(), candidates));
         }
         if (candidates.size() > 1) {
             throw new NoUniqueBeanException("Multiple beans of type " + dependencyType.getName() + ": " + candidates.keySet());
         }
-        return candidates.values().iterator().next();
+        return noteDependency(candidates, candidates.values().iterator().next());
+    }
+
+    /** Remembers which bean satisfied a constructor or factory-method parameter of the bean being created. */
+    private Object noteDependency(Map<String, ?> candidates, Object resolved) {
+        List<String> dependencies = resolvingDependencies.peek();
+        if (dependencies != null) {
+            candidates.entrySet().stream()
+                .filter(entry -> entry.getValue() == resolved)
+                .map(Map.Entry::getKey)
+                .findFirst()
+                .ifPresent(dependencies::add);
+        }
+        return resolved;
     }
 
     private Object invokeFactoryMethod(BeanDefinition beanDefinition) {
@@ -568,17 +626,52 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
 
     private Object initializeBean(String beanName, Object bean) {
         injectFieldValues(bean);
+        if (bean instanceof BeanNameAware || bean instanceof ApplicationContextAware) {
+            TraceRecorder.record(TraceLayer.CONTAINER, "aware", "aware", "Passed the bean name or context to " + beanName + ".",
+                TraceRecorder.attributes("bean", beanName));
+        }
         invokeAwareCallbacks(beanName, bean);
         Object current = bean;
         for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
             current = beanPostProcessor.postProcessBeforeInitialization(beanName, current);
         }
-        invokeLifecycleMethods(current, PostConstruct.class);
-        for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
-            current = beanPostProcessor.postProcessAfterInitialization(beanName, current);
+        if (hasLifecycleMethod(current.getClass(), PostConstruct.class)) {
+            TraceRecorder.record(TraceLayer.CONTAINER, "init", "@PostConstruct", "Ran @PostConstruct on " + beanName + ".",
+                TraceRecorder.attributes("bean", beanName));
         }
+        invokeLifecycleMethods(current, PostConstruct.class);
+        List<String> processorResults = new ArrayList<>();
+        for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
+            Object processed = beanPostProcessor.postProcessAfterInitialization(beanName, current);
+            processorResults.add(beanPostProcessor.getClass().getSimpleName() + ":" + (processed == current ? "kept" : "replaced"));
+            current = processed;
+        }
+        boolean replaced = current != bean;
+        TraceRecorder.record(TraceLayer.CONTAINER, "post-process", replaced ? "proxy" : "kept",
+            replaced
+                ? "A BeanPostProcessor replaced " + beanName + " with " + current.getClass().getSimpleName() + "."
+                : "BeanPostProcessors kept the original " + beanName + ".",
+            TraceRecorder.attributes(
+                "bean", beanName,
+                "processors", String.join(",", processorResults),
+                "exposedType", current.getClass().getName(),
+                "proxied", replaced && isProxy(current)
+            ));
         registerDestroyCallback(beanName, bean, current);
+        TraceRecorder.record(TraceLayer.CONTAINER, "ready", "ready", beanName + " is ready and exposed by the container.",
+            TraceRecorder.attributes("bean", beanName, "destroyCallback", destroyCallbacks.containsKey(beanName)));
         return current;
+    }
+
+    private boolean hasLifecycleMethod(Class<?> type, Class<? extends java.lang.annotation.Annotation> annotationType) {
+        for (Class<?> current = type; current != null && !Object.class.equals(current); current = current.getSuperclass()) {
+            for (Method method : current.getDeclaredMethods()) {
+                if (method.isAnnotationPresent(annotationType)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void invokeAwareCallbacks(String beanName, Object bean) {
