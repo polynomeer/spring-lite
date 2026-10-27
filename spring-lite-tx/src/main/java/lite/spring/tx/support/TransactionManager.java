@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.sql.DataSource;
 import lite.spring.core.trace.TraceLayer;
 import lite.spring.core.trace.TraceRecorder;
+import lite.spring.core.whatif.WhatIf;
 import lite.spring.tx.annotation.Propagation;
 
 public class TransactionManager {
@@ -69,6 +70,10 @@ public class TransactionManager {
             return;
         }
         String rollbackOnlyDetail = "Rolled back " + context.name() + " because a participant marked it rollback-only.";
+        if (context.rollbackOnly() && WhatIf.isEnabled(WhatIf.Flag.TX_IGNORE_ROLLBACK_ONLY)) {
+            trace("what-if", "ignore rollbackOnly", "What-if: ignored the rollback-only mark on " + context.name() + " and committed anyway.", context);
+            context.clearRollbackOnly();
+        }
         if (context.connection() == null) {
             if (context.rollbackOnly()) {
                 trace("rollback", "rollback()", rollbackOnlyDetail, context);
@@ -216,6 +221,10 @@ public class TransactionManager {
 
         private void markRollbackOnly() {
             rollbackOnly = true;
+        }
+
+        private void clearRollbackOnly() {
+            rollbackOnly = false;
         }
 
         private boolean rollbackOnly() {

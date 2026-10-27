@@ -11,6 +11,7 @@
 - 문자열 기반 타입 변환
 - 입력 검증 규칙과 위반 모델 제공
 - 학습용 실행 이벤트 수집(`TraceRecorder`, 스레드별 세션)과 이벤트 직후 상태 스냅샷 훅(`Session.snapshotWith`)
+- 학습용 What-if 플래그(`WhatIf`): 프레임워크 안전장치를 하나씩 끄는 실험 스위치. 기본은 모두 꺼짐이고, `spring.lite.whatif.<key>=true` 시스템 프로퍼티나 `WhatIf.with(...)`(현재 스레드 한정)로 켠다
 
 ## 핵심 패키지
 
@@ -19,6 +20,7 @@
 - `lite.spring.core.exception`
 - `lite.spring.core.reflect`
 - `lite.spring.core.trace`
+- `lite.spring.core.whatif`
 - `lite.spring.core.metrics`
 - `lite.spring.core.util`
 - `lite.spring.core.validation`

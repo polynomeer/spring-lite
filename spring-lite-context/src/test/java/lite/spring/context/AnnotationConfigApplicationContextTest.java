@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.lang.reflect.Proxy;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lite.spring.context.support.AnnotationConfigApplicationContext;
@@ -29,6 +30,7 @@ import lite.spring.core.annotation.Value;
 import lite.spring.core.exception.BeansException;
 import lite.spring.core.exception.NoSuchBeanException;
 import lite.spring.core.exception.NoUniqueBeanException;
+import lite.spring.core.whatif.WhatIf;
 import lite.spring.context.fixture.ScannedGreetingService;
 import org.junit.jupiter.api.Test;
 
@@ -198,6 +200,23 @@ class AnnotationConfigApplicationContextTest {
             .isInstanceOf(BeansException.class)
             .hasMessageContaining("Circular dependency")
             .hasMessageMatching("(?s).*circular[AB] -> circular[AB] -> circular[AB].*");
+    }
+
+    @Test
+    void whatIfFlagTurnsTheCycleReportIntoStackOverflow() {
+        Throwable failure = WhatIf.with(Set.of(WhatIf.Flag.CONTEXT_DISABLE_CYCLE_DETECTION), () -> {
+            try (AnnotationConfigApplicationContext ignored = new AnnotationConfigApplicationContext(CircularConfig.class)) {
+                return null;
+            } catch (Throwable throwable) {
+                return throwable;
+            }
+        });
+
+        Throwable root = failure;
+        while (root != null && !(root instanceof StackOverflowError) && root.getCause() != null) {
+            root = root.getCause();
+        }
+        assertThat(root).isInstanceOf(StackOverflowError.class);
     }
 
     @Test

@@ -13,6 +13,7 @@
 - `FactoryBean` product 조회와 `&beanName` factory dereference 지원
 - `ContextRefreshedEvent`, `ContextClosedEvent` 발행과 `ApplicationListener` / `@EventListener` 구독, `@Order` 실행 순서
 - 빈 생성 단계(create, 생성자/`@Bean` 호출, Aware, `@PostConstruct`, 후처리기별 교체 여부, ready, 순환 참조)를 `TraceRecorder` 이벤트로 기록하고 마지막 refresh 기록을 `getRefreshTrace()`로 보관, `BeanRuntimeDescriptor`에 주입받은 빈 목록 제공
+- What-if `context.disable-cycle-detection`: 생성 중 빈 검사를 건너뛰어, 순환 참조가 경로를 담은 `BeansException` 대신 `StackOverflowError`로 끝나는 모습을 보여줌
 
 ## 핵심 패키지
 

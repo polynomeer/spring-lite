@@ -9,9 +9,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.sql.DataSource;
 import lite.spring.core.trace.TraceEvent;
 import lite.spring.core.trace.TraceRecorder;
+import lite.spring.core.whatif.WhatIf;
 import lite.spring.tx.annotation.Propagation;
 import org.junit.jupiter.api.Test;
 
@@ -48,6 +50,26 @@ class TransactionManagerTest {
         assertThat(recordingConnection.commitCalls).isZero();
         assertThat(recordingConnection.rollbackCalls).isEqualTo(1);
         assertThat(recordingConnection.closeCalls).isEqualTo(1);
+    }
+
+    @Test
+    void whatIfFlagCommitsDespiteTheRollbackOnlyMark() {
+        RecordingConnection recordingConnection = new RecordingConnection();
+        TransactionManager transactionManager = new TransactionManager(recordingConnection.dataSource());
+
+        List<TraceEvent> events = WhatIf.with(Set.of(WhatIf.Flag.TX_IGNORE_ROLLBACK_ONLY), () -> {
+            try (TraceRecorder.Session session = TraceRecorder.start()) {
+                transactionManager.begin();
+                transactionManager.begin();
+                transactionManager.rollback();
+                transactionManager.commit();
+                return session.events();
+            }
+        });
+
+        assertThat(recordingConnection.commitCalls).isEqualTo(1);
+        assertThat(recordingConnection.rollbackCalls).isZero();
+        assertThat(events).extracting(TraceEvent::kind).containsSubsequence("mark-rollback-only", "what-if", "commit");
     }
 
     @Test

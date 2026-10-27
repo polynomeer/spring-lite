@@ -9,6 +9,7 @@
 - `@Aspect`, `@Before`, `@Around`, `@AfterReturning` 해석
 - `@Order` 기반 advice 실행 순서 제어
 - `@Timed` 기반 메서드 실행 시간 기록
+- What-if `aop.reverse-interceptor-order`(호출 시점에 인터셉터 체인을 거꾸로 실행)와 `aop.force-class-proxy`(인터페이스가 있어도 하위 클래스 프록시 생성)
 
 ## 핵심 패키지
 

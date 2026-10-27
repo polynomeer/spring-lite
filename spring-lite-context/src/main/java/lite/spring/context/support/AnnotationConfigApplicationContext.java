@@ -62,6 +62,7 @@ import lite.spring.core.trace.TraceLayer;
 import lite.spring.core.trace.TraceRecorder;
 import lite.spring.core.util.OrderUtils;
 import lite.spring.core.util.PropertyResolver;
+import lite.spring.core.whatif.WhatIf;
 
 public class AnnotationConfigApplicationContext implements ConfigurableApplicationContext {
     private final Map<String, BeanDefinition> beanDefinitions = new LinkedHashMap<>();
@@ -374,7 +375,7 @@ public class AnnotationConfigApplicationContext implements ConfigurableApplicati
         if (singletons.containsKey(beanName)) {
             return singletons.get(beanName);
         }
-        if (!beansInCreation.add(beanName)) {
+        if (!beansInCreation.add(beanName) && !WhatIf.isEnabled(WhatIf.Flag.CONTEXT_DISABLE_CYCLE_DETECTION)) {
             String cycle = describeCircularDependency(beanName);
             TraceRecorder.record(TraceLayer.CONTAINER, "cycle", "cycle", "Circular dependency detected: " + cycle,
                 TraceRecorder.attributes("bean", beanName, "path", cycle));

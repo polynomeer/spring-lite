@@ -6,9 +6,11 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import lite.spring.aop.MethodInterceptor;
 import lite.spring.core.util.OrderUtils;
+import lite.spring.core.whatif.WhatIf;
 import lite.spring.aop.MethodInvocation;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
@@ -35,7 +37,7 @@ public final class ProxyFactory {
         Object proxyTarget = descriptor.target();
         List<MethodInterceptor> mergedInterceptors = mergeInterceptors(descriptor.interceptors(), interceptors);
         Class<?>[] interfaces = proxyTarget.getClass().getInterfaces();
-        if (interfaces.length == 0) {
+        if (interfaces.length == 0 || WhatIf.isEnabled(WhatIf.Flag.AOP_FORCE_CLASS_PROXY)) {
             return createClassProxy(proxyTarget, mergedInterceptors);
         }
         SpringLiteInvocationHandler invocationHandler = new SpringLiteInvocationHandler(proxyTarget, mergedInterceptors);
@@ -109,7 +111,12 @@ public final class ProxyFactory {
 
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            return new SimpleMethodInvocation(target, method, args == null ? new Object[0] : args, interceptors).proceed();
+            List<MethodInterceptor> chain = interceptors;
+            if (WhatIf.isEnabled(WhatIf.Flag.AOP_REVERSE_INTERCEPTOR_ORDER)) {
+                chain = new ArrayList<>(interceptors);
+                Collections.reverse(chain);
+            }
+            return new SimpleMethodInvocation(target, method, args == null ? new Object[0] : args, chain).proceed();
         }
 
         private Object target() {
