@@ -7,13 +7,15 @@ import { PitfallsView } from "../features/pitfalls/PitfallsView";
 import { ReplayView } from "../features/replay/ReplayView";
 import { ReviewView } from "../features/review/ReviewView";
 import { WhatIfView } from "../features/whatif/WhatIfView";
+import { WorkspaceView } from "../features/workspace/WorkspaceView";
 import { SandboxView } from "../features/sandbox/SandboxView";
 import { useLabTheme } from "../theme/theme";
 
-type View = "map" | "replay" | "sandbox" | "beans" | "pitfalls" | "what-if" | "compare" | "review" | "console";
+type View = "map" | "workspace" | "replay" | "sandbox" | "beans" | "pitfalls" | "what-if" | "compare" | "review" | "console";
 
 const views: { id: View; label: string }[] = [
   { id: "map", label: "학습 지도" },
+  { id: "workspace", label: "워크스페이스" },
   { id: "replay", label: "리플레이" },
   { id: "sandbox", label: "트랜잭션 샌드박스" },
   { id: "beans", label: "빈 그래프" },
@@ -81,6 +83,7 @@ export function Shell() {
         </button>
       </header>
       {view === "map" && <LearningMapView />}
+      {view === "workspace" && <WorkspaceView />}
       {view === "replay" && <ReplayView />}
       {view === "sandbox" && <SandboxView />}
       {view === "beans" && <BeanGraphView />}

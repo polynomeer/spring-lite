@@ -1,0 +1,65 @@
+[
+  {
+    "id": "requires-new",
+    "track": "tx",
+    "title": "REQUIRES_NEW 전파 구현",
+    "goal": "이미 트랜잭션이 열려 있을 때 REQUIRES_NEW로 들어오면, 바깥 트랜잭션을 보류(suspend)하고 새 커넥션으로 독립된 트랜잭션을 연다. 안쪽이 끝나면 바깥을 다시 이어(resume) 간다.",
+    "success": [
+      "안쪽 트랜잭션은 바깥과 다른 커넥션을 쓴다",
+      "안쪽이 롤백돼도 바깥은 계속 커밋할 수 있다",
+      "suspend → begin → … → rollback/commit → resume 순서로 이벤트가 남는다"
+    ],
+    "module": "spring-lite-tx",
+    "suite": "lite.spring.tx.support.TransactionManagerTest",
+    "tests": ["resumesTheSuspendedTransactionAfterRequiresNewCompletes()", "tracesSuspendAndResumeAroundRequiresNew()"],
+    "focus": { "file": "spring-lite-tx/src/main/java/lite/spring/tx/support/TransactionManager.java", "anchor": "public void begin(Propagation propagation, boolean readOnly)", "lines": 30 },
+    "hints": [
+      "REQUIRED와 다른 점은 \"열린 트랜잭션이 있어도 참여하지 않는다\"는 것 하나다. begin의 첫 분기를 어떻게 바꿔야 할까?",
+      "보류는 바깥 컨텍스트를 버리는 게 아니다. 스택(Deque)에 그대로 두고 새 컨텍스트를 위에 쌓으면 peek()이 자연스럽게 안쪽을 가리킨다.",
+      "끝날 때는 안쪽 컨텍스트를 pop한 뒤 스택이 비어 있지 않으면 그것이 재개할 바깥이다. completeContext에서 resume 이벤트를 남긴다."
+    ],
+    "flow": { "kind": "sandbox", "propagation": "REQUIRES_NEW", "label": "바깥 REQUIRED insert → 안쪽 REQUIRES_NEW insert 후 예외 → 바깥 catch" }
+  },
+  {
+    "id": "rollback-only",
+    "track": "tx",
+    "title": "rollback-only 표시",
+    "goal": "REQUIRED로 참여한 메서드가 실패하면 물리 롤백 대신 트랜잭션에 rollback-only 표시만 남긴다. 가장 바깥 경계가 커밋하려 할 때 표시를 보고 롤백한다.",
+    "success": [
+      "참여자의 rollback()은 커넥션을 롤백하지 않고 표시만 남긴다",
+      "바깥의 commit()은 표시가 있으면 롤백한다",
+      "mark-rollback-only 이벤트에 rollbackOnly=true가 남는다"
+    ],
+    "module": "spring-lite-tx",
+    "suite": "lite.spring.tx.support.TransactionManagerTest",
+    "tests": ["marksNestedTransactionsRollbackOnly()", "tracesParticipantRollbackAsRollbackOnlyMark()"],
+    "focus": { "file": "spring-lite-tx/src/main/java/lite/spring/tx/support/TransactionManager.java", "anchor": "public void rollback()", "lines": 22 },
+    "hints": [
+      "참여자와 바깥 경계를 구분하는 값이 이미 있다. 컨텍스트의 depth를 보자.",
+      "depth가 남아 있으면 롤백하지 말고 표시만 한 뒤 depth를 줄이고 돌아온다.",
+      "commit()에서 마지막 경계에 도달했을 때 표시를 확인하고 rollbackConnection으로 보낸다."
+    ],
+    "flow": { "kind": "sandbox", "propagation": "REQUIRED", "label": "바깥 REQUIRED insert → 안쪽 REQUIRED insert 후 예외 → 바깥 catch" }
+  },
+  {
+    "id": "cycle-detection",
+    "track": "context",
+    "title": "생성자 순환 참조 감지",
+    "goal": "생성 중인 빈을 다시 요청받으면 끝없이 재귀하지 말고, 지금까지의 생성 경로를 담아 BeansException으로 실패한다.",
+    "success": [
+      "순환이 있으면 StackOverflowError가 아니라 BeansException이 난다",
+      "메시지에 \"Circular dependency\"와 A -> B -> A 형태의 경로가 들어간다",
+      "cycle 이벤트가 refresh 기록에 남는다"
+    ],
+    "module": "spring-lite-context",
+    "suite": "lite.spring.context.AnnotationConfigApplicationContextTest",
+    "tests": ["detectsCircularDependencies()"],
+    "focus": { "file": "spring-lite-context/src/main/java/lite/spring/context/support/AnnotationConfigApplicationContext.java", "anchor": "private Object createBean(String beanName, BeanDefinition beanDefinition)", "lines": 14 },
+    "hints": [
+      "\"지금 만들고 있는 빈\"을 기억할 자료구조가 필요하다. 순서도 필요하다면 무엇이 좋을까?",
+      "createBean 첫머리에서 이름을 넣고, 이미 있으면 순환이다. 다 만들면 finally에서 빼야 다음 생성에 영향이 없다.",
+      "경로 문자열은 생성 경로 목록에서 순환이 시작된 빈부터 잘라 \" -> \"로 잇고 마지막에 같은 빈을 한 번 더 붙인다."
+    ],
+    "flow": { "kind": "pitfall", "label": "OrderFacade ↔ PaymentFacade 생성자 순환으로 임시 컨테이너 refresh" }
+  }
+]

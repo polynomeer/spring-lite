@@ -1,12 +1,13 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { workspacePlugin } from "./dev/workspace-plugin";
 
 const proxyTarget = process.env.VITE_PROXY_TARGET || "http://127.0.0.1:8080";
 const compareLiteTarget = process.env.VITE_COMPARE_LITE_PROXY_TARGET || "http://127.0.0.1:18081";
 const compareBootTarget = process.env.VITE_COMPARE_BOOT_PROXY_TARGET || "http://127.0.0.1:18082";
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), workspacePlugin()],
   server: {
     port: 4173,
     proxy: {

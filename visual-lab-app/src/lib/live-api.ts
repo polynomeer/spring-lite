@@ -1,5 +1,5 @@
 import { containerGraphEndpoint, labEndpoint, liveEventsEndpoint, liveTraceEndpoint, sandboxEndpoint, springBootCompareEndpoint, springLiteCompareEndpoint } from "./runtime-config";
-import type { WhatIfRunResult, ComparisonEventTrace, ContainerGraph, LabEventTrace, PitfallRunResult, LabTrace, LabTraceRequest, SandboxNode, SandboxRunResult } from "./types";
+import type { WorkspaceTestReport, WhatIfRunResult, ComparisonEventTrace, ContainerGraph, LabEventTrace, PitfallRunResult, LabTrace, LabTraceRequest, SandboxNode, SandboxRunResult } from "./types";
 
 export async function fetchLiveLabTrace(request: LabTraceRequest): Promise<LabTrace> {
   if (!liveTraceEndpoint) {
@@ -126,4 +126,21 @@ export async function runWhatIf(id: string, mode: "off" | "on"): Promise<WhatIfR
     throw new Error(`What-if run failed: ${response.status} ${response.statusText}`);
   }
   return (await response.json()) as WhatIfRunResult;
+}
+
+/** Reads the learner's local Gradle report through the dev-server workspace plugin. */
+export async function fetchTestReport(module: string, suite: string): Promise<WorkspaceTestReport> {
+  const response = await fetch(`/workspace/test-results?module=${encodeURIComponent(module)}&suite=${encodeURIComponent(suite)}`);
+  if (!response.ok || !(response.headers.get("Content-Type") ?? "").includes("application/json")) {
+    throw new Error("워크스페이스 결과는 개발 서버(npm run dev)에서만 읽을 수 있다");
+  }
+  return (await response.json()) as WorkspaceTestReport;
+}
+
+export async function fetchWorkspaceSource(path: string): Promise<string> {
+  const response = await fetch(`/workspace/source?path=${encodeURIComponent(path)}`);
+  if (!response.ok || !(response.headers.get("Content-Type") ?? "").includes("text/plain")) {
+    throw new Error("소스는 개발 서버(npm run dev)에서만 읽을 수 있다");
+  }
+  return response.text();
 }

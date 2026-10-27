@@ -18,6 +18,7 @@
 - `example-flow`, `container`, `playground` live runtime 연동
 - Spring Lite와 Spring Boot DI 결과를 나란히 조회하는 dual-runtime comparison
 - 학습 지도(`#/`, `#/map`, 홈): 트랙 8개(core~test)×단계 4개(개념·구현·실험·비교) 메타데이터(`src/lib/learning-tracks.json`), 트랙별 진행 막대, 이어서 하기. 실험 단계는 리플레이·샌드박스·빈 그래프·함정 실험실이 남기는 활동 신호로 자동 완료되고, 읽기·구현 단계는 직접 완료 표시. 진행도는 브라우저 `localStorage`(`spring-lite-lab-progress`)
+- 구현 워크스페이스(`#/workspace`): 과제 3개(REQUIRES_NEW, rollback-only, 생성자 순환 감지)의 목표·성공 조건·단계별 힌트, 로컬 Gradle 테스트 보고서(통과/실패/미실행과 실패 메시지), 작업 트리의 대상 메서드, 기준 실행 경로(`workspace-reference.ts`)와 지금 띄운 example-app 실행 경로의 비교와 처음 갈라지는 지점. 보고서와 소스는 개발 서버 전용 플러그인(`dev/workspace-plugin.ts`, `/workspace/test-results`, `/workspace/source`)이 읽으며 코드를 실행하지 않음
 - What-if 스위치(`#/what-if`): 프레임워크 안전장치 4개(rollback-only, 인터셉터 순서, 프록시 방식, 순환 감지)마다 바뀌는 코드 한 줄(diff)과 시나리오를 보여주고, `POST /lab/what-if/{id}/{off|on}`으로 원래 동작과 장치를 끈 동작을 나란히 실행해 비교. 장치가 있는 이유와 실제 Spring의 대응을 함께 보여줌
 - 런타임 비교(`#/compare`): 같은 `@Transactional` 호출(커밋/롤백)을 `comparison-spring-lite-app`과 `comparison-spring-boot-app`의 `GET /lab/compare/events/{scenario}`로 실행하고, 정규화 단계 이름을 LCS로 정렬해 나란히 보여줌. 한쪽에만 있는 단계(동기화 콜백, 커넥션 정리)는 점선 칸과 같음·단순화·미구현 판정으로 표시. 정적 샘플(`comparison-sample.ts`) 포함
 - 복습 노트(`#/review`): 틀린 예측으로 만든 복습 카드(답을 떠올린 뒤 펼치고, 기억 여부에 따라 1·3·7·14·30일 간격 반복, 일정은 `spring-lite-lab-reviews`), 틀린 예측과 연결된 약한 개념과 다시 볼 실험 링크, "틀린 것만" 필터가 있는 예측 기록 표

@@ -23,7 +23,7 @@
       "subtitle": "빈 정의·생성자 주입·생명주기",
       "steps": [
         { "stage": "concept", "title": "IoC 컨테이너가 하는 일", "reading": "docs/architecture/spring-core-principles-and-code-guide.md" },
-        { "stage": "build", "title": "스캔과 생성자 주입 구현", "reading": "docs/book/build-along-implementation-guide.md" },
+        { "stage": "build", "title": "생성자 순환 참조 감지 구현", "href": "#/workspace", "action": "워크스페이스 열기", "signals": ["workspace:cycle-detection"] },
         { "stage": "experiment", "title": "빈 생성 순서와 함정", "href": "#/beans", "action": "생성 순서 재생하기", "signals": ["beans:playback", "pitfall:prototype-injection", "pitfall:circular-dependency", "whatif:cycle-detection"] },
         { "stage": "compare", "title": "Spring 컨테이너와 비교", "href": "#/console", "action": "비교 대시보드 열기" }
       ]
@@ -45,7 +45,7 @@
       "subtitle": "@Transactional·전파·롤백",
       "steps": [
         { "stage": "concept", "title": "트랜잭션 경계와 전파", "reading": "docs/architecture/example-app-request-flow.md" },
-        { "stage": "build", "title": "TransactionManager 구현", "reading": "docs/book/build-along-implementation-guide.md" },
+        { "stage": "build", "title": "REQUIRES_NEW와 rollback-only 구현", "href": "#/workspace", "action": "워크스페이스 열기", "signals": ["workspace:requires-new", "workspace:rollback-only"] },
         { "stage": "experiment", "title": "전파 속성 조립해 보기", "href": "#/sandbox", "action": "샌드박스에서 예측하기", "signals": ["sandbox:run", "pitfall:rollback-only", "pitfall:new-thread", "pitfall:checked-exception", "whatif:rollback-only"] },
         { "stage": "compare", "title": "두 런타임의 트랜잭션 경로", "href": "#/compare", "action": "실행 경로 비교하기", "signals": ["compare:tx-rollback", "compare:tx-commit"] }
       ]

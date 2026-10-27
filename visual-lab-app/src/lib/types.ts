@@ -159,3 +159,25 @@ export interface WhatIfRunResult {
   events: TraceEventView[];
   eventCount: number;
 }
+
+export interface WorkspaceEvent {
+  seq: number;
+  layer: TraceEventView["layer"];
+  kind: string;
+  marker: string;
+  detail: string;
+}
+
+export interface WorkspaceTestCase {
+  name: string;
+  status: "passed" | "failed" | "skipped";
+  time: number;
+  message?: string;
+}
+
+export interface WorkspaceTestReport {
+  found: boolean;
+  command?: string;
+  modifiedAt?: string;
+  tests?: WorkspaceTestCase[];
+}
