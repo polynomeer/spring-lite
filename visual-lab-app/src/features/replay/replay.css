@@ -485,3 +485,122 @@
     font-size: 24px;
   }
 }
+
+.replay-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-size: 14px;
+  color: var(--lab-text-2);
+}
+
+.replay-toggle input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--lab-brand);
+}
+
+.replay-stats {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--lab-muted);
+}
+
+.replay-predict {
+  padding: 18px 20px;
+  border-radius: 14px;
+  background: var(--lab-ink);
+  color: var(--lab-surface);
+}
+
+.replay-predict h2 {
+  margin: 4px 0 12px;
+  color: inherit;
+  font-size: 20px;
+}
+
+.replay-predict-eyebrow {
+  margin: 0;
+  font-size: 13px;
+  opacity: 0.75;
+}
+
+.replay-predict-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.replay-predict-skip {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  opacity: 0.8;
+  cursor: pointer;
+}
+
+.replay-predict-result {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.replay-predict-result.is-correct {
+  background: var(--lab-brand-soft);
+  color: var(--lab-brand-text);
+}
+
+.replay-predict-result.is-wrong {
+  border: 1.5px solid var(--lab-err);
+  background: var(--lab-err-soft);
+  color: var(--lab-err-text);
+}
+
+.replay-snapshot-at {
+  margin: 0 0 8px;
+  font-family: var(--lab-mono);
+  font-size: 12px;
+  color: var(--lab-muted);
+}
+
+.replay-snapshot-cells {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.replay-snapshot-cells div {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--lab-line-soft);
+}
+
+.replay-snapshot-cells span {
+  display: block;
+  font-size: 12px;
+  color: var(--lab-muted);
+}
+
+.replay-snapshot-cells strong {
+  font-family: var(--lab-mono);
+  font-size: 22px;
+}
+
+.replay-snapshot p {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--lab-text-2);
+}
+
+.replay-snapshot p.is-gap {
+  color: var(--lab-tx-text);
+  font-weight: 600;
+}

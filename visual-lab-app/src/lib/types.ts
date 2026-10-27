@@ -78,6 +78,8 @@ export interface TraceEventView {
   detail: string;
   stack: string[];
   attributes: Record<string, string>;
+  /** State captured right after the event, e.g. {"orders.current": "2", "orders.other": "1"}. */
+  snapshot?: Record<string, string>;
 }
 
 export interface LabEventTrace {

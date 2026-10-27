@@ -19,6 +19,7 @@
 - Spring Lite와 Spring Boot DI 결과를 나란히 조회하는 dual-runtime comparison
 - 라이트(기본)·다크(Trace Ink) 테마 토큰(`src/theme/theme.css`, `--lab-*`)과 상단 바 테마 전환, 선택은 브라우저에 저장
 - 요청 리플레이(`#/replay`): `POST /lab/run/events`의 실제 프레임워크 이벤트를 스크러버(←/→/스페이스), 콜스택, 이벤트 상세, 트랜잭션 상태 인스펙터, 이벤트 로그로 재생. 서버 없이 쓰는 정적 샘플(`replay-samples.ts`) 포함
+- 리플레이 DB 스냅샷(쓰기·트랜잭션 완료 직후 트랜잭션 커넥션과 다른 커넥션의 행 수)과 예측 루프(트랜잭션 결말·메서드 반환/예외를 먼저 고르고 확인, 기록은 브라우저 `localStorage`)
 
 ## 실행 예정 방법
 

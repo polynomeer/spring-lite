@@ -79,3 +79,79 @@ export function isFailure(event: TraceEventView): boolean {
     || event.kind === "exception"
     || (event.kind === "response" && Number(event.attributes.status) >= 400);
 }
+
+export interface TableSnapshot {
+  table: string;
+  current?: number;
+  other?: number;
+}
+
+export interface EventSnapshot {
+  seq: number;
+  marker: string;
+  tables: TableSnapshot[];
+}
+
+/** Returns the most recent snapshot recorded at or before {@code index}. */
+export function latestSnapshot(events: TraceEventView[], index: number): EventSnapshot | null {
+  for (let cursor = Math.min(index, events.length - 1); cursor >= 0; cursor--) {
+    const event = events[cursor];
+    const entries = Object.entries(event.snapshot ?? {});
+    if (entries.length === 0) {
+      continue;
+    }
+    const tables = new Map<string, TableSnapshot>();
+    for (const [key, value] of entries) {
+      const [table, observer] = key.split(".");
+      const snapshot = tables.get(table) ?? { table };
+      if (observer === "current") {
+        snapshot.current = Number(value);
+      } else if (observer === "other") {
+        snapshot.other = Number(value);
+      }
+      tables.set(table, snapshot);
+    }
+    return { seq: event.seq, marker: event.marker, tables: [...tables.values()] };
+  }
+  return null;
+}
+
+export interface Checkpoint {
+  question: string;
+  options: { id: string; label: string }[];
+  answer: string;
+}
+
+const outcomeLabels: Record<string, string> = {
+  commit: "커밋된다",
+  rollback: "롤백된다",
+  return: "정상 반환한다",
+  throw: "예외를 던진다"
+};
+
+export function outcomeLabel(id: string): string {
+  return outcomeLabels[id] ?? id;
+}
+
+/** Turns the upcoming event into a prediction question when its outcome is worth guessing first. */
+export function checkpointFor(next: TraceEventView | undefined): Checkpoint | null {
+  if (!next) {
+    return null;
+  }
+  if (next.layer === "tx" && (next.kind === "commit" || next.kind === "rollback")) {
+    return {
+      question: `${next.attributes.tx ?? "이 트랜잭션"}은 어떻게 끝날까?`,
+      options: [{ id: "commit", label: outcomeLabels.commit }, { id: "rollback", label: outcomeLabels.rollback }],
+      answer: next.kind
+    };
+  }
+  if (next.layer === "service" && (next.kind === "return" || next.kind === "throw")) {
+    const method = next.stack[next.stack.length - 1] ?? "이 메서드";
+    return {
+      question: `${method}는 어떻게 끝날까?`,
+      options: [{ id: "return", label: outcomeLabels.return }, { id: "throw", label: outcomeLabels.throw }],
+      answer: next.kind
+    };
+  }
+  return null;
+}

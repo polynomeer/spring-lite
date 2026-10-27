@@ -63,7 +63,7 @@ export const replaySamples: Record<string, LabEventTrace> = {
         },
         {
           "label": "Duration (µs)",
-          "value": "1559",
+          "value": "2558",
           "detail": "Approximate live execution time for this trace scenario."
         }
       ],
@@ -202,7 +202,7 @@ export const replaySamples: Record<string, LabEventTrace> = {
             },
             {
               "id": "tx-3",
-              "text": "duration=1559µs",
+              "text": "duration=2558µs",
               "kind": "info"
             }
           ]
@@ -259,7 +259,8 @@ export const replaySamples: Record<string, LabEventTrace> = {
         "attributes": {
           "sql": "select id, product, quantity, status from orders order by id",
           "rows": "1"
-        }
+        },
+        "snapshot": {}
       },
       {
         "seq": 2,
@@ -273,38 +274,44 @@ export const replaySamples: Record<string, LabEventTrace> = {
         "attributes": {
           "propagation": "REQUIRED",
           "readOnly": "false"
-        }
+        },
+        "snapshot": {}
       },
       {
         "seq": 3,
         "layer": "tx",
         "kind": "begin",
         "marker": "begin()",
-        "detail": "Started tx#2 on a new connection with auto-commit disabled.",
+        "detail": "Started tx#1 on a new connection with auto-commit disabled.",
         "stack": [
           "DefaultOrderService.createOrder"
         ],
         "attributes": {
-          "tx": "tx#2",
+          "tx": "tx#1",
           "depth": "1",
           "active": "1",
           "readOnly": "false",
           "rollbackOnly": "false"
-        }
+        },
+        "snapshot": {}
       },
       {
         "seq": 4,
         "layer": "jdbc",
         "kind": "update",
         "marker": "insert",
-        "detail": "Ran inside tx#2: insert into orders(product, quantity, status) values (?, ?, ?)",
+        "detail": "Ran inside tx#1: insert into orders(product, quantity, status) values (?, ?, ?)",
         "stack": [
           "DefaultOrderService.createOrder"
         ],
         "attributes": {
           "sql": "insert into orders(product, quantity, status) values (?, ?, ?)",
           "rows": "1",
-          "tx": "tx#2"
+          "tx": "tx#1"
+        },
+        "snapshot": {
+          "orders.current": "2",
+          "orders.other": "1"
         }
       },
       {
@@ -312,15 +319,16 @@ export const replaySamples: Record<string, LabEventTrace> = {
         "layer": "jdbc",
         "kind": "query",
         "marker": "select",
-        "detail": "Ran inside tx#2: select id, product, quantity, status from orders order by id desc limit 1",
+        "detail": "Ran inside tx#1: select id, product, quantity, status from orders order by id desc limit 1",
         "stack": [
           "DefaultOrderService.createOrder"
         ],
         "attributes": {
           "sql": "select id, product, quantity, status from orders order by id desc limit 1",
           "rows": "1",
-          "tx": "tx#2"
-        }
+          "tx": "tx#1"
+        },
+        "snapshot": {}
       },
       {
         "seq": 6,
@@ -331,23 +339,28 @@ export const replaySamples: Record<string, LabEventTrace> = {
         "stack": [
           "DefaultOrderService.createOrder"
         ],
-        "attributes": {}
+        "attributes": {},
+        "snapshot": {}
       },
       {
         "seq": 7,
         "layer": "tx",
         "kind": "commit",
         "marker": "commit()",
-        "detail": "Committed tx#2.",
+        "detail": "Committed tx#1.",
         "stack": [
           "DefaultOrderService.createOrder"
         ],
         "attributes": {
-          "tx": "tx#2",
+          "tx": "tx#1",
           "depth": "0",
           "active": "1",
           "readOnly": "false",
           "rollbackOnly": "false"
+        },
+        "snapshot": {
+          "orders.current": "2",
+          "orders.other": "2"
         }
       },
       {
@@ -360,7 +373,8 @@ export const replaySamples: Record<string, LabEventTrace> = {
         "attributes": {
           "sql": "select id, product, quantity, status from orders order by id",
           "rows": "2"
-        }
+        },
+        "snapshot": {}
       }
     ]
   },
@@ -410,7 +424,7 @@ export const replaySamples: Record<string, LabEventTrace> = {
         },
         {
           "label": "Duration (µs)",
-          "value": "3882",
+          "value": "5371",
           "detail": "Approximate live execution time for the rollback scenario."
         }
       ],
@@ -544,7 +558,7 @@ export const replaySamples: Record<string, LabEventTrace> = {
             },
             {
               "id": "tx-3",
-              "text": "duration=3882µs",
+              "text": "duration=5371µs",
               "kind": "info"
             }
           ]
@@ -600,7 +614,8 @@ export const replaySamples: Record<string, LabEventTrace> = {
         "attributes": {
           "sql": "select id, product, quantity, status from orders order by id",
           "rows": "1"
-        }
+        },
+        "snapshot": {}
       },
       {
         "seq": 2,
@@ -614,7 +629,8 @@ export const replaySamples: Record<string, LabEventTrace> = {
         "attributes": {
           "propagation": "REQUIRED",
           "readOnly": "false"
-        }
+        },
+        "snapshot": {}
       },
       {
         "seq": 3,
@@ -631,7 +647,8 @@ export const replaySamples: Record<string, LabEventTrace> = {
           "active": "1",
           "readOnly": "false",
           "rollbackOnly": "false"
-        }
+        },
+        "snapshot": {}
       },
       {
         "seq": 4,
@@ -646,6 +663,10 @@ export const replaySamples: Record<string, LabEventTrace> = {
           "sql": "insert into orders(product, quantity, status) values (?, ?, ?)",
           "rows": "1",
           "tx": "tx#1"
+        },
+        "snapshot": {
+          "orders.current": "2",
+          "orders.other": "1"
         }
       },
       {
@@ -661,7 +682,8 @@ export const replaySamples: Record<string, LabEventTrace> = {
           "sql": "select id, product, quantity, status from orders order by id desc limit 1",
           "rows": "1",
           "tx": "tx#1"
-        }
+        },
+        "snapshot": {}
       },
       {
         "seq": 6,
@@ -675,7 +697,8 @@ export const replaySamples: Record<string, LabEventTrace> = {
         "attributes": {
           "exception": "java.lang.IllegalStateException",
           "rollback": "true"
-        }
+        },
+        "snapshot": {}
       },
       {
         "seq": 7,
@@ -692,6 +715,10 @@ export const replaySamples: Record<string, LabEventTrace> = {
           "active": "1",
           "readOnly": "false",
           "rollbackOnly": "true"
+        },
+        "snapshot": {
+          "orders.current": "1",
+          "orders.other": "1"
         }
       },
       {
@@ -704,7 +731,8 @@ export const replaySamples: Record<string, LabEventTrace> = {
         "attributes": {
           "sql": "select id, product, quantity, status from orders order by id",
           "rows": "1"
-        }
+        },
+        "snapshot": {}
       }
     ]
   },

@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { fetchLabEventTrace } from "../../lib/live-api";
+import { loadPredictions, savePrediction, type PredictionRecord } from "../../lib/prediction-store";
 import { replaySamples } from "../../lib/replay-samples";
 import type { LabEventTrace, RuntimeMode } from "../../lib/types";
 import {
+  checkpointFor,
   deriveTransactions,
   describeLatestConnection,
   isFailure,
+  latestSnapshot,
   layerLabels,
+  outcomeLabel,
   transactionStatusLabels
 } from "./replay-state";
 import "./replay.css";
@@ -29,6 +33,10 @@ export function ReplayView() {
   const [error, setError] = useState<string | null>(null);
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [askPredictions, setAskPredictions] = useState(true);
+  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [lastResult, setLastResult] = useState<{ seq: number; choice: string; answer: string } | null>(null);
+  const [predictions, setPredictions] = useState<PredictionRecord[]>(loadPredictions);
 
   const staticData = replaySamples[scenario] ?? null;
   const data = mode === "static" ? staticData : liveData;
@@ -37,11 +45,42 @@ export function ReplayView() {
   // The event list can change before the reset effect runs, so always read through a clamped position.
   const position = Math.min(index, lastIndex);
   const current = events[position];
+  const next = events[position + 1];
+  const checkpoint = askPredictions ? checkpointFor(next) : null;
+  const pendingCheckpoint = checkpoint !== null && next !== undefined && answers[next.seq] === undefined;
 
   useEffect(() => {
     setIndex(0);
     setPlaying(false);
+    setAnswers({});
+    setLastResult(null);
   }, [mode, scenario, liveData]);
+
+  useEffect(() => {
+    if (playing && pendingCheckpoint) {
+      setPlaying(false);
+    }
+  }, [playing, pendingCheckpoint]);
+
+  const predict = (choice: string) => {
+    if (!checkpoint || !next) {
+      return;
+    }
+    const correct = choice === checkpoint.answer;
+    setAnswers((value) => ({ ...value, [next.seq]: choice }));
+    setLastResult({ seq: next.seq, choice, answer: checkpoint.answer });
+    setPredictions(savePrediction({
+      scenario,
+      source: mode,
+      eventSeq: next.seq,
+      question: checkpoint.question,
+      choice,
+      answer: checkpoint.answer,
+      correct,
+      at: new Date().toISOString()
+    }));
+    setIndex(position + 1);
+  };
 
   const runLive = useCallback(async () => {
     setLoading(true);
@@ -101,6 +140,8 @@ export function ReplayView() {
 
   const transactions = useMemo(() => deriveTransactions(events, position), [events, position]);
   const connection = useMemo(() => describeLatestConnection(events, position), [events, position]);
+  const snapshot = useMemo(() => latestSnapshot(events, position), [events, position]);
+  const correctCount = predictions.filter((record) => record.correct).length;
   const outcome = data?.trace.metrics.slice(0, 3) ?? [];
 
   return (
@@ -112,6 +153,9 @@ export function ReplayView() {
           <p className="replay-lede">
             spring-lite가 실제로 남긴 실행 이벤트를 한 단계씩 재생한다. ←/→로 이동하고 스페이스로 재생·정지한다.
           </p>
+          {predictions.length > 0 && (
+            <p className="replay-stats">이 브라우저의 예측 기록 {predictions.length}개 중 {correctCount}개 적중</p>
+          )}
         </div>
         <div className="replay-controls">
           <label className="replay-field">
@@ -128,6 +172,10 @@ export function ReplayView() {
             <button type="button" aria-pressed={mode === "static"} onClick={() => setMode("static")}>정적 샘플</button>
             <button type="button" aria-pressed={mode === "live"} onClick={() => setMode("live")}>live</button>
           </div>
+          <label className="replay-toggle">
+            <input type="checkbox" checked={askPredictions} onChange={(event) => setAskPredictions(event.target.checked)} />
+            결과 예측하며 보기
+          </label>
           {mode === "live" && (
             <button type="button" className="lab-button primary" onClick={runLive} disabled={loading}>
               {loading ? "실행 중…" : "요청 보내기"}
@@ -200,6 +248,30 @@ export function ReplayView() {
             <span className="replay-counter">{position + 1} / {events.length}</span>
           </section>
 
+          {pendingCheckpoint && checkpoint && (
+            <section className="replay-predict" aria-labelledby="replay-predict-question">
+              <p className="replay-predict-eyebrow">다음 이벤트를 예측해 보세요</p>
+              <h2 id="replay-predict-question">{checkpoint.question}</h2>
+              <div className="replay-predict-options">
+                {checkpoint.options.map((option) => (
+                  <button key={option.id} type="button" className="lab-button" onClick={() => predict(option.id)}>
+                    {option.label}
+                  </button>
+                ))}
+                <button type="button" className="replay-predict-skip" onClick={() => step(1)}>건너뛰기</button>
+              </div>
+            </section>
+          )}
+
+          {lastResult && current && lastResult.seq === current.seq && (
+            <p className={`replay-predict-result ${lastResult.choice === lastResult.answer ? "is-correct" : "is-wrong"}`} role="status">
+              {lastResult.choice === lastResult.answer
+                ? `예측 적중: 실제로 “${outcomeLabel(lastResult.answer)}”.`
+                : `예측과 다름: “${outcomeLabel(lastResult.choice)}”를 골랐지만 실제로는 “${outcomeLabel(lastResult.answer)}”.`}
+              {" "}아래 상태 인스펙터와 DB 스냅샷에서 이유를 확인하라.
+            </p>
+          )}
+
           <div className="replay-panels">
             <section className="replay-panel" aria-labelledby="replay-stack">
               <h2 id="replay-stack">콜스택</h2>
@@ -230,6 +302,41 @@ export function ReplayView() {
                   </div>
                 ))}
               </dl>
+            </section>
+
+            <section className="replay-panel" aria-labelledby="replay-db">
+              <h2 id="replay-db">DB 스냅샷</h2>
+              {!snapshot ? (
+                <p className="replay-empty">아직 쓰기나 트랜잭션 완료가 없다.</p>
+              ) : (
+                <>
+                  <p className="replay-snapshot-at">#{snapshot.seq} {snapshot.marker} 직후{snapshot.seq !== current.seq ? " (최근 기록)" : ""}</p>
+                  {snapshot.tables.map((table) => {
+                    const gap = table.current !== undefined && table.other !== undefined ? table.current - table.other : 0;
+                    return (
+                      <div key={table.table} className="replay-snapshot">
+                        <div className="replay-snapshot-cells">
+                          <div>
+                            <span>이 트랜잭션의 커넥션</span>
+                            <strong>{table.current ?? "—"}</strong>
+                          </div>
+                          <div>
+                            <span>다른 커넥션</span>
+                            <strong>{table.other ?? "—"}</strong>
+                          </div>
+                        </div>
+                        <p className={gap !== 0 ? "is-gap" : undefined}>
+                          {table.current === undefined
+                            ? `${table.table}: 트랜잭션이 끝나 다른 커넥션 값만 있다.`
+                            : gap !== 0
+                              ? `${table.table}: 커밋 전 변경 ${Math.abs(gap)}행은 이 트랜잭션에만 보인다.`
+                              : `${table.table}: 두 커넥션이 같은 상태를 본다.`}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </>
+              )}
             </section>
 
             <section className="replay-panel" aria-labelledby="replay-state">
