@@ -184,6 +184,18 @@ class ExampleApplicationWebTest {
     }
 
     @Test
+    void returnsContainerGraphWithDependenciesAndRefreshEvents(MockMvc mockMvc) {
+        MockHttpResponse response = mockMvc.get("/lab/container/graph");
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body())
+            .contains("\"name\":\"defaultOrderService\"")
+            .contains("\"dependencies\":[\"jdbcOrderRepository\"")
+            .contains("\"kind\":\"post-process\"")
+            .contains("TransactionalBeanPostProcessor:replaced");
+    }
+
+    @Test
     void returnsLiveContainerRuntimeTrace(MockMvc mockMvc) {
         MockHttpResponse response = mockMvc.perform(
             MockHttpRequest.post("/lab/run/trace")
