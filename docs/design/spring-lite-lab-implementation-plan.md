@@ -138,4 +138,5 @@
 | 2 | 완료 | `50d3cb6`, `283e9de` | 토큰은 기존 콘솔 변수와 겹치지 않게 `--lab-*`로 두었다. 새 Shell이 `#/replay`(기본)와 `#/console`(기존 랩)을 전환한다. 정적 샘플은 실제 `/lab/run/events` 응답에서 만들었다. 브라우저에서 라이트·다크, 정적·live(service-error) 재생을 확인했다. |
 | 3 | 완료 | `32aecf8`, `88b6e58`, `64c243b`, `0a69248` | 스냅샷은 core의 `Session.snapshotWith` 훅으로 일반화하고, 행 수 조회는 example-app의 `LabDbSnapshotProvider`가 맡는다. 반영된 결과를 보도록 tx의 commit/rollback 이벤트를 실제 반영 직후로 옮겼다. 예측은 트랜잭션 결말과 메서드 반환/예외 두 종류로 시작했다. 스냅샷 패널과 예측 UI는 한 화면 흐름이라 커밋 하나로 묶었다. |
 | 4 | 완료 | `5020a1b`, `d3a5693` | 요청 본문 바인딩이 평평한 record만 지원해서 컨트롤러는 `Map`을 받고 `SandboxScenarioParser`가 검증·변환한다. 실행은 `SandboxTransactions`의 실제 `@Transactional` 프록시를 거치고, 행은 run id로 구분해 실행끼리 섞이지 않는다. spring-lite는 rollback-only 트랜잭션을 조용히 롤백하지만 실제 Spring은 `UnexpectedRollbackException`을 던지므로 결과 화면에 그 차이를 적었다. |
-| 5 | 다음 | | 빈 그래프와 생명주기 |
+| 5 | 완료 | `2dd18e0`, `46956e8`, `e5d7ac1`, `34a04dd` | refresh는 자체 trace 세션을 열어 기록을 `getRefreshTrace()`로 보관한다(기동 실패 시에도 남음). 후처리기마다 kept/replaced를 남기고, 주입받은 빈은 `BeanRuntimeDescriptor.dependencies`로 노출한다. 실제 응답을 받다가 자체 JSON 매퍼가 줄바꿈을 이스케이프하지 않는 기존 버그를 찾아 `fix(web)`로 고쳤다. 화면 03(빈 그래프)과 08(생명주기)은 한 화면의 그래프와 상세 패널로 합쳤다. |
+| 6 | 다음 | | 함정 실험실 |
