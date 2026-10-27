@@ -109,3 +109,19 @@ export interface SandboxRunResult {
   events: TraceEventView[];
   rows: Record<string, number>;
 }
+
+export interface ContainerBean {
+  name: string;
+  typeName: string;
+  simpleType: string;
+  definitionKind: "COMPONENT" | "CONFIGURATION" | "INFRASTRUCTURE" | "FACTORY_METHOD";
+  scope: "singleton" | "prototype";
+  instantiated: boolean;
+  proxied: boolean;
+  dependencies: string[];
+}
+
+export interface ContainerGraph {
+  beans: ContainerBean[];
+  refresh: TraceEventView[];
+}

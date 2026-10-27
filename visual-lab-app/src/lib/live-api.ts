@@ -1,5 +1,5 @@
-import { liveEventsEndpoint, liveTraceEndpoint, sandboxEndpoint, springBootCompareEndpoint, springLiteCompareEndpoint } from "./runtime-config";
-import type { LabEventTrace, LabTrace, LabTraceRequest, SandboxNode, SandboxRunResult } from "./types";
+import { containerGraphEndpoint, liveEventsEndpoint, liveTraceEndpoint, sandboxEndpoint, springBootCompareEndpoint, springLiteCompareEndpoint } from "./runtime-config";
+import type { ContainerGraph, LabEventTrace, LabTrace, LabTraceRequest, SandboxNode, SandboxRunResult } from "./types";
 
 export async function fetchLiveLabTrace(request: LabTraceRequest): Promise<LabTrace> {
   if (!liveTraceEndpoint) {
@@ -52,6 +52,14 @@ export async function runSandbox(root: SandboxNode): Promise<SandboxRunResult> {
   }
 
   return (await response.json()) as SandboxRunResult;
+}
+
+export async function fetchContainerGraph(): Promise<ContainerGraph> {
+  const response = await fetch(containerGraphEndpoint);
+  if (!response.ok) {
+    throw new Error(`Container graph request failed: ${response.status} ${response.statusText}`);
+  }
+  return (await response.json()) as ContainerGraph;
 }
 
 async function fetchComparisonTrace(endpoint: string, runtime: string): Promise<LabTrace> {
