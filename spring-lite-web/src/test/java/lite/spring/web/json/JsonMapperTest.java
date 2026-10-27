@@ -21,6 +21,14 @@ class JsonMapperTest {
     }
 
     @Test
+    void escapesControlCharactersSoOutputStaysValidJson() {
+        String written = jsonMapper.write("line1\nline2\t\"q\"\\\u0001");
+
+        assertThat(written).isEqualTo("\"line1\\nline2\\t\\\"q\\\"\\\\\\u0001\"");
+        assertThat(jsonMapper.readTree(written)).isEqualTo("line1\nline2\t\"q\"\\\u0001");
+    }
+
+    @Test
     void parsesNestedJsonStructures() {
         Object parsed = jsonMapper.readTree("{\"name\":\"codex\",\"count\":3,\"enabled\":true,\"items\":[1,2],\"nested\":{\"value\":null}}");
 

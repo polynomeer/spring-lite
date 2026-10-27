@@ -81,13 +81,29 @@ final class JsonParser {
         while (currentChar() != '"') {
             char current = text.charAt(index++);
             if (current == '\\') {
-                builder.append(text.charAt(index++));
+                builder.append(unescape(text.charAt(index++)));
                 continue;
             }
             builder.append(current);
         }
         expect('"');
         return builder.toString();
+    }
+
+    private char unescape(char escaped) {
+        return switch (escaped) {
+            case 'n' -> '\n';
+            case 'r' -> '\r';
+            case 't' -> '\t';
+            case 'b' -> '\b';
+            case 'f' -> '\f';
+            case 'u' -> {
+                char decoded = (char) Integer.parseInt(text.substring(index, index + 4), 16);
+                index += 4;
+                yield decoded;
+            }
+            default -> escaped;
+        };
     }
 
     private Boolean parseBoolean() {
