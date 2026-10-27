@@ -18,6 +18,7 @@
 - `example-flow`, `container`, `playground` live runtime 연동
 - Spring Lite와 Spring Boot DI 결과를 나란히 조회하는 dual-runtime comparison
 - 학습 지도(`#/`, `#/map`, 홈): 트랙 8개(core~test)×단계 4개(개념·구현·실험·비교) 메타데이터(`src/lib/learning-tracks.json`), 트랙별 진행 막대, 이어서 하기. 실험 단계는 리플레이·샌드박스·빈 그래프·함정 실험실이 남기는 활동 신호로 자동 완료되고, 읽기·구현 단계는 직접 완료 표시. 진행도는 브라우저 `localStorage`(`spring-lite-lab-progress`)
+- 런타임 비교(`#/compare`): 같은 `@Transactional` 호출(커밋/롤백)을 `comparison-spring-lite-app`과 `comparison-spring-boot-app`의 `GET /lab/compare/events/{scenario}`로 실행하고, 정규화 단계 이름을 LCS로 정렬해 나란히 보여줌. 한쪽에만 있는 단계(동기화 콜백, 커넥션 정리)는 점선 칸과 같음·단순화·미구현 판정으로 표시. 정적 샘플(`comparison-sample.ts`) 포함
 - 복습 노트(`#/review`): 틀린 예측으로 만든 복습 카드(답을 떠올린 뒤 펼치고, 기억 여부에 따라 1·3·7·14·30일 간격 반복, 일정은 `spring-lite-lab-reviews`), 틀린 예측과 연결된 약한 개념과 다시 볼 실험 링크, "틀린 것만" 필터가 있는 예측 기록 표
 - 라이트(기본)·다크(Trace Ink) 테마 토큰(`src/theme/theme.css`, `--lab-*`)과 상단 바 테마 전환, 선택은 브라우저에 저장
 - 요청 리플레이(`#/replay`): `POST /lab/run/events`의 실제 프레임워크 이벤트를 스크러버(←/→/스페이스), 콜스택, 이벤트 상세, 트랜잭션 상태 인스펙터, 이벤트 로그로 재생. 서버 없이 쓰는 정적 샘플(`replay-samples.ts`) 포함

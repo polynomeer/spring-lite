@@ -133,3 +133,20 @@ export interface PitfallRunResult {
   facts: Record<string, string>;
   events: TraceEventView[];
 }
+
+export interface ComparisonTraceEvent {
+  seq: number;
+  step: string;
+  layer: string;
+  detail: string;
+  attributes: Record<string, string>;
+}
+
+export interface ComparisonEventTrace {
+  runtime: string;
+  scenario: string;
+  outcome: string;
+  ordersBefore: number;
+  ordersAfter: number;
+  events: ComparisonTraceEvent[];
+}

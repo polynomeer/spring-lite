@@ -47,7 +47,7 @@
         { "stage": "concept", "title": "트랜잭션 경계와 전파", "reading": "docs/architecture/example-app-request-flow.md" },
         { "stage": "build", "title": "TransactionManager 구현", "reading": "docs/book/build-along-implementation-guide.md" },
         { "stage": "experiment", "title": "전파 속성 조립해 보기", "href": "#/sandbox", "action": "샌드박스에서 예측하기", "signals": ["sandbox:run", "pitfall:rollback-only", "pitfall:new-thread", "pitfall:checked-exception"] },
-        { "stage": "compare", "title": "rollback 규칙 차이", "reading": "docs/architecture/intentional-simplifications-and-limitations.md" }
+        { "stage": "compare", "title": "두 런타임의 트랜잭션 경로", "href": "#/compare", "action": "실행 경로 비교하기", "signals": ["compare:tx-rollback", "compare:tx-commit"] }
       ]
     },
     {

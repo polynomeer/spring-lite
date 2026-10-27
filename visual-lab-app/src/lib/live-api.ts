@@ -1,5 +1,5 @@
 import { containerGraphEndpoint, labEndpoint, liveEventsEndpoint, liveTraceEndpoint, sandboxEndpoint, springBootCompareEndpoint, springLiteCompareEndpoint } from "./runtime-config";
-import type { ContainerGraph, LabEventTrace, PitfallRunResult, LabTrace, LabTraceRequest, SandboxNode, SandboxRunResult } from "./types";
+import type { ComparisonEventTrace, ContainerGraph, LabEventTrace, PitfallRunResult, LabTrace, LabTraceRequest, SandboxNode, SandboxRunResult } from "./types";
 
 export async function fetchLiveLabTrace(request: LabTraceRequest): Promise<LabTrace> {
   if (!liveTraceEndpoint) {
@@ -106,4 +106,15 @@ export function fetchDualRuntimeComparisonTraces(scenario: string) {
     fetchComparisonTrace(springLiteCompareEndpoint(scenario), "Spring Lite"),
     fetchComparisonTrace(springBootCompareEndpoint(scenario), "Spring Boot")
   ]);
+}
+
+/** Runs one transaction scenario on a comparison app and returns its normalized framework events. */
+export async function fetchComparisonEvents(runtime: "lite" | "boot", scenario: string): Promise<ComparisonEventTrace> {
+  const path = `events/${scenario}`;
+  const endpoint = runtime === "lite" ? springLiteCompareEndpoint(path) : springBootCompareEndpoint(path);
+  const response = await fetch(endpoint);
+  if (!response.ok) {
+    throw new Error(`${runtime === "lite" ? "spring-lite" : "Spring Boot"} comparison request failed: ${response.status} ${response.statusText}`);
+  }
+  return (await response.json()) as ComparisonEventTrace;
 }
