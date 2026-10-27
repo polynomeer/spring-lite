@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react";
 import { App } from "./App";
 import { BeanGraphView } from "../features/beans/BeanGraphView";
+import { PitfallsView } from "../features/pitfalls/PitfallsView";
 import { ReplayView } from "../features/replay/ReplayView";
 import { SandboxView } from "../features/sandbox/SandboxView";
 import { useLabTheme } from "../theme/theme";
 
-type View = "replay" | "sandbox" | "beans" | "console";
+type View = "replay" | "sandbox" | "beans" | "pitfalls" | "console";
 
 const views: { id: View; label: string }[] = [
   { id: "replay", label: "리플레이" },
   { id: "sandbox", label: "트랜잭션 샌드박스" },
   { id: "beans", label: "빈 그래프" },
+  { id: "pitfalls", label: "함정 실험실" },
   { id: "console", label: "기존 랩 콘솔" }
 ];
 
@@ -73,6 +75,7 @@ export function Shell() {
       {view === "replay" && <ReplayView />}
       {view === "sandbox" && <SandboxView />}
       {view === "beans" && <BeanGraphView />}
+      {view === "pitfalls" && <PitfallsView />}
       {view === "console" && (
         <div className="lab-legacy-frame">
           <App />

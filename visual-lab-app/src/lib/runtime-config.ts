@@ -26,6 +26,10 @@ export const containerGraphEndpoint = liveApiBaseUrl
     ? `${liveApiBaseUrl}${containerGraphEndpointPath}`
     : containerGraphEndpointPath;
 
+export function labEndpoint(path: string) {
+  return liveApiBaseUrl ? `${liveApiBaseUrl}${path}` : path;
+}
+
 function configuredUrl(value: string | undefined) {
   const trimmed = value?.trim() ?? "";
   return trimmed.length > 0 ? trimmed.replace(/\/+$/, "") : "";

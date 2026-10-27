@@ -125,3 +125,11 @@ export interface ContainerGraph {
   beans: ContainerBean[];
   refresh: TraceEventView[];
 }
+
+export interface PitfallRunResult {
+  id: string;
+  variant: "broken" | "fixed";
+  outcome: string;
+  facts: Record<string, string>;
+  events: TraceEventView[];
+}

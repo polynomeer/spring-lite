@@ -22,6 +22,7 @@
 - 리플레이 DB 스냅샷(쓰기·트랜잭션 완료 직후 트랜잭션 커넥션과 다른 커넥션의 행 수)과 예측 루프(트랜잭션 결말·메서드 반환/예외를 먼저 고르고 확인, 기록은 브라우저 `localStorage`)
 - 트랜잭션 샌드박스(`#/sandbox`): 메서드·전파·insert/call/throw·catch로 호출 구조를 편집하고, 테이블별 최종 행 수를 예측한 뒤 `POST /lab/sandbox/run`으로 실행해 판정, 트랜잭션 타임라인(보류·재개 포함), 트랜잭션별 결말을 보여줌
 - 빈 그래프(`#/beans`): `GET /lab/container/graph`의 빈과 주입 관계를 계층 그래프로 그리고(프록시 강조, 앱 빈/프레임워크 빈 필터), 생성 순서를 재생하며, 선택한 빈의 생애 단계와 BeanPostProcessor 체인(교체 여부)을 보여줌. 정적 샘플(`container-sample.ts`) 포함
+- 함정 실험실(`#/pitfalls`): 실험 8종(self-invocation, final 메서드, checked 예외, 새 스레드, rollback-only, prototype 주입, 생성자 순환 참조, `@Valid` 누락)을 계층별로 고르고, 망가진 버전과 고친 버전을 example-app에서 실제로 실행해 결과·관찰 사실·이벤트를 나란히 비교. 원인과 고치는 법, 실제 Spring과의 차이를 함께 보여줌
 
 ## 실행 예정 방법
 
