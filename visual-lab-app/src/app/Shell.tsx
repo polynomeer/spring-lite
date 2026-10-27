@@ -4,10 +4,11 @@ import { BeanGraphView } from "../features/beans/BeanGraphView";
 import { LearningMapView } from "../features/map/LearningMapView";
 import { PitfallsView } from "../features/pitfalls/PitfallsView";
 import { ReplayView } from "../features/replay/ReplayView";
+import { ReviewView } from "../features/review/ReviewView";
 import { SandboxView } from "../features/sandbox/SandboxView";
 import { useLabTheme } from "../theme/theme";
 
-type View = "map" | "replay" | "sandbox" | "beans" | "pitfalls" | "console";
+type View = "map" | "replay" | "sandbox" | "beans" | "pitfalls" | "review" | "console";
 
 const views: { id: View; label: string }[] = [
   { id: "map", label: "학습 지도" },
@@ -15,6 +16,7 @@ const views: { id: View; label: string }[] = [
   { id: "sandbox", label: "트랜잭션 샌드박스" },
   { id: "beans", label: "빈 그래프" },
   { id: "pitfalls", label: "함정 실험실" },
+  { id: "review", label: "복습 노트" },
   { id: "console", label: "기존 랩 콘솔" }
 ];
 
@@ -79,6 +81,7 @@ export function Shell() {
       {view === "sandbox" && <SandboxView />}
       {view === "beans" && <BeanGraphView />}
       {view === "pitfalls" && <PitfallsView />}
+      {view === "review" && <ReviewView />}
       {view === "console" && (
         <div className="lab-legacy-frame">
           <App />
