@@ -204,6 +204,14 @@ class ExampleApplicationWebTest {
     }
 
     @Test
+    void runsWhatIfExperimentWithTheSwitchOn(MockMvc mockMvc) {
+        MockHttpResponse response = mockMvc.perform(MockHttpRequest.post("/lab/what-if/rollback-only/on").build());
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).contains("\"mode\":\"on\"", "\"바깥 트랜잭션 결말\":\"commit\"", "\"kind\":\"what-if\"");
+    }
+
+    @Test
     void validatesRequestBodyOnlyWhenValidIsPresent(MockMvc mockMvc) {
         String invalid = "{\"product\":\"x\",\"quantity\":0}";
         MockHttpResponse broken = mockMvc.perform(
