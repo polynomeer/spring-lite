@@ -11,13 +11,14 @@
 - Visual Lab trace API: `POST /lab/run/trace`(정규화된 시나리오 trace), `POST /lab/run/events`(trace와 실제 프레임워크 실행 이벤트, 쓰기·트랜잭션 완료 직후 커넥션별 주문 행 수 스냅샷)
 - 트랜잭션 샌드박스 API: `POST /lab/sandbox/run`이 JSON 호출 트리(메서드, 전파 `REQUIRED`/`REQUIRES_NEW`/`NONE`, insert·call·throw 단계, catch 여부)를 실제 `@Transactional` 프록시로 실행하고 이벤트와 테이블별 최종 행 수를 반환
 - 컨테이너 그래프 API: `GET /lab/container/graph`가 빈을 새로 만들지 않고 빈 목록(종류, 스코프, 프록시 여부, 주입받은 빈)과 refresh 중 기록된 생명주기 이벤트를 반환
+- 함정 실험 API: `POST /lab/pitfalls/{id}/{broken|fixed}`가 self-invocation, final 메서드, checked 예외, 새 스레드, prototype 주입, 생성자 순환 참조, rollback-only 실험을 실제로 실행해 결과 요약·관찰 사실·이벤트를 반환. `@Valid` 누락 실험은 `POST /lab/pitfall-endpoints/missing-valid/{broken|fixed}`
 
 ## 핵심 패키지
 
 - `lite.spring.example`
 - `lite.spring.example.config`
 - `lite.spring.example.order`
-- `lite.spring.example.lab`, `lite.spring.example.lab.sandbox`
+- `lite.spring.example.lab`, `lite.spring.example.lab.sandbox`, `lite.spring.example.lab.pitfall`
 
 ## 공개 진입점
 

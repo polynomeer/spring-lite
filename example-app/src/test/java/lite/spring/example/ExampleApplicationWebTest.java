@@ -196,6 +196,30 @@ class ExampleApplicationWebTest {
     }
 
     @Test
+    void runsPitfallExperimentVariant(MockMvc mockMvc) {
+        MockHttpResponse response = mockMvc.perform(MockHttpRequest.post("/lab/pitfalls/self-invocation/broken").build());
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).contains("\"variant\":\"broken\"", "\"열린 트랜잭션\":\"0개\"");
+    }
+
+    @Test
+    void validatesRequestBodyOnlyWhenValidIsPresent(MockMvc mockMvc) {
+        String invalid = "{\"product\":\"x\",\"quantity\":0}";
+        MockHttpResponse broken = mockMvc.perform(
+            MockHttpRequest.post("/lab/pitfall-endpoints/missing-valid/broken").contentType("application/json").body(invalid).build()
+        );
+        MockHttpResponse fixed = mockMvc.perform(
+            MockHttpRequest.post("/lab/pitfall-endpoints/missing-valid/fixed").contentType("application/json").body(invalid).build()
+        );
+
+        assertThat(broken.statusCode()).isEqualTo(200);
+        assertThat(broken.body()).contains("\"accepted\":true");
+        assertThat(fixed.statusCode()).isEqualTo(400);
+        assertThat(fixed.body()).contains("Validation failed");
+    }
+
+    @Test
     void returnsLiveContainerRuntimeTrace(MockMvc mockMvc) {
         MockHttpResponse response = mockMvc.perform(
             MockHttpRequest.post("/lab/run/trace")
