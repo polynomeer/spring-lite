@@ -1,0 +1,25 @@
+.whatif-file {
+  font-family: var(--lab-mono);
+  font-size: 12px;
+  color: var(--lab-muted) !important;
+}
+
+.whatif-diff span {
+  display: block;
+  white-space: pre;
+}
+
+.whatif-diff .is-add {
+  background: var(--lab-brand-soft);
+  color: var(--lab-brand-text);
+}
+
+.whatif-diff .is-del {
+  background: var(--lab-err-soft);
+  color: var(--lab-err-text);
+}
+
+.pitfalls-events li.whatif-event span:last-child {
+  color: var(--lab-err-text);
+  font-weight: 600;
+}

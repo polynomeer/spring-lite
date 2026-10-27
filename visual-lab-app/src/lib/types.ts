@@ -150,3 +150,12 @@ export interface ComparisonEventTrace {
   ordersAfter: number;
   events: ComparisonTraceEvent[];
 }
+
+export interface WhatIfRunResult {
+  id: string;
+  mode: "off" | "on";
+  outcome: string;
+  facts: Record<string, string>;
+  events: TraceEventView[];
+  eventCount: number;
+}

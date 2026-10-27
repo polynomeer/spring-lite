@@ -1,5 +1,5 @@
 import { containerGraphEndpoint, labEndpoint, liveEventsEndpoint, liveTraceEndpoint, sandboxEndpoint, springBootCompareEndpoint, springLiteCompareEndpoint } from "./runtime-config";
-import type { ComparisonEventTrace, ContainerGraph, LabEventTrace, PitfallRunResult, LabTrace, LabTraceRequest, SandboxNode, SandboxRunResult } from "./types";
+import type { WhatIfRunResult, ComparisonEventTrace, ContainerGraph, LabEventTrace, PitfallRunResult, LabTrace, LabTraceRequest, SandboxNode, SandboxRunResult } from "./types";
 
 export async function fetchLiveLabTrace(request: LabTraceRequest): Promise<LabTrace> {
   if (!liveTraceEndpoint) {
@@ -117,4 +117,13 @@ export async function fetchComparisonEvents(runtime: "lite" | "boot", scenario: 
     throw new Error(`${runtime === "lite" ? "spring-lite" : "Spring Boot"} comparison request failed: ${response.status} ${response.statusText}`);
   }
   return (await response.json()) as ComparisonEventTrace;
+}
+
+/** Runs one what-if experiment with its framework switch off (normal behavior) or on. */
+export async function runWhatIf(id: string, mode: "off" | "on"): Promise<WhatIfRunResult> {
+  const response = await fetch(labEndpoint(`/lab/what-if/${id}/${mode}`), { method: "POST" });
+  if (!response.ok) {
+    throw new Error(`What-if run failed: ${response.status} ${response.statusText}`);
+  }
+  return (await response.json()) as WhatIfRunResult;
 }

@@ -6,10 +6,11 @@ import { LearningMapView } from "../features/map/LearningMapView";
 import { PitfallsView } from "../features/pitfalls/PitfallsView";
 import { ReplayView } from "../features/replay/ReplayView";
 import { ReviewView } from "../features/review/ReviewView";
+import { WhatIfView } from "../features/whatif/WhatIfView";
 import { SandboxView } from "../features/sandbox/SandboxView";
 import { useLabTheme } from "../theme/theme";
 
-type View = "map" | "replay" | "sandbox" | "beans" | "pitfalls" | "compare" | "review" | "console";
+type View = "map" | "replay" | "sandbox" | "beans" | "pitfalls" | "what-if" | "compare" | "review" | "console";
 
 const views: { id: View; label: string }[] = [
   { id: "map", label: "학습 지도" },
@@ -17,6 +18,7 @@ const views: { id: View; label: string }[] = [
   { id: "sandbox", label: "트랜잭션 샌드박스" },
   { id: "beans", label: "빈 그래프" },
   { id: "pitfalls", label: "함정 실험실" },
+  { id: "what-if", label: "What-if" },
   { id: "compare", label: "런타임 비교" },
   { id: "review", label: "복습 노트" },
   { id: "console", label: "기존 랩 콘솔" }
@@ -83,6 +85,7 @@ export function Shell() {
       {view === "sandbox" && <SandboxView />}
       {view === "beans" && <BeanGraphView />}
       {view === "pitfalls" && <PitfallsView />}
+      {view === "what-if" && <WhatIfView />}
       {view === "compare" && <CompareView />}
       {view === "review" && <ReviewView />}
       {view === "console" && (
