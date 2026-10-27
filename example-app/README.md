@@ -9,12 +9,14 @@
 - JDBC/H2 기반 저장소 검증
 - 프로퍼티 기반 기본 주문 상태와 데이터소스 설정 검증
 - Visual Lab trace API: `POST /lab/run/trace`(정규화된 시나리오 trace), `POST /lab/run/events`(trace와 실제 프레임워크 실행 이벤트, 쓰기·트랜잭션 완료 직후 커넥션별 주문 행 수 스냅샷)
+- 트랜잭션 샌드박스 API: `POST /lab/sandbox/run`이 JSON 호출 트리(메서드, 전파 `REQUIRED`/`REQUIRES_NEW`/`NONE`, insert·call·throw 단계, catch 여부)를 실제 `@Transactional` 프록시로 실행하고 이벤트와 테이블별 최종 행 수를 반환
 
 ## 핵심 패키지
 
 - `lite.spring.example`
 - `lite.spring.example.config`
 - `lite.spring.example.order`
+- `lite.spring.example.lab`, `lite.spring.example.lab.sandbox`
 
 ## 공개 진입점
 

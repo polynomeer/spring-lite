@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.sql.DataSource;
@@ -23,6 +24,7 @@ public class LabDbSnapshotProvider {
     private static final Set<String> JDBC_WRITES = Set.of("update", "batch");
     private static final Set<String> TX_COMPLETIONS = Set.of("commit", "rollback");
     private static final String COUNT_ORDERS = "select count(*) from orders";
+    private static final String COUNT_SANDBOX_ROWS = "select count(*) from lab_sandbox_row where run_id = ? and target_table = ?";
 
     private final DataSource dataSource;
     private final TransactionManager transactionManager;
@@ -33,31 +35,57 @@ public class LabDbSnapshotProvider {
     }
 
     public Map<String, String> snapshot(TraceEvent event) {
-        boolean checkpoint = (event.layer() == TraceLayer.JDBC && JDBC_WRITES.contains(event.kind()))
-            || (event.layer() == TraceLayer.TX && TX_COMPLETIONS.contains(event.kind()));
-        if (!checkpoint) {
+        if (!isCheckpoint(event)) {
             return Map.of();
         }
+        return capture(List.of("orders"), (connection, table) -> count(connection, COUNT_ORDERS));
+    }
+
+    /** Same as {@link #snapshot} but counts one sandbox run's rows in each of {@code tables}. */
+    public Map<String, String> sandboxSnapshot(TraceEvent event, String runId, List<String> tables) {
+        if (!isCheckpoint(event)) {
+            return Map.of();
+        }
+        return capture(tables, (connection, table) -> count(connection, COUNT_SANDBOX_ROWS, runId, table));
+    }
+
+    private boolean isCheckpoint(TraceEvent event) {
+        return (event.layer() == TraceLayer.JDBC && JDBC_WRITES.contains(event.kind()))
+            || (event.layer() == TraceLayer.TX && TX_COMPLETIONS.contains(event.kind()));
+    }
+
+    private Map<String, String> capture(List<String> tables, RowCounter counter) {
         Map<String, String> snapshot = new LinkedHashMap<>();
         Connection current = transactionManager.currentConnection();
-        if (current != null) {
-            snapshot.put("orders.current", String.valueOf(countOrders(current)));
-        }
         try (Connection other = dataSource.getConnection()) {
-            snapshot.put("orders.other", String.valueOf(countOrders(other)));
+            for (String table : tables) {
+                if (current != null) {
+                    snapshot.put(table + ".current", String.valueOf(counter.count(current, table)));
+                }
+                snapshot.put(table + ".other", String.valueOf(counter.count(other, table)));
+            }
         } catch (SQLException exception) {
             throw new IllegalStateException("Failed to open snapshot connection", exception);
         }
         return snapshot;
     }
 
-    private long countOrders(Connection connection) {
-        try (PreparedStatement statement = connection.prepareStatement(COUNT_ORDERS);
-             ResultSet resultSet = statement.executeQuery()) {
-            resultSet.next();
-            return resultSet.getLong(1);
+    private long count(Connection connection, String sql, Object... args) {
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            for (int index = 0; index < args.length; index++) {
+                statement.setObject(index + 1, args[index]);
+            }
+            try (ResultSet resultSet = statement.executeQuery()) {
+                resultSet.next();
+                return resultSet.getLong(1);
+            }
         } catch (SQLException exception) {
-            throw new IllegalStateException("Failed to count orders for a lab snapshot", exception);
+            throw new IllegalStateException("Failed to count rows for a lab snapshot", exception);
         }
+    }
+
+    @FunctionalInterface
+    private interface RowCounter {
+        long count(Connection connection, String table);
     }
 }

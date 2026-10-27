@@ -153,6 +153,37 @@ class ExampleApplicationWebTest {
     }
 
     @Test
+    void runsTransactionalSandboxCallTree(MockMvc mockMvc) {
+        MockHttpResponse response = mockMvc.perform(
+            MockHttpRequest.post("/lab/sandbox/run")
+                .contentType("application/json")
+                .body("""
+                    {"root":{"name":"OrderService.placeOrder","propagation":"REQUIRED","steps":[
+                      {"type":"insert","target":"orders"},
+                      {"type":"call","catch":true,"call":{"name":"AuditService.log","propagation":"REQUIRES_NEW","steps":[
+                        {"type":"insert","target":"audit_log"},{"type":"throw"}]}}]}}
+                    """)
+                .build()
+        );
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).contains("\"outcome\":\"completed\"", "\"rows\":{\"orders\":1,\"audit_log\":0}");
+    }
+
+    @Test
+    void rejectsInvalidSandboxCallTree(MockMvc mockMvc) {
+        MockHttpResponse response = mockMvc.perform(
+            MockHttpRequest.post("/lab/sandbox/run")
+                .contentType("application/json")
+                .body("{\"root\":{\"name\":\"A.b\",\"propagation\":\"NESTED\",\"steps\":[]}}")
+                .build()
+        );
+
+        assertThat(response.statusCode()).isEqualTo(400);
+        assertThat(response.body()).contains("Unsupported sandbox propagation: NESTED");
+    }
+
+    @Test
     void returnsLiveContainerRuntimeTrace(MockMvc mockMvc) {
         MockHttpResponse response = mockMvc.perform(
             MockHttpRequest.post("/lab/run/trace")

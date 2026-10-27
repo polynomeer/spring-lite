@@ -15,7 +15,7 @@ public record LabTraceEventView(
     Map<String, String> attributes,
     Map<String, String> snapshot
 ) {
-    static LabTraceEventView from(TraceEvent event) {
+    public static LabTraceEventView from(TraceEvent event) {
         return new LabTraceEventView(
             event.seq(),
             event.layer().name().toLowerCase(Locale.ROOT),
