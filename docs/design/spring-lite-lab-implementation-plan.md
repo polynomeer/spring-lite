@@ -137,4 +137,5 @@
 | 1 | 완료 | `7f47837`, `3cc999e`, `dd7d1ab`, `078cebb`, `42ad1f4` | `TraceRecorder`(core), tx·jdbc·web 수집, `POST /lab/run/events`. 트랜잭션 프록시 진입은 AOP 계층, 메서드 반환·예외는 SERVICE 계층으로 기록한다. |
 | 2 | 완료 | `50d3cb6`, `283e9de` | 토큰은 기존 콘솔 변수와 겹치지 않게 `--lab-*`로 두었다. 새 Shell이 `#/replay`(기본)와 `#/console`(기존 랩)을 전환한다. 정적 샘플은 실제 `/lab/run/events` 응답에서 만들었다. 브라우저에서 라이트·다크, 정적·live(service-error) 재생을 확인했다. |
 | 3 | 완료 | `32aecf8`, `88b6e58`, `64c243b`, `0a69248` | 스냅샷은 core의 `Session.snapshotWith` 훅으로 일반화하고, 행 수 조회는 example-app의 `LabDbSnapshotProvider`가 맡는다. 반영된 결과를 보도록 tx의 commit/rollback 이벤트를 실제 반영 직후로 옮겼다. 예측은 트랜잭션 결말과 메서드 반환/예외 두 종류로 시작했다. 스냅샷 패널과 예측 UI는 한 화면 흐름이라 커밋 하나로 묶었다. |
-| 4 | 다음 | | 시나리오 DSL과 트랜잭션 샌드박스 |
+| 4 | 완료 | `5020a1b`, `d3a5693` | 요청 본문 바인딩이 평평한 record만 지원해서 컨트롤러는 `Map`을 받고 `SandboxScenarioParser`가 검증·변환한다. 실행은 `SandboxTransactions`의 실제 `@Transactional` 프록시를 거치고, 행은 run id로 구분해 실행끼리 섞이지 않는다. spring-lite는 rollback-only 트랜잭션을 조용히 롤백하지만 실제 Spring은 `UnexpectedRollbackException`을 던지므로 결과 화면에 그 차이를 적었다. |
+| 5 | 다음 | | 빈 그래프와 생명주기 |
