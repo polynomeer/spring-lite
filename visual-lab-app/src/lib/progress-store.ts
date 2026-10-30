@@ -50,6 +50,29 @@ export function setStepCompleted(key: string, done: boolean): LearningProgress {
   return saveProgress({ ...progress, completed: done ? [...completed, key] : completed });
 }
 
+const STARTED_KEY = "spring-lite-lab-workspace-started";
+
+/** Workspace tasks this browser has seen in a started or edited state, so a passing reference build is not counted. */
+export function loadStartedTasks(): string[] {
+  try {
+    const parsed: unknown = JSON.parse(window.localStorage.getItem(STARTED_KEY) ?? "[]");
+    return Array.isArray(parsed) ? (parsed as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function markTaskStarted(id: string): void {
+  const started = loadStartedTasks();
+  if (!started.includes(id)) {
+    try {
+      window.localStorage.setItem(STARTED_KEY, JSON.stringify([...started, id]));
+    } catch {
+      // Storage can be unavailable (private mode); completion then needs the task to be started again.
+    }
+  }
+}
+
 export function rememberLastStep(track: string, index: number): LearningProgress {
   return saveProgress({ ...loadProgress(), lastStep: { track, index, at: new Date().toISOString() } });
 }

@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "build": "node scripts/workspace-task.mjs verify && tsc -b && vite build",
+    "preview": "vite preview",
+    "workspace": "node scripts/workspace-task.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

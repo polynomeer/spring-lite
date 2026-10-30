@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetchTestReport, fetchWorkspaceSource, runPitfall, runSandbox } from "../../lib/live-api";
-import { recordActivity } from "../../lib/progress-store";
+import { loadStartedTasks, markTaskStarted, recordActivity } from "../../lib/progress-store";
 import type { SandboxNode, WorkspaceEvent, WorkspaceTestReport } from "../../lib/types";
 import { workspaceReference } from "../../lib/workspace-reference";
 import { layerLabels } from "../replay/replay-state";
@@ -8,14 +8,31 @@ import {
   firstDivergence,
   focusLines,
   gradleCommand,
+  taskState,
   taskTestStatuses,
   workspaceTasks,
+  type TaskState,
   type TestStatus,
   type WorkspaceTask
 } from "./workspace-model";
 import "../replay/replay.css";
 import "../pitfalls/pitfalls.css";
 import "./workspace.css";
+
+const stateNotes: Record<TaskState, { label: string; text: string }> = {
+  reference: {
+    label: "기준 구현 상태",
+    text: "정답 코드가 그대로 들어 있어서 테스트가 이미 통과한다. 아래 명령으로 과제를 시작하면 대상 코드가 TODO 스텁으로 바뀌고 테스트가 실패하기 시작한다."
+  },
+  started: {
+    label: "과제 시작함",
+    text: "대상 코드가 스텁으로 바뀌었다. 고칠 곳의 TODO를 IDE에서 채우고 테스트를 돌린다."
+  },
+  edited: {
+    label: "작업 중",
+    text: "스텁을 고치기 시작했다. 테스트가 모두 통과하면 학습 지도에 구현 단계가 완료로 남는다."
+  }
+};
 
 const statusLabels: Record<TestStatus, string> = { passed: "통과", failed: "실패", skipped: "건너뜀", "not-run": "미실행" };
 
@@ -57,9 +74,11 @@ export function WorkspaceView() {
   const allPassed = statuses.every((test) => test.status === "passed");
   const divergence = mine ? firstDivergence(reference, mine) : null;
   const focus = source ? focusLines(source, task) : [];
+  const state = source ? taskState(task, source) : null;
 
   const loadReport = useCallback(async () => {
     setReportError(null);
+    fetchWorkspaceSource(task.focus.file).then(setSource).catch(() => setSource(null));
     try {
       setReport(await fetchTestReport(task.module, task.suite));
     } catch (cause) {
@@ -74,14 +93,17 @@ export function WorkspaceView() {
     setFlowError(null);
     setSource(null);
     void loadReport();
-    fetchWorkspaceSource(task.focus.file).then(setSource).catch(() => setSource(null));
   }, [task, loadReport]);
 
   useEffect(() => {
-    if (report?.found && allPassed) {
+    if (state === "started" || state === "edited") {
+      markTaskStarted(task.id);
+    }
+    // The reference build passes from the start, so only a task this learner actually started can complete.
+    if (report?.found && allPassed && state !== "started" && loadStartedTasks().includes(task.id)) {
       recordActivity(`workspace:${task.id}`);
     }
-  }, [report, allPassed, task.id]);
+  }, [state, report, allPassed, task.id]);
 
   const compare = async () => {
     setRunning(true);
@@ -136,17 +158,29 @@ export function WorkspaceView() {
             </ul>
           </div>
 
+          {state && (
+            <div className={`pitfalls-panel workspace-state is-${state}`} role="status">
+              <p><b>{stateNotes[state].label}.</b> {stateNotes[state].text}</p>
+              <code className="workspace-command">
+                {state === "reference" ? `cd visual-lab-app && npm run workspace -- start ${task.id}` : `cd visual-lab-app && npm run workspace -- restore ${task.id}${state === "edited" ? " --yes" : ""}`}
+              </code>
+              {state !== "reference" && (
+                <p className="workspace-meta">위 명령은 기준 구현으로 되돌린다. {state === "edited" ? "직접 고친 내용은 git restore로 사라지니 남기려면 먼저 커밋한다." : ""}</p>
+              )}
+            </div>
+          )}
+
           <div className="workspace-columns">
             <section className="pitfalls-panel" aria-labelledby="workspace-tests">
               <div className="workspace-panel-head">
                 <h3 id="workspace-tests">테스트</h3>
-                <button type="button" className="lab-button" onClick={() => void loadReport()}>결과 다시 읽기</button>
+                <button type="button" className="lab-button" onClick={() => void loadReport()}>다시 읽기</button>
               </div>
               <code className="workspace-command">{gradleCommand(task)}</code>
               {reportError ? (
                 <p className="replay-notice is-error">{reportError}.</p>
               ) : !report?.found ? (
-                <p className="replay-empty">아직 테스트 보고서가 없다. 위 명령을 실행한 뒤 "결과 다시 읽기"를 누른다.</p>
+                <p className="replay-empty">아직 테스트 보고서가 없다. 위 명령을 실행한 뒤 "다시 읽기"를 누른다.</p>
               ) : (
                 <p className="workspace-meta">보고서 시각 {new Date(report.modifiedAt ?? "").toLocaleString("ko-KR")}</p>
               )}
@@ -181,7 +215,7 @@ export function WorkspaceView() {
             {focus.length > 0 ? (
               <pre className="pitfalls-code workspace-source">
                 {focus.map((line) => (
-                  <span key={line.number}><span className="workspace-line">{line.number}</span>{line.text}{"\n"}</span>
+                  <span key={line.number} className={line.text.includes("TODO(workspace:") ? "is-todo" : undefined}><span className="workspace-line">{line.number}</span>{line.text}{"\n"}</span>
                 ))}
               </pre>
             ) : (

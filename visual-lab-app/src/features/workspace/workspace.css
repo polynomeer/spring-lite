@@ -203,3 +203,19 @@
 .workspace-flow-row.is-after {
   opacity: 0.6;
 }
+
+.workspace-state.is-reference {
+  border-color: var(--lab-tx);
+  background: var(--lab-tx-soft);
+}
+
+.workspace-state.is-started,
+.workspace-state.is-edited {
+  border-color: var(--lab-brand);
+}
+
+.workspace-source .is-todo {
+  background: var(--lab-tx-soft);
+  color: var(--lab-tx-text);
+  font-weight: 600;
+}

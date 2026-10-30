@@ -13,12 +13,33 @@ export interface WorkspaceTask {
   focus: { file: string; anchor: string; lines: number };
   hints: string[];
   flow: { kind: "sandbox"; propagation: "REQUIRED" | "REQUIRES_NEW"; label: string } | { kind: "pitfall"; label: string };
+  /** Exact reference snippets and the stubs `npm run workspace -- start` swaps in; all live in focus.file. */
+  starter: { file: string; find: string; replace: string }[];
+}
+
+export type TaskState = "reference" | "started" | "edited";
+
+function occurrences(text: string, part: string): number {
+  return text.split(part).length - 1;
+}
+
+/** Same rule as scripts/workspace-task.mjs: reference code intact, stub untouched, or the learner's own edit. */
+export function taskState(task: WorkspaceTask, source: string): TaskState {
+  if (task.starter.every((step) => occurrences(source, step.find) === 1)) {
+    return "reference";
+  }
+  if (task.starter.every((step) => occurrences(source, step.replace) === 1)) {
+    return "started";
+  }
+  return "edited";
 }
 
 export const workspaceTasks = tasksJson as WorkspaceTask[];
 
+/** Runs only the task's own tests, so unrelated tests in the same suite never block the learner. */
 export function gradleCommand(task: WorkspaceTask): string {
-  return `./gradlew :${task.module}:test --tests '${task.suite}'`;
+  const filters = task.tests.map((test) => `--tests '${task.suite}.${test.replace(/\(\)$/, "")}'`);
+  return `./gradlew :${task.module}:test ${filters.join(" ")}`;
 }
 
 export type TestStatus = WorkspaceTestCase["status"] | "not-run";
